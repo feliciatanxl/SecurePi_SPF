@@ -1,0 +1,19 @@
+{
+  "name": "ShieldQuest — Youth Crime Prevention",
+  "short_name": "ShieldQuest",
+  "description": "Practise the moment of choice: risk recognition, delayed consequences, and peer intervention.",
+  "start_url": "/play",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#05080f",
+  "theme_color": "#05080f",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
