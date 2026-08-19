@@ -26,6 +26,7 @@ import {
 } from "@/components/admin/ScenarioTable";
 import { Modal } from "@/components/ui/Modal";
 import { api } from "@/lib/api/client";
+import { clearDemoData } from "@/lib/state/demoStorage";
 import { SAFEGUARDS } from "@/lib/api/mock-data";
 import type {
   AdminScenarioRow,
@@ -76,6 +77,16 @@ export default function AdminPage() {
     setDeployed(created);
     setPanelOpen(false);
     setSection("scenarios");
+  }, []);
+
+  /**
+   * Demo-only. Clears the prototype's browser storage and reloads so player
+   * stats, Guardian progress and deployed Flash Missions all return to the
+   * fixture state. Built-in scenarios are never touched.
+   */
+  const handleResetDemo = useCallback(() => {
+    clearDemoData();
+    window.location.reload();
   }, []);
 
   const filtered = useMemo(
@@ -229,7 +240,10 @@ export default function AdminPage() {
                   </Section>
 
                   <Section title="Data &amp; safeguards">
-                    <DataSafeguardCard items={SAFEGUARDS} />
+                    <DataSafeguardCard
+                      items={SAFEGUARDS}
+                      onResetDemo={handleResetDemo}
+                    />
                   </Section>
                 </>
               )}
@@ -281,7 +295,10 @@ export default function AdminPage() {
                     </SimulatedDataNote>
                   </Section>
                   <Section title="Data &amp; safeguards">
-                    <DataSafeguardCard items={SAFEGUARDS} />
+                    <DataSafeguardCard
+                      items={SAFEGUARDS}
+                      onResetDemo={handleResetDemo}
+                    />
                   </Section>
                 </>
               )}

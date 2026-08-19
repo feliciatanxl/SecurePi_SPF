@@ -10,6 +10,11 @@ import type {
   Scenario,
 } from "@/lib/types";
 import {
+  FLASH_MISSIONS_KEY,
+  readDemo,
+  writeDemo,
+} from "@/lib/state/demoStorage";
+import {
   derivePortalSummary,
   MOCK_ADMIN_SCENARIOS,
   MOCK_GUARDIANS,
@@ -46,7 +51,24 @@ class MockApiClient implements ShieldQuestApi {
     [MULE_PEER_SHIELD.id, MULE_PEER_SHIELD],
   ]);
 
-  private adminRows: AdminScenarioRow[] = [...MOCK_ADMIN_SCENARIOS];
+  /**
+   * Flash Missions deployed during a demo session, overlaid on the fixtures so
+   * a page refresh mid-presentation does not lose them. The fixture list stays
+   * the base dataset and is never mutated.
+   */
+  private demoFlashMissions(): AdminScenarioRow[] {
+    const stored = readDemo<AdminScenarioRow[]>(FLASH_MISSIONS_KEY);
+    return Array.isArray(stored) ? stored : [];
+  }
+
+  /** Newest demo missions first, then fixtures. Keyed by id so reloads cannot duplicate. */
+  private allRows(): AdminScenarioRow[] {
+    const merged = new Map<string, AdminScenarioRow>();
+    for (const row of [...this.demoFlashMissions(), ...MOCK_ADMIN_SCENARIOS]) {
+      if (!merged.has(row.id)) merged.set(row.id, row);
+    }
+    return [...merged.values()];
+  }
 
   async getProfile(): Promise<PlayerProfile> {
     await latency(120);
@@ -91,12 +113,12 @@ class MockApiClient implements ShieldQuestApi {
 
   async listScenarios(): Promise<AdminScenarioRow[]> {
     await latency(300);
-    return [...this.adminRows];
+    return this.allRows();
   }
 
   async getPortalSummary(): Promise<PortalSummary> {
     await latency(140);
-    return derivePortalSummary(this.adminRows);
+    return derivePortalSummary(this.allRows());
   }
 
   async getInsights(): Promise<Insight[]> {
@@ -106,8 +128,10 @@ class MockApiClient implements ShieldQuestApi {
 
   async deployFlashMission(draft: FlashMissionDraft): Promise<AdminScenarioRow> {
     await latency(650);
+    const existing = this.demoFlashMissions();
     const row: AdminScenarioRow = {
-      id: `scn_flash_${this.adminRows.length + 1}`,
+      // Stable and collision-free across reloads, unlike a length-based index.
+      id: `scn_flash_demo_${Date.now().toString(36)}`,
       title: draft.title,
       category: draft.category,
       targetGroup: draft.targetGroup,
@@ -120,7 +144,7 @@ class MockApiClient implements ShieldQuestApi {
       updatedOn: "Just now",
       isFlashMission: true,
     };
-    this.adminRows = [row, ...this.adminRows];
+    writeDemo(FLASH_MISSIONS_KEY, [row, ...existing]);
     return row;
   }
 }

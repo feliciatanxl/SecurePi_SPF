@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   ListChecks,
   Lock,
+  RotateCcw,
   Shield,
   Zap,
 } from "lucide-react";
@@ -155,9 +156,12 @@ export function InsightCard({ insight }: { insight: Insight }) {
 export function DataSafeguardCard({
   items,
   compact = false,
+  onResetDemo,
 }: {
   items?: string[];
   compact?: boolean;
+  /** Demo-only. Deliberately a small text action, never a primary control. */
+  onResetDemo?: () => void;
 }) {
   const list = items ?? [
     "Aggregate learning analytics",
@@ -193,6 +197,17 @@ export function DataSafeguardCard({
           </li>
         ))}
       </ul>
+
+      {onResetDemo && (
+        <button
+          type="button"
+          onClick={onResetDemo}
+          className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 text-[12px] font-semibold text-ink-soft underline underline-offset-2 transition hover:text-ink"
+        >
+          <RotateCcw className="h-3 w-3" aria-hidden="true" />
+          Reset demo data
+        </button>
+      )}
     </section>
   );
 }
