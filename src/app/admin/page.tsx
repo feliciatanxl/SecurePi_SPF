@@ -1,41 +1,67 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  Activity,
   CheckCircle2,
-  Gamepad2,
+  ExternalLink,
   Loader2,
   Search,
   Shield,
-  Users,
   Zap,
 } from "lucide-react";
-import { FlashMissionForm } from "@/components/admin/FlashMissionModal";
-import { ScenarioTable } from "@/components/admin/ScenarioTable";
+import {
+  AdminSection as Section,
+  AdminSidebar,
+  DataSafeguardCard,
+  InsightCard,
+  PortalSummaryRow,
+  SimulatedDataNote,
+  type AdminSection as SectionId,
+} from "@/components/admin/AdminChrome";
+import { FlashMissionPanel } from "@/components/admin/FlashMissionPanel";
+import {
+  REVIEW_THRESHOLD,
+  ScenarioTable,
+} from "@/components/admin/ScenarioTable";
 import { Modal } from "@/components/ui/Modal";
 import { api } from "@/lib/api/client";
-import type { AdminScenarioRow, FlashMissionDraft } from "@/lib/types";
+import { SAFEGUARDS } from "@/lib/api/mock-data";
+import type {
+  AdminScenarioRow,
+  FlashMissionDraft,
+  Insight,
+  PortalSummary,
+} from "@/lib/types";
 
 /**
- * View 3 — Scenario Management Portal.
+ * View 5 — Scenario Management Portal.
  *
- * Desktop-first: this is an operational console for SPF crime prevention
- * officers, not a youth-facing surface.
+ * A desktop-first console for reviewing how well prevention CONTENT is teaching
+ * and updating it as risks evolve. Deliberately branded as a prototype admin
+ * view: it is not, and must not appear to be, a deployed government system.
  */
 export default function AdminPage() {
+  const [section, setSection] = useState<SectionId>("overview");
   const [rows, setRows] = useState<AdminScenarioRow[]>([]);
+  const [summary, setSummary] = useState<PortalSummary | null>(null);
+  const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [justDeployedId, setJustDeployedId] = useState<string | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [deployed, setDeployed] = useState<AdminScenarioRow | null>(null);
 
   useEffect(() => {
     let active = true;
-    api.listScenarios().then((data) => {
+    Promise.all([
+      api.listScenarios(),
+      api.getPortalSummary(),
+      api.getInsights(),
+    ]).then(([r, s, i]) => {
       if (!active) return;
-      setRows(data);
+      setRows(r);
+      setSummary(s);
+      setInsights(i);
       setLoading(false);
     });
     return () => {
@@ -46,179 +72,291 @@ export default function AdminPage() {
   const handleDeploy = useCallback(async (draft: FlashMissionDraft) => {
     const created = await api.deployFlashMission(draft);
     setRows((prev) => [created, ...prev]);
-    setJustDeployedId(created.id);
-    setModalOpen(false);
+    setSummary(await api.getPortalSummary());
+    setDeployed(created);
+    setPanelOpen(false);
+    setSection("scenarios");
   }, []);
 
-  const filtered = rows.filter((r) =>
-    `${r.title} ${r.threatType}`.toLowerCase().includes(query.toLowerCase()),
+  const filtered = useMemo(
+    () =>
+      rows.filter((r) =>
+        `${r.title} ${r.category} ${r.targetGroup}`
+          .toLowerCase()
+          .includes(query.toLowerCase()),
+      ),
+    [rows, query],
   );
 
-  const live = rows.filter((r) => r.status === "LIVE");
-  const scored = live.filter((r) => r.plays > 0);
-  const avgSafeRate = scored.length
-    ? Math.round(
-        scored.reduce((sum, r) => sum + r.safeDecisionRate, 0) / scored.length,
-      )
-    : 0;
-  const totalPlays = rows.reduce((sum, r) => sum + r.plays, 0);
+  const flashRows = filtered.filter((r) => r.isFlashMission);
+  const reviewRows = rows.filter(
+    (r) =>
+      r.status === "LIVE" &&
+      r.responses > 0 &&
+      r.safeDecisionRate < REVIEW_THRESHOLD,
+  );
 
   return (
-    <div className="min-h-dvh bg-slate-100 text-slate-900">
+    <div className="min-h-dvh bg-canvas text-ink">
       {/* Top bar */}
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3.5">
-          <div className="flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-slate-900">
-              <Shield className="h-4.5 w-4.5 text-white" />
+      <header className="border-b border-line bg-surface">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+          <div className="flex items-center gap-3 lg:hidden">
+            <span
+              aria-hidden="true"
+              className="grid h-9 w-9 place-items-center rounded-xl bg-navy-900"
+            >
+              <Shield className="h-4 w-4 text-amber-400" />
             </span>
-            <div>
-              <p className="text-sm font-bold leading-tight tracking-tight">
-                ShieldQuest{" "}
-                <span className="font-medium text-slate-400">
-                  Scenario Management Portal
-                </span>
-              </p>
-              <p className="text-xs text-slate-500">
-                Singapore Police Force · Crime Prevention Division
-              </p>
-            </div>
+            <p className="text-[13px] font-extrabold text-navy-900">
+              Project SHIELD
+            </p>
           </div>
+
+          <span className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-amber-700">
+            Prototype admin view · demonstration environment · simulated data
+          </span>
 
           <div className="flex items-center gap-3">
             <Link
-              href="/play"
-              className="hidden items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 sm:inline-flex"
+              href="/"
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-line px-3 text-[13px] font-semibold text-ink-muted transition hover:border-civic-200 hover:text-civic-700"
             >
-              <Gamepad2 className="h-3.5 w-3.5" />
-              Player view
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              Youth app
             </Link>
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-slate-200 text-xs font-bold text-slate-600">
+            <span
+              aria-hidden="true"
+              className="grid h-9 w-9 place-items-center rounded-full bg-navy-100 text-[12px] font-bold text-navy-800"
+            >
               DO
             </span>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        {/* Heading + primary action */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              Active scenarios
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Content currently in the field, with live efficacy data by cohort.
-            </p>
+      <div className="flex flex-col lg:flex-row">
+        <AdminSidebar
+          active={section}
+          onSelect={setSection}
+          reviewCount={reviewRows.length}
+        />
+
+        <main className="min-w-0 flex-1 px-5 py-6 lg:px-8">
+          {/* Page heading */}
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-civic-700">
+                Project SHIELD
+              </p>
+              <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-navy-900">
+                Scenario Management Portal
+              </h1>
+              <p className="mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-muted">
+                Review youth learning trends and update prevention content
+                without rebuilding the application.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setPanelOpen(true)}
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-civic-600 px-5 text-[14px] font-bold text-white shadow-sm transition hover:bg-civic-700"
+            >
+              <Zap className="h-4 w-4" aria-hidden="true" />
+              Deploy Flash Mission
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
-            <Zap className="h-4 w-4" />
-            Deploy Flash Mission
-          </button>
-        </div>
+          {deployed && (
+            <div
+              role="status"
+              className="mt-5 flex flex-wrap items-center gap-2.5 rounded-xl border border-leaf-200 bg-leaf-50 px-4 py-3"
+            >
+              <CheckCircle2
+                className="h-4 w-4 shrink-0 text-leaf-700"
+                aria-hidden="true"
+              />
+              <p className="text-[14px] text-leaf-700">
+                <span className="font-extrabold uppercase tracking-wide">
+                  Flash Mission live
+                </span>{" "}
+                — <span className="font-semibold">{deployed.title}</span> is now
+                available to the {deployed.targetGroup} cohort.
+              </p>
+              <button
+                type="button"
+                onClick={() => setDeployed(null)}
+                className="ml-auto inline-flex min-h-[44px] items-center px-2 text-[13px] font-semibold text-leaf-700 underline underline-offset-2"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
-        {/* Stat strip */}
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard
-            icon={<Activity className="h-4 w-4" />}
-            label="Live scenarios"
-            value={String(live.length)}
-            note={`${rows.length - live.length} in draft or scheduled`}
-          />
-          <StatCard
-            icon={<CheckCircle2 className="h-4 w-4" />}
-            label="Avg. safe decision rate"
-            value={`${avgSafeRate}%`}
-            note="Across all scored live content"
-          />
-          <StatCard
-            icon={<Users className="h-4 w-4" />}
-            label="Total plays"
-            value={totalPlays.toLocaleString()}
-            note="All cohorts, last 30 days"
-          />
-        </div>
-
-        {/* Search */}
-        <div className="mt-8 flex items-center justify-between gap-4">
-          <div className="relative w-full max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Filter by title or threat type"
-              aria-label="Filter scenarios"
-              className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
-          </div>
-          <span className="whitespace-nowrap text-xs text-slate-500 tabular-nums">
-            {filtered.length} of {rows.length}
-          </span>
-        </div>
-
-        {/* Table */}
-        <div className="mt-3">
-          {loading ? (
-            <div className="grid place-items-center rounded-xl border border-slate-200 bg-white py-20">
-              <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+          {loading || !summary ? (
+            <div className="mt-8 grid place-items-center rounded-xl border border-line bg-surface py-24">
+              <Loader2
+                className="h-6 w-6 animate-spin text-civic-600"
+                aria-label="Loading portal data"
+              />
             </div>
           ) : (
-            <ScenarioTable rows={filtered} highlightId={justDeployedId} />
-          )}
-        </div>
+            <div className="mt-6 space-y-8">
+              {section === "overview" && (
+                <>
+                  <Section
+                    title="Overview"
+                    description="Aggregate performance of published prevention content."
+                  >
+                    <PortalSummaryRow summary={summary} />
+                    <SimulatedDataNote />
+                  </Section>
 
-        {justDeployedId && (
-          <p className="mt-3 inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/20">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            Flash Mission is live. Players in the target cohort receive it on next
-            app open.
-          </p>
-        )}
-      </main>
+                  <Section
+                    title="Insights"
+                    description="Which topics are landing, and which need more teaching support."
+                  >
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                      {insights.map((i) => (
+                        <InsightCard key={i.id} insight={i} />
+                      ))}
+                    </div>
+                    <SimulatedDataNote>
+                      Aggregated prototype data. Individual participant
+                      performance is not displayed.
+                    </SimulatedDataNote>
+                  </Section>
+
+                  <Section title="Data &amp; safeguards">
+                    <DataSafeguardCard items={SAFEGUARDS} />
+                  </Section>
+                </>
+              )}
+
+              {section === "scenarios" && (
+                <Section
+                  title="Scenarios"
+                  description="All published, drafted and scheduled content."
+                  action={<SearchBox value={query} onChange={setQuery} count={filtered.length} total={rows.length} />}
+                >
+                  <ScenarioTable
+                    rows={filtered}
+                    highlightId={deployed?.id}
+                    caption="All scenarios with target group, status and safe decision rate"
+                  />
+                  <SimulatedDataNote />
+                </Section>
+              )}
+
+              {section === "flash" && (
+                <Section
+                  title="Flash Missions"
+                  description="Rapid-response content published against an emerging trend."
+                  action={<SearchBox value={query} onChange={setQuery} count={flashRows.length} total={rows.filter((r) => r.isFlashMission).length} />}
+                >
+                  <ScenarioTable
+                    rows={flashRows}
+                    highlightId={deployed?.id}
+                    caption="Flash Missions currently deployed"
+                  />
+                  <SimulatedDataNote />
+                </Section>
+              )}
+
+              {section === "insights" && (
+                <>
+                  <Section
+                    title="Insights"
+                    description="Aggregate learning signals across all cohorts."
+                  >
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                      {insights.map((i) => (
+                        <InsightCard key={i.id} insight={i} />
+                      ))}
+                    </div>
+                    <SimulatedDataNote>
+                      Aggregated prototype data. Individual participant
+                      performance is not displayed.
+                    </SimulatedDataNote>
+                  </Section>
+                  <Section title="Data &amp; safeguards">
+                    <DataSafeguardCard items={SAFEGUARDS} />
+                  </Section>
+                </>
+              )}
+
+              {section === "review" && (
+                <Section
+                  title="Content review"
+                  description={`Live scenarios where fewer than ${REVIEW_THRESHOLD}% of responses chose a safer option. This indicates the content needs stronger teaching support — it is not a measure of the participants.`}
+                >
+                  <ScenarioTable
+                    rows={reviewRows}
+                    caption="Scenarios recommended for authoring review"
+                  />
+                  <SimulatedDataNote />
+                </Section>
+              )}
+            </div>
+          )}
+
+          <footer className="mt-10 border-t border-line pt-5">
+            <p className="text-[12px] leading-relaxed text-ink-soft">
+              ShieldQuest is a concept prototype for Project SHIELD. It is not an
+              official Singapore Police Force platform and carries no official
+              endorsement. All figures shown are simulated.
+            </p>
+          </footer>
+        </main>
+      </div>
 
       <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        className="max-w-2xl bg-white"
+        open={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        placement="right"
+        className="bg-surface"
+        labelledBy="flash-mission-title"
       >
-        <FlashMissionForm
+        <FlashMissionPanel
           onDeploy={handleDeploy}
-          onCancel={() => setModalOpen(false)}
+          onCancel={() => setPanelOpen(false)}
         />
       </Modal>
     </div>
   );
 }
 
-function StatCard({
-  icon,
-  label,
+function SearchBox({
   value,
-  note,
+  onChange,
+  count,
+  total,
 }: {
-  icon: React.ReactNode;
-  label: string;
   value: string;
-  note: string;
+  onChange: (v: string) => void;
+  count: number;
+  total: number;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-2 text-slate-500">
-        {icon}
-        <span className="text-xs font-semibold uppercase tracking-wider">
-          {label}
-        </span>
+    <div className="flex items-center gap-3">
+      <div className="relative">
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft"
+          aria-hidden="true"
+        />
+        <input
+          type="search"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Filter scenarios"
+          aria-label="Filter scenarios by title, category or target group"
+          className="min-h-[44px] w-56 rounded-lg border border-line-strong bg-surface py-2 pl-9 pr-3 text-[14px] outline-none transition placeholder:text-ink-soft focus:border-civic-500"
+        />
       </div>
-      <p className="mt-2 text-2xl font-bold tabular-nums tracking-tight">
-        {value}
-      </p>
-      <p className="mt-0.5 text-xs text-slate-500">{note}</p>
+      <span className="whitespace-nowrap text-[12px] text-ink-soft tabular-nums">
+        {count} of {total}
+      </span>
     </div>
   );
 }

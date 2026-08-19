@@ -11,12 +11,11 @@ import type {
   ScenarioMessage,
 } from "@/lib/types";
 
-type BurstTone = "reward" | "resilience" | "penalty";
-
 interface Burst {
   key: number;
-  label: string;
-  tone: BurstTone;
+  title: string;
+  amount?: string;
+  tone: "reward" | "positive" | "caution";
 }
 
 /**
@@ -29,10 +28,11 @@ interface Burst {
  * real life.
  */
 export function useScenarioRun(scenarioId: string) {
-  const { applyDeltas } = usePlayer();
+  const { applyDeltas, advanceGuardian } = usePlayer();
 
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [transcript, setTranscript] = useState<ScenarioMessage[]>([]);
+  const [taggedClues, setTaggedClues] = useState<string[]>([]);
   const [pendingChoiceId, setPendingChoiceId] = useState<string | null>(null);
   const [committedChoice, setCommittedChoice] = useState<ScenarioChoice | null>(
     null,
@@ -55,7 +55,6 @@ export function useScenarioRun(scenarioId: string) {
     timers.current.push(setTimeout(fn, ms));
   }, []);
 
-  // Load (and reload on replay).
   const load = useCallback(async () => {
     const next = await api.getScenario(scenarioId);
     setScenario(next);
@@ -68,52 +67,73 @@ export function useScenarioRun(scenarioId: string) {
     return clearTimers;
   }, [load, clearTimers]);
 
+  /** Clue tagging is optional and never gates the decision. */
+  const toggleClue = useCallback((clueId: string) => {
+    setTaggedClues((prev) =>
+      prev.includes(clueId)
+        ? prev.filter((c) => c !== clueId)
+        : [...prev, clueId],
+    );
+  }, []);
+
   const choose = useCallback(
     async (choice: ScenarioChoice) => {
       if (committedChoice || pendingChoiceId) return;
       setPendingChoiceId(choice.id);
 
-      const submission = {
+      const res = await api.submitChoice({
         scenarioId,
         choiceId: choice.id,
         deliberationMs: Date.now() - startedAt.current,
-      };
-      const res = await api.submitChoice(submission);
+        cluesTagged: taggedClues,
+      });
 
       setPendingChoiceId(null);
       setCommittedChoice(choice);
       setResult(res);
 
-      // 1. Player's reply lands in the transcript.
+      // 1. The player's reply lands in the transcript.
       setTranscript((prev) => [
         ...prev,
         { id: `reply_${choice.id}`, author: "you", body: choice.reply },
       ]);
 
       // 2. Immediate, visible payoff.
-      applyDeltas({ coins: res.coinDelta, resilience: res.resilienceDelta });
+      applyDeltas(res.deltas);
       setBurst({
         key: Date.now(),
-        label: res.flash,
+        title: res.flashTitle,
+        amount: res.flashAmount,
         tone:
-          res.resilienceDelta < 0
-            ? "penalty"
-            : res.coinDelta > 0 && res.resilienceDelta <= 0
+          res.outcome === "SAFE"
+            ? "positive"
+            : res.outcome === "RISKY"
               ? "reward"
-              : "resilience",
+              : "caution",
       });
-      track(() => setBurst(null), 1700);
+      track(() => setBurst(null), 2000);
 
-      // 3. The bill, later.
+      // 3. A strong decision strengthens the matching Guardian.
+      if (res.debrief.guardianId) advanceGuardian(res.debrief.guardianId);
+
+      // 4. The bill, later.
       if (res.delayed) {
         const delayed = res.delayed;
         track(() => {
-          applyDeltas({ coins: delayed.coinDelta });
+          applyDeltas(delayed.deltas);
           setConsequence(delayed);
         }, delayed.delayMs);
       }
     },
-    [applyDeltas, committedChoice, pendingChoiceId, scenarioId, track],
+    [
+      advanceGuardian,
+      applyDeltas,
+      committedChoice,
+      pendingChoiceId,
+      scenarioId,
+      taggedClues,
+      track,
+    ],
   );
 
   const replay = useCallback(() => {
@@ -123,12 +143,15 @@ export function useScenarioRun(scenarioId: string) {
     setResult(null);
     setBurst(null);
     setConsequence(null);
+    setTaggedClues([]);
     void load();
   }, [clearTimers, load]);
 
   return {
     scenario,
     transcript,
+    taggedClues,
+    toggleClue,
     pendingChoiceId,
     committedChoice,
     result,

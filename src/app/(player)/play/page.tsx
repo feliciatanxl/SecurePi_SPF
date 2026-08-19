@@ -1,21 +1,23 @@
-import { Zap } from "lucide-react";
-import { ScenarioRunner } from "@/components/player/ScenarioRunner";
+"use client";
+
+import { MissionRunner } from "@/components/player/MissionRunner";
 import { MULE_ENCOUNTER } from "@/lib/api/mock-data";
 
-export const metadata = { title: "Encounter · ShieldQuest" };
-
 /**
- * View 1 — Scenario Encounter.
+ * View 2 — Scenario Encounter.
  *
- * The player is the target. Choosing "Accept" pays +300 Coins instantly, then
- * three seconds later the account-frozen consequence lands.
+ * The player is the target. "Accept" pays +300 Coins instantly; the delayed
+ * consequence lands three seconds later.
  */
 export default function PlayPage() {
   return (
-    <ScenarioRunner
+    <MissionRunner
       scenarioId={MULE_ENCOUNTER.id}
-      accentLabel="Encounter"
-      accentIcon={<Zap className="h-3 w-3" />}
+      accent="civic"
+      eyebrow="Mission"
+      decisionPrompt="What do you do?"
+      backHref="/"
+      backLabel="Back to missions"
     />
   );
 }

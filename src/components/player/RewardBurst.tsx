@@ -2,39 +2,52 @@
 
 import { Coins, ShieldCheck, TrendingDown } from "lucide-react";
 
-type Tone = "reward" | "resilience" | "penalty";
+type Tone = "reward" | "positive" | "caution";
+
+const TONES: Record<Tone, { wrap: string; Icon: typeof Coins }> = {
+  reward: { wrap: "bg-amber-500 text-navy-900", Icon: Coins },
+  positive: { wrap: "bg-leaf-700 text-white", Icon: ShieldCheck },
+  caution: { wrap: "bg-navy-800 text-white", Icon: TrendingDown },
+};
 
 /**
- * The immediate payoff. For risky choices this is intentionally the most
- * satisfying moment in the whole flow — the delayed consequence only lands if
- * the reward felt genuinely good first.
+ * The immediate payoff.
+ *
+ * For a risky choice this is intentionally the most satisfying moment in the
+ * flow — the delayed consequence only teaches anything if the reward genuinely
+ * felt good first.
  */
 export function RewardBurst({
-  label,
+  title,
+  amount,
   tone = "reward",
 }: {
-  label: string;
+  title: string;
+  amount?: string;
   tone?: Tone;
 }) {
-  const styles: Record<Tone, string> = {
-    reward: "bg-gold-400 text-ink-950 shadow-gold-400/40",
-    resilience: "bg-safe-500 text-ink-950 shadow-safe-500/40",
-    penalty: "bg-danger-500 text-white shadow-danger-500/40",
-  };
-  const Icon =
-    tone === "penalty" ? TrendingDown : tone === "resilience" ? ShieldCheck : Coins;
+  const { wrap, Icon } = TONES[tone];
 
   return (
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none absolute inset-x-0 top-4 z-30 flex justify-center"
+      className="pointer-events-none absolute inset-x-0 top-3 z-30 flex justify-center px-4"
     >
       <span
-        className={`animate-float-up flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-extrabold tracking-tight shadow-lg ${styles[tone]}`}
+        className={`animate-float-up flex items-center gap-2.5 rounded-2xl px-4 py-2.5 shadow-lg ${wrap}`}
       >
-        <Icon className="h-4 w-4" strokeWidth={2.5} />
-        {label}
+        <Icon className="h-5 w-5 shrink-0" strokeWidth={2.4} aria-hidden="true" />
+        <span className="leading-tight">
+          <span className="block text-[13px] font-semibold opacity-90">
+            {title}
+          </span>
+          {amount && (
+            <span className="block text-lg font-extrabold tracking-tight tabular-nums">
+              {amount}
+            </span>
+          )}
+        </span>
       </span>
     </div>
   );

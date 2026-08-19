@@ -13,15 +13,19 @@ npm run dev
 
 Then open <http://localhost:3000>.
 
-## The three views
+## Prototype views
 
 | Route | View | What it demonstrates |
 | --- | --- | --- |
-| `/play` | **Scenario Encounter** | Player is the target of a money mule approach. "Accept" pays **+300 Coins immediately**, then **3 seconds later** the Delayed Consequence modal reveals the frozen account and claws the coins back. |
-| `/peer-shield` | **Peer Shield Mode** | Same threat, player is the bystander. "Warn them privately" scores highest and awards **Community Resilience Points**; silence deducts them. |
-| `/admin` | **Scenario Management Portal** | Desktop console for SPF officers: live scenario table with Safe Decision Rate and week-on-week delta, plus a no-code **Deploy Flash Mission** form that publishes an emerging trend without a release. |
+| `/` | **Mission Home** | The product front door: hero, player overview (Guardian, Community Resilience, missions, streak) and Today's Mission. |
+| `/play` | **Scenario Encounter** | Player is the target of a money mule approach. Optional clue tagging, then three **visually neutral** choices. "Accept" pays **+300 Coins immediately**; **~3 seconds later** the Delayed Consequence takeover lands. |
+| `/play` (after Accept) | **Delayed Consequence** | Full-screen "3 days later" takeover: What changed (immediate vs later), Why this mattered, Safer response. Not dismissible. |
+| `/peer-shield` | **Peer Shield Mode** | Same threat, player is the bystander. "Warn them privately" awards **Community Resilience**; silence deducts it. Includes a sample intervention script. |
+| `/guardians` | **Guardian / Progress** | VeriFox, Beacon and Shieldfin — one prevention skill each, strengthened only by practising that skill. |
+| `/admin` | **Scenario Management Portal** | Desktop console: overview stats, insights, content-review queue, scenario table, and a no-code **Deploy Flash Mission** side panel. |
 
-`/` is a landing page linking to all three.
+Naming: **PROJECT SHIELD** is the initiative, **ShieldQuest** the digital experience,
+**S.H.I.E.L.D.** the behavioural framework. Tagline: *Choose Right. Protect Together.*
 
 ## Architecture
 
@@ -38,17 +42,21 @@ src/
                           simulated latency). HttpApiClient skeleton is sketched
                           in a comment — implement it and swap the export.
     api/mock-data.ts      All fixtures. The only file with hardcoded content.
-    state/PlayerProvider  Client mirror of the server-authoritative wallet.
+    state/PlayerProvider  Client mirror of server-authoritative player state
+                          (coins, Trust, Risk, Resilience, Guardian progress).
     hooks/useScenarioRun  The scenario engine: load → commit choice → apply
                           immediate reward → schedule the delayed consequence.
   components/
-    player/               ScenarioRunner and its parts. Both player views are
+    player/               AppShell (presentation canvas + bottom nav),
+                          MissionRunner and its parts. Both player missions are
                           the same runner with a different scenario id.
-    admin/                ScenarioTable, FlashMissionForm.
+    admin/                AdminChrome (sidebar, metric/insight/safeguard cards),
+                          ScenarioTable, FlashMissionPanel.
     ui/Modal.tsx          Shared dialog. `dismissible={false}` is used for the
                           consequence reveal so it must be acknowledged.
   app/
-    (player)/             Route group sharing the PhoneShell chrome.
+    (player)/             Route group sharing the AppShell chrome and one
+                          PlayerProvider, so state carries across the demo.
     admin/                Desktop portal.
 ```
 
@@ -61,8 +69,15 @@ Nothing else changes.
 
 ### Notes on the design
 
-- **Choice buttons are colour-neutral by design.** If the safe option looked
+- **Choice buttons are colour-neutral by design.** Every option renders with an
+  identical border until a decision is committed. If the safe option looked
   safe, the scenario would measure colour recognition rather than judgement.
+- **Light interface, dark where it earns it.** Navy is reserved for the hero,
+  mission bar, bottom navigation and the consequence takeover — the only fully
+  dark screen in the app.
+- **Analytics describe content, not youths.** The admin portal measures how well
+  a scenario teaches. There is no crime prediction, no individual profiling and
+  no participant ranking anywhere in the data model.
 - **The delay is the mechanic.** The reward has to be banked and enjoyed before
   the cost arrives — punishing risky choices instantly would teach the opposite
   of how this works in real life.
@@ -72,11 +87,18 @@ Nothing else changes.
 ## Deploying to Vercel
 
 Zero configuration — import the repository and deploy. It builds as a fully
-static export of five prerendered routes.
+static export of six prerendered routes.
 
 ```bash
 npm run build
 ```
+
+## Accessibility
+
+Verified in-browser at 375px and 1366px: no horizontal page scroll on any route,
+all interactive targets ≥44px, WCAG AA contrast met on every route and admin
+section (lowest measured ratio 4.84:1), semantic landmarks and table headers,
+visible keyboard focus, and `prefers-reduced-motion` honoured globally.
 
 ## PWA
 

@@ -1,6 +1,10 @@
 import type {
   AdminScenarioRow,
+  Guardian,
+  Insight,
+  MissionSummary,
   PlayerProfile,
+  PortalSummary,
   Scenario,
 } from "@/lib/types";
 
@@ -9,306 +13,659 @@ import type {
  *
  * Everything here is shaped exactly like the payloads the real API will return,
  * so swapping `MockApiClient` for `HttpApiClient` requires no component changes.
+ *
+ * All figures are illustrative. Nothing in this file is a real pilot result.
  */
+
+export const PROTOTYPE_DISCLAIMER =
+  "Concept prototype · simulated scenarios and data";
+
+/* ------------------------------------------------------------------ */
+/* Guardians                                                           */
+/* ------------------------------------------------------------------ */
+
+export const GUARDIAN_VERIFOX = "gd_verifox";
+export const GUARDIAN_BEACON = "gd_beacon";
+export const GUARDIAN_SHIELDFIN = "gd_shieldfin";
+
+export const MOCK_GUARDIANS: Guardian[] = [
+  {
+    id: GUARDIAN_VERIFOX,
+    name: "VeriFox",
+    skill: "Verification",
+    motto: "Check before you trust.",
+    competency: "SPOT",
+    target: 6,
+    description:
+      "Strengthens when you slow down and check who you are really dealing with.",
+    unlocked: true,
+  },
+  {
+    id: GUARDIAN_BEACON,
+    name: "Beacon",
+    skill: "Help-Seeking",
+    motto: "Know when and where to seek help.",
+    competency: "LEAD",
+    target: 6,
+    description:
+      "Strengthens when you step out of a situation and reach the right channel for help.",
+    unlocked: true,
+  },
+  {
+    id: GUARDIAN_SHIELDFIN,
+    name: "Shieldfin",
+    skill: "Peer Protection",
+    motto: "Protect your people.",
+    competency: "DEFEND",
+    target: 6,
+    description:
+      "Strengthens when you look out for a friend without escalating the situation.",
+    unlocked: true,
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/* Player                                                              */
+/* ------------------------------------------------------------------ */
 
 export const MOCK_PROFILE: PlayerProfile = {
   handle: "Guardian_2481",
-  cohort: "NYP · Y2-04",
+  cohort: "Poly · Y2",
   coins: 1240,
   resiliencePoints: 85,
-  guardiansUnlocked: 3,
-  guardiansTotal: 6,
+  trust: 62,
+  risk: 28,
+  missionsCompleted: 7,
+  streakDays: 4,
+  currentGuardianId: GUARDIAN_VERIFOX,
+  // Cumulative qualifying decisions. Level and bar position are derived from
+  // these, so the two can never drift apart. 10 with a target of 6 renders as
+  // "Level 2 · 4 / 6".
+  guardianProgress: {
+    [GUARDIAN_VERIFOX]: 10,
+    [GUARDIAN_BEACON]: 2,
+    [GUARDIAN_SHIELDFIN]: 3,
+  },
 };
 
 /* ------------------------------------------------------------------ */
-/* View 1 — Scenario Encounter                                         */
+/* Scenario Encounter — money mule recruitment                         */
 /* ------------------------------------------------------------------ */
 
 export const MULE_ENCOUNTER: Scenario = {
   id: "scn_money_mule_01",
   mode: "ENCOUNTER",
-  title: "Easy Money",
-  threatType: "Money Mule Recruitment",
+  title: "Easy Money?",
+  category: "Money Mule Recruitment",
+  hook: "Can you spot the risk before the reward?",
+  difficulty: "Medium",
+  estimatedMinutes: 3,
+  primaryCompetency: "SPOT",
   competencies: ["SPOT", "HOLD", "EVALUATE"],
+  step: 2,
+  totalSteps: 4,
   prompt:
-    "It's 11:40pm. Someone you've never met messages you on a gaming server.",
+    "Someone online offers you S$300 to receive money into your bank account.",
   messages: [
     {
       id: "m1",
       author: "system",
-      body: "New message request · @cash_flow_sg",
+      body: "Message request from an unknown contact",
+      meta: "You have not spoken to this account before",
     },
     {
       id: "m2",
       author: "them",
-      displayName: "cash_flow_sg",
-      body: "yo bro, saw ur post. u want easy side income? 💰",
+      displayName: "Unknown contact",
+      body: "Bro easy $300.",
     },
     {
       id: "m3",
       author: "them",
-      displayName: "cash_flow_sg",
-      body: "Someone online offers you S$300 to receive money into your bank account.",
+      displayName: "Unknown contact",
+      body: "Just let money enter your account then transfer it out.",
     },
     {
       id: "m4",
       author: "them",
-      displayName: "cash_flow_sg",
-      body: "all u do is receive, then transfer out. 10 mins work. 100% legit, my company does this daily. need answer tonight ah, got 2 other ppl asking",
+      displayName: "Unknown contact",
+      body: "No risk. Takes 5 mins only. Need your answer tonight.",
+    },
+  ],
+  clueQuestion: "Why does this seem suspicious?",
+  clues: [
+    {
+      id: "cl_easy",
+      label: "Easy money",
+      note: "A large payment for almost no work is a recruitment tactic, not a job.",
+    },
+    {
+      id: "cl_urgency",
+      label: "Urgency",
+      note: "A deadline is there to stop you checking. Real offers survive a delay.",
+    },
+    {
+      id: "cl_account",
+      label: "Using my account",
+      note: "Nobody legitimate needs your personal account to move their money.",
+    },
+    {
+      id: "cl_unknown",
+      label: "Unknown sender",
+      note: "You cannot verify who this is, so you cannot verify what you are agreeing to.",
     },
   ],
   choices: [
     {
       id: "ch_accept",
       label: "Accept",
-      hint: "Send your bank details and take the S$300",
-      reply: "ok deal. sending u my acc number now",
+      hint: "Share your account details and take the S$300",
+      reply: "Ok deal. Sending you my account number now.",
       outcome: "RISKY",
       immediate: {
-        coinDelta: 300,
-        resilienceDelta: 0,
-        flash: "+300 Coins",
+        deltas: { coins: 300 },
+        flashTitle: "Payment received",
+        flashAmount: "+300 Coins",
       },
       delayed: {
         delayMs: 3000,
-        headline: "Your account has been frozen",
-        body: "Three days later, your bank suspends your account for suspicious activity. The S$300 came from a scam victim in Jurong. You are now the account holder police can trace — and your name is on the transfer.",
-        coinDelta: -300,
-        debrief:
-          "Receiving and forwarding money for a stranger makes you a money mule. Under Singapore law that is an offence even if you did not know the money was stolen — and a frozen account can follow you for years.",
+        timeLabel: "3 days later",
+        headline: "Account access restricted",
+        body: "Transactions through your account were flagged as suspicious. The account is now restricted while the transfers are reviewed.",
+        deltas: { coins: -300, trust: -20, risk: 25 },
+        changedImmediate: ["+300 Coins"],
+        changedLater: [
+          "Account restricted",
+          "Trust decreased",
+          "Risk increased",
+        ],
+        warningSigns: [
+          "Payment offered for use of your personal account",
+          "Unknown sender you could not verify",
+          "Easy-money promise for almost no work",
+          "Request to transfer the funds onward",
+        ],
+        saferResponse:
+          "Do not allow other people to use your bank account to receive or move money. Disengage, and seek help through appropriate official channels where necessary.",
         competency: "EVALUATE",
       },
-      feedback:
-        "The payout arrived instantly. That is exactly why this works on people.",
+      debrief: {
+        headline: "You took the offer",
+        body: "The payment arrived straight away, which is exactly why this approach works on people.",
+        competency: "EVALUATE",
+      },
     },
     {
       id: "ch_proof",
       label: "Ask for proof",
-      hint: "Request company details before deciding",
-      reply: "wait, which company is this? send me ur UEN and website first",
+      hint: "Ask who they are before deciding anything",
+      reply: "Which company is this? Send me your registration details first.",
       outcome: "CAUTIOUS",
       immediate: {
-        coinDelta: 10,
-        resilienceDelta: 5,
-        flash: "+10 Coins · Verification attempted",
+        deltas: { coins: 10, trust: 4 },
+        flashTitle: "You slowed it down",
+        flashAmount: "+10 Coins",
       },
-      feedback:
-        "Good instinct — you slowed the deal down. But scammers produce fake documents easily, and staying in the conversation keeps the pressure on you. Verifying a stranger's story is weaker than refusing an offer that is illegal regardless of who is asking.",
+      debrief: {
+        headline: "Partly there",
+        body: "Slowing the conversation down was the right instinct. But documents are easy to fake, and staying in the chat keeps the pressure on you. The offer is unsafe regardless of who is asking, so verifying the sender is weaker than stepping away.",
+        spotted: ["Unverified sender"],
+        saferResponse:
+          "You do not need to establish who they are. Decline the use of your account and disengage.",
+        competency: "HOLD",
+        guardianId: GUARDIAN_VERIFOX,
+      },
     },
     {
       id: "ch_reject",
-      label: "Reject & Report",
-      hint: "Block the account and report it to ScamShield",
-      reply: "No. That's money mule work and it's illegal. Blocking and reporting you.",
+      label: "Reject & seek help",
+      hint: "Decline, disengage, and tell someone you trust",
+      reply:
+        "No — I'm not letting anyone use my account. Blocking this and telling someone.",
       outcome: "SAFE",
       immediate: {
-        coinDelta: 50,
-        resilienceDelta: 25,
-        flash: "+50 Coins · +25 Resilience",
+        deltas: { coins: 50, resilience: 10, trust: 10, risk: -10 },
+        flashTitle: "Good call",
+        flashAmount: "+50 Coins",
       },
-      feedback:
-        "Correct. No legitimate employer needs your bank account to receive and forward funds. You spotted the risk, held before acting, and removed yourself from the situation entirely. Reporting it also protects the next person they message.",
+      debrief: {
+        headline: "Good call",
+        body: "You disengaged instead of negotiating, and you brought someone else in. That is the response that holds up even when the offer is dressed up convincingly.",
+        spotted: [
+          "Unverified sender",
+          "Easy-money incentive",
+          "Request to use your personal account",
+        ],
+        saferResponse:
+          "Letting someone else move money through your account can make you responsible for it. Decline, disengage, and raise it through an appropriate official channel if you are unsure.",
+        competency: "SPOT",
+        guardianId: GUARDIAN_VERIFOX,
+      },
     },
   ],
 };
 
 /* ------------------------------------------------------------------ */
-/* View 2 — Peer Shield Mode                                           */
+/* Peer Shield Mode                                                    */
 /* ------------------------------------------------------------------ */
 
 export const MULE_PEER_SHIELD: Scenario = {
   id: "scn_money_mule_peer_01",
   mode: "PEER_SHIELD",
-  title: "Your Friend's Turn",
-  threatType: "Money Mule Recruitment",
+  title: "Jayden's Offer",
+  category: "Money Mule Recruitment",
+  hook: "Sometimes the risky choice isn't yours.",
+  difficulty: "Medium",
+  estimatedMinutes: 2,
+  primaryCompetency: "DEFEND",
   competencies: ["DEFEND", "LEAD"],
-  prompt:
-    "Same offer, different target. You notice your friend agreeing to transfer unknown funds.",
+  step: 1,
+  totalSteps: 3,
+  prompt: "You notice your friend agreeing to transfer unknown funds.",
   messages: [
     {
       id: "p1",
       author: "system",
-      body: "Group chat · Bball Kakis (6 members)",
+      body: "Group chat · 6 members",
+      meta: "Jayden posted 2 minutes ago",
     },
     {
       id: "p2",
       author: "them",
-      displayName: "Dan",
-      body: "eh guys i found legit side hustle 😤 300 bucks just to receive money in my POSB then transfer out",
+      displayName: "Jayden",
+      body: "Bro this guy says he'll pay me $300. I just need to receive the money first.",
     },
     {
       id: "p3",
       author: "them",
-      displayName: "Dan",
-      body: "already sent him my acc number. money coming tonight 🤑",
+      displayName: "Jayden",
+      body: "Sending him my account number now. Free money sia.",
+    },
+  ],
+  clueQuestion: "What stands out about Jayden's situation?",
+  clues: [
+    {
+      id: "pcl_account",
+      label: "His account, their money",
+      note: "Jayden would be the named account holder for funds that are not his.",
     },
     {
-      id: "p4",
-      author: "system",
-      body: "Dan is typing…",
+      id: "pcl_stranger",
+      label: "He hasn't met them",
+      note: "There is no way for Jayden to check who he is actually helping.",
+    },
+    {
+      id: "pcl_public",
+      label: "Six people are watching",
+      note: "The more people who see it, the less likely any one of them says something.",
     },
   ],
   choices: [
     {
       id: "pc_ignore",
       label: "Ignore it",
-      hint: "Not your business — say nothing",
-      reply: "(you say nothing and close the chat)",
+      hint: "Say nothing and scroll past",
+      reply: "(You say nothing and close the chat.)",
       outcome: "RISKY",
       immediate: {
-        coinDelta: 0,
-        resilienceDelta: -10,
-        flash: "−10 Resilience",
+        deltas: { resilience: -10, risk: 5 },
+        flashTitle: "You stayed quiet",
+        flashAmount: "−10 Resilience",
       },
-      feedback:
-        "Silence reads as agreement. Dan had six people watching and none of them gave him a reason to stop. Bystander research is consistent on this: the more witnesses there are, the less likely any one of them acts.",
-    },
-    {
-      id: "pc_roast",
-      label: "Call him out in the group",
-      hint: "Tell everyone he's being scammed",
-      reply: "BRO ARE YOU SERIOUS 😂 that's a scam, everyone knows this one",
-      outcome: "CAUTIOUS",
-      immediate: {
-        coinDelta: 5,
-        resilienceDelta: 5,
-        flash: "+5 Resilience",
+      debrief: {
+        headline: "Silence reads as agreement",
+        body: "Six people saw the message and nobody gave Jayden a reason to stop. The more witnesses there are, the less likely any single one of them speaks up — which is exactly why saying something matters.",
+        competency: "DEFEND",
       },
-      feedback:
-        "You said something, which beats silence. But a public callout costs Dan face in front of five friends, and people defend a position harder once they've been embarrassed into it. The message was right; the venue was wrong.",
     },
     {
       id: "pc_private",
       label: "Warn them privately",
-      hint: "DM Dan, give him an exit that doesn't cost him face",
-      reply: "(DM to Dan) eh don't do that one — receiving + transferring for a stranger is money mule, they freeze your account. call the bank now and stop it, I'll help you.",
+      hint: "Message Jayden directly, away from the group",
+      reply:
+        "(Direct message to Jayden) Hey — hold off on that one, I don't think it's safe.",
       outcome: "SAFE",
       immediate: {
-        coinDelta: 40,
-        resilienceDelta: 30,
-        flash: "+30 Community Resilience Points",
+        deltas: { coins: 40, resilience: 30, trust: 8 },
+        flashTitle: "Peer Shield success",
+        flashAmount: "+30 Community Resilience",
       },
-      feedback:
-        "This is the highest-scoring intervention. A private message lets Dan back out without losing face, which is the single biggest barrier to a peer changing their mind. You named the risk, you didn't shame him, and you gave him something to do next — tell him to stop the transfer and call the bank.",
+      debrief: {
+        headline: "Peer Shield success",
+        body: "You challenged the risky behaviour without escalating the situation. A private message lets Jayden step back without losing face in front of the group, which is the single biggest barrier to a friend changing their mind.",
+        spotted: [
+          "Raised it privately, not publicly",
+          "Named the risk without shaming him",
+          "Gave him a clear next step",
+        ],
+        sampleScript:
+          "This sounds risky. Why does he need YOUR account? Don't send anything first — let's check it properly.",
+        competency: "DEFEND",
+        guardianId: GUARDIAN_SHIELDFIN,
+      },
     },
     {
-      id: "pc_report",
-      label: "Report the recruiter",
-      hint: "Escalate the account to ScamShield",
-      reply: "(you report the recruiter's account to ScamShield)",
+      id: "pc_help",
+      label: "Get appropriate help",
+      hint: "Bring in a trusted adult or an official channel",
+      reply:
+        "(You speak to someone you trust and point Jayden to the right place to check.)",
       outcome: "SAFE",
       immediate: {
-        coinDelta: 35,
-        resilienceDelta: 25,
-        flash: "+25 Community Resilience Points",
+        deltas: { coins: 35, resilience: 25, trust: 10 },
+        flashTitle: "Peer Shield success",
+        flashAmount: "+25 Community Resilience",
       },
-      feedback:
-        "Strong — this protects everyone the recruiter contacts next, not just Dan. Pair it with a private warning to Dan himself and you cover both the immediate risk and the source.",
+      debrief: {
+        headline: "Peer Shield success",
+        body: "Some situations are bigger than a group chat. Bringing in a trusted adult or an official channel is the right call when a friend has already shared their details — and it does not require you to confront anyone yourself.",
+        spotted: [
+          "Recognised it had gone past peer advice",
+          "Chose a trusted adult over confrontation",
+        ],
+        sampleScript:
+          "I'm not sure how to fix this one — let's ask someone who actually knows what to do before anything gets transferred.",
+        competency: "LEAD",
+        guardianId: GUARDIAN_BEACON,
+      },
     },
   ],
 };
 
 /* ------------------------------------------------------------------ */
-/* View 3 — Scenario Management Portal                                 */
+/* Mission home                                                        */
+/* ------------------------------------------------------------------ */
+
+export const TODAYS_MISSION: MissionSummary = {
+  id: "ms_mule",
+  scenarioId: MULE_ENCOUNTER.id,
+  category: "Money Mule Recruitment",
+  title: "Easy Money?",
+  difficulty: "Medium",
+  estimatedMinutes: 3,
+  primaryCompetency: "SPOT",
+  locked: false,
+};
+
+export const UPCOMING_MISSIONS: MissionSummary[] = [
+  {
+    id: "ms_shop_theft",
+    category: "Shop Theft & Peer Pressure",
+    title: "The Dare at Checkout",
+    difficulty: "Easy",
+    estimatedMinutes: 3,
+    primaryCompetency: "IDENTIFY",
+    locked: true,
+    lockedNote: "Unlocks after today's mission",
+  },
+  {
+    id: "ms_account_sharing",
+    category: "Account Sharing",
+    title: "Just Use Mine",
+    difficulty: "Medium",
+    estimatedMinutes: 4,
+    primaryCompetency: "EVALUATE",
+    locked: true,
+    lockedNote: "Unlocks after today's mission",
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/* Scenario Management Portal                                          */
 /* ------------------------------------------------------------------ */
 
 export const MOCK_ADMIN_SCENARIOS: AdminScenarioRow[] = [
   {
-    id: "scn_money_mule_01",
-    title: "Easy Money",
-    threatType: "Money Mule",
-    ageGroup: "16–18",
-    status: "LIVE",
-    safeDecisionRate: 61,
-    previousSafeDecisionRate: 54,
-    plays: 2841,
-    competencies: ["SPOT", "HOLD", "EVALUATE"],
-    updatedBy: "SSgt Lim",
-    updatedOn: "12 Aug 2026",
-    isFlashMission: false,
-  },
-  {
     id: "scn_shop_theft_01",
     title: "The Dare at Checkout",
-    threatType: "Shop Theft",
-    ageGroup: "13–15",
+    category: "Shop Theft & Peer Pressure",
+    targetGroup: "Secondary",
     status: "LIVE",
     safeDecisionRate: 74,
-    previousSafeDecisionRate: 71,
-    plays: 3960,
+    previousSafeDecisionRate: 65,
+    responses: 3960,
     competencies: ["SPOT", "IDENTIFY", "LEAD"],
-    updatedBy: "Insp Rahman",
+    updatedBy: "Content Team",
     updatedOn: "09 Aug 2026",
     isFlashMission: false,
   },
   {
-    id: "scn_job_scam_01",
-    title: "S$800 A Day, No Experience",
-    threatType: "Job Scam",
-    ageGroup: "16–18",
+    id: "scn_money_mule_01",
+    title: "Easy Money?",
+    category: "Money Mule Recruitment",
+    targetGroup: "ITE / Poly / JC",
     status: "LIVE",
-    safeDecisionRate: 48,
-    previousSafeDecisionRate: 57,
-    plays: 1874,
-    competencies: ["IDENTIFY", "EVALUATE"],
-    updatedBy: "SSgt Lim",
+    safeDecisionRate: 61,
+    previousSafeDecisionRate: 54,
+    responses: 2841,
+    competencies: ["SPOT", "HOLD", "EVALUATE"],
+    updatedBy: "Content Team",
+    updatedOn: "12 Aug 2026",
+    isFlashMission: false,
+  },
+  {
+    id: "scn_account_sharing_01",
+    title: "Just Use Mine",
+    category: "Account Sharing",
+    targetGroup: "Secondary / Tertiary",
+    status: "LIVE",
+    safeDecisionRate: 58,
+    previousSafeDecisionRate: 60,
+    responses: 2210,
+    competencies: ["EVALUATE", "HOLD"],
+    updatedBy: "Content Team",
     updatedOn: "14 Aug 2026",
     isFlashMission: false,
   },
   {
     id: "scn_ecom_01",
     title: "Concert Tickets, Cash Only",
-    threatType: "E-Commerce Scam",
-    ageGroup: "13–21",
+    category: "E-Commerce Scam",
+    targetGroup: "All youth cohorts",
     status: "LIVE",
     safeDecisionRate: 82,
     previousSafeDecisionRate: 80,
-    plays: 5120,
+    responses: 5120,
     competencies: ["SPOT", "HOLD"],
-    updatedBy: "Cpl Yeo",
+    updatedBy: "Content Team",
     updatedOn: "02 Aug 2026",
     isFlashMission: false,
   },
   {
-    id: "scn_flash_qr_01",
-    title: "Carpark QR Swap",
-    threatType: "Phishing QR",
-    ageGroup: "16–18",
+    id: "scn_peer_mule_01",
+    title: "Jayden's Offer",
+    category: "Peer Shield · Money Mule",
+    targetGroup: "ITE / Poly / JC",
     status: "LIVE",
-    safeDecisionRate: 39,
-    previousSafeDecisionRate: 39,
-    plays: 412,
-    competencies: ["SPOT", "IDENTIFY"],
-    updatedBy: "Insp Rahman",
-    updatedOn: "18 Aug 2026",
-    isFlashMission: true,
+    safeDecisionRate: 71,
+    previousSafeDecisionRate: 68,
+    responses: 1902,
+    competencies: ["DEFEND", "LEAD"],
+    updatedBy: "Content Team",
+    updatedOn: "11 Aug 2026",
+    isFlashMission: false,
+  },
+  {
+    id: "scn_job_scam_01",
+    title: "No Experience Needed",
+    category: "Job Scam",
+    targetGroup: "ITE / Poly / JC",
+    status: "LIVE",
+    safeDecisionRate: 66,
+    previousSafeDecisionRate: 62,
+    responses: 1874,
+    competencies: ["IDENTIFY", "EVALUATE"],
+    updatedBy: "Content Team",
+    updatedOn: "07 Aug 2026",
+    isFlashMission: false,
   },
   {
     id: "scn_vape_01",
     title: "Just Hold It For Me",
-    threatType: "Vape Possession",
-    ageGroup: "13–15",
-    status: "DRAFT",
-    safeDecisionRate: 0,
-    previousSafeDecisionRate: 0,
-    plays: 0,
+    category: "Vape Possession",
+    targetGroup: "Secondary",
+    status: "LIVE",
+    safeDecisionRate: 79,
+    previousSafeDecisionRate: 76,
+    responses: 3315,
     competencies: ["HOLD", "DEFEND"],
-    updatedBy: "Cpl Yeo",
-    updatedOn: "17 Aug 2026",
+    updatedBy: "Content Team",
+    updatedOn: "05 Aug 2026",
+    isFlashMission: false,
+  },
+  {
+    id: "scn_qr_01",
+    title: "Carpark QR Swap",
+    category: "Phishing QR",
+    targetGroup: "All youth cohorts",
+    status: "LIVE",
+    safeDecisionRate: 55,
+    previousSafeDecisionRate: 55,
+    responses: 812,
+    competencies: ["SPOT", "IDENTIFY"],
+    updatedBy: "Content Team",
+    updatedOn: "18 Aug 2026",
+    isFlashMission: true,
+  },
+  {
+    id: "scn_gaming_01",
+    title: "Free Skins, Just Log In",
+    category: "Account Takeover",
+    targetGroup: "Secondary",
+    status: "LIVE",
+    safeDecisionRate: 69,
+    previousSafeDecisionRate: 64,
+    responses: 4408,
+    competencies: ["SPOT", "EVALUATE"],
+    updatedBy: "Content Team",
+    updatedOn: "01 Aug 2026",
     isFlashMission: false,
   },
   {
     id: "scn_loan_01",
     title: "Runner for a Day",
-    threatType: "Unlicensed Moneylending",
-    ageGroup: "16–18",
+    category: "Unlicensed Moneylending",
+    targetGroup: "ITE / Poly / JC",
+    status: "LIVE",
+    safeDecisionRate: 63,
+    previousSafeDecisionRate: 58,
+    responses: 1544,
+    competencies: ["EVALUATE", "LEAD"],
+    updatedBy: "Content Team",
+    updatedOn: "10 Aug 2026",
+    isFlashMission: false,
+  },
+  {
+    id: "scn_peer_theft_01",
+    title: "Cover For Me",
+    category: "Peer Shield · Shop Theft",
+    targetGroup: "Secondary",
+    status: "LIVE",
+    safeDecisionRate: 77,
+    previousSafeDecisionRate: 73,
+    responses: 2670,
+    competencies: ["DEFEND"],
+    updatedBy: "Content Team",
+    updatedOn: "08 Aug 2026",
+    isFlashMission: false,
+  },
+  {
+    id: "scn_deepfake_01",
+    title: "That's Not Really Them",
+    category: "Impersonation",
+    targetGroup: "Secondary / Tertiary",
+    status: "LIVE",
+    safeDecisionRate: 61,
+    previousSafeDecisionRate: 57,
+    responses: 1180,
+    competencies: ["IDENTIFY", "HOLD"],
+    updatedBy: "Content Team",
+    updatedOn: "16 Aug 2026",
+    isFlashMission: true,
+  },
+  {
+    id: "scn_draft_01",
+    title: "Borrowed Login",
+    category: "Account Sharing",
+    targetGroup: "Secondary",
+    status: "DRAFT",
+    safeDecisionRate: 0,
+    previousSafeDecisionRate: 0,
+    responses: 0,
+    competencies: ["HOLD"],
+    updatedBy: "Content Team",
+    updatedOn: "17 Aug 2026",
+    isFlashMission: false,
+  },
+  {
+    id: "scn_sched_01",
+    title: "The Group Buy",
+    category: "E-Commerce Scam",
+    targetGroup: "All youth cohorts",
     status: "SCHEDULED",
     safeDecisionRate: 0,
     previousSafeDecisionRate: 0,
-    plays: 0,
-    competencies: ["EVALUATE", "LEAD"],
-    updatedBy: "SSgt Lim",
+    responses: 0,
+    competencies: ["SPOT", "EVALUATE"],
+    updatedBy: "Content Team",
     updatedOn: "16 Aug 2026",
     isFlashMission: false,
   },
 ];
+
+/**
+ * Participants is a distinct count of youths in the demonstration cohort — not
+ * the sum of responses, since one participant answers many scenarios.
+ */
+export const MOCK_PORTAL_PARTICIPANTS = 1248;
+
+export const MOCK_INSIGHTS: Insight[] = [
+  {
+    id: "in_support",
+    kind: "SUPPORT",
+    label: "Topic requiring more support",
+    subject: "Account Sharing",
+    value: "58%",
+    note: "Safer-decision rate is the lowest across live content. Consider an additional teaching scenario.",
+  },
+  {
+    id: "in_improved",
+    kind: "IMPROVED",
+    label: "Most improved",
+    subject: "Shop Theft & Peer Pressure",
+    value: "+9 pts",
+    note: "Improvement since the revised debrief was published this cycle.",
+  },
+  {
+    id: "in_peer",
+    kind: "PEER_SHIELD",
+    label: "Peer Shield",
+    subject: "Appropriate intervention chosen",
+    value: "72%",
+    note: "Across all Peer Shield content. Private-warning and seek-help options combined.",
+  },
+];
+
+export const SAFEGUARDS: string[] = [
+  "Aggregate learning analytics only",
+  "No crime prediction",
+  "No individual youth profiling",
+  "No real banking or Singpass credentials used in scenarios",
+  "Simulated scenario data",
+];
+
+export function derivePortalSummary(rows: AdminScenarioRow[]): PortalSummary {
+  const live = rows.filter((r) => r.status === "LIVE");
+  const scored = live.filter((r) => r.responses > 0);
+  const average = scored.length
+    ? Math.round(
+        scored.reduce((sum, r) => sum + r.safeDecisionRate, 0) / scored.length,
+      )
+    : 0;
+  return {
+    activeScenarios: live.length,
+    participants: MOCK_PORTAL_PARTICIPANTS,
+    averageSafeDecisionRate: average,
+    needsReview: scored.filter((r) => r.safeDecisionRate < 60).length,
+  };
+}

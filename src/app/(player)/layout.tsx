@@ -1,6 +1,11 @@
-import { PhoneShell } from "@/components/player/PhoneShell";
+import { AppShell } from "@/components/player/AppShell";
 import { PlayerProvider } from "@/lib/state/PlayerProvider";
 
+/**
+ * One provider wraps every player route, so coins, Trust, Risk, Community
+ * Resilience and Guardian progress carry across Home → Mission → Peer Shield
+ * → Guardians during a demo.
+ */
 export default function PlayerLayout({
   children,
 }: {
@@ -8,7 +13,7 @@ export default function PlayerLayout({
 }) {
   return (
     <PlayerProvider>
-      <PhoneShell>{children}</PhoneShell>
+      <AppShell>{children}</AppShell>
     </PlayerProvider>
   );
 }

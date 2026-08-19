@@ -3,11 +3,17 @@ import type {
   ChoiceResult,
   ChoiceSubmission,
   FlashMissionDraft,
+  Guardian,
+  Insight,
   PlayerProfile,
+  PortalSummary,
   Scenario,
 } from "@/lib/types";
 import {
+  derivePortalSummary,
   MOCK_ADMIN_SCENARIOS,
+  MOCK_GUARDIANS,
+  MOCK_INSIGHTS,
   MOCK_PROFILE,
   MULE_ENCOUNTER,
   MULE_PEER_SHIELD,
@@ -18,18 +24,21 @@ import {
  *
  * Components only ever talk to `api`, never to fixtures. When the Node.js
  * service is ready, implement `HttpApiClient` below against the same interface
- * and flip `NEXT_PUBLIC_API_MODE=http` — no component has to change.
+ * and swap the export — no component has to change.
  */
 export interface ShieldQuestApi {
   getProfile(): Promise<PlayerProfile>;
+  getGuardians(): Promise<Guardian[]>;
   getScenario(id: string): Promise<Scenario>;
   submitChoice(submission: ChoiceSubmission): Promise<ChoiceResult>;
   listScenarios(): Promise<AdminScenarioRow[]>;
+  getPortalSummary(): Promise<PortalSummary>;
+  getInsights(): Promise<Insight[]>;
   deployFlashMission(draft: FlashMissionDraft): Promise<AdminScenarioRow>;
 }
 
 /** Simulated network latency so loading states are exercised in the prototype. */
-const latency = (ms = 260) => new Promise((r) => setTimeout(r, ms));
+const latency = (ms = 240) => new Promise((r) => setTimeout(r, ms));
 
 class MockApiClient implements ShieldQuestApi {
   private scenarios = new Map<string, Scenario>([
@@ -44,6 +53,11 @@ class MockApiClient implements ShieldQuestApi {
     return { ...MOCK_PROFILE };
   }
 
+  async getGuardians(): Promise<Guardian[]> {
+    await latency(120);
+    return MOCK_GUARDIANS.map((g) => ({ ...g }));
+  }
+
   async getScenario(id: string): Promise<Scenario> {
     await latency();
     const scenario = this.scenarios.get(id);
@@ -53,7 +67,7 @@ class MockApiClient implements ShieldQuestApi {
 
   /**
    * In production this is authoritative: the server resolves the choice, applies
-   * the wallet deltas and schedules the delayed consequence. The client is told
+   * the stat deltas and schedules the delayed consequence. The client is told
    * only what it needs to render. We keep the same shape here.
    */
   async submitChoice({
@@ -67,30 +81,40 @@ class MockApiClient implements ShieldQuestApi {
 
     return {
       outcome: choice.outcome,
-      flash: choice.immediate.flash,
-      coinDelta: choice.immediate.coinDelta,
-      resilienceDelta: choice.immediate.resilienceDelta,
-      feedback: choice.feedback,
+      flashTitle: choice.immediate.flashTitle,
+      flashAmount: choice.immediate.flashAmount,
+      deltas: choice.immediate.deltas,
+      debrief: choice.debrief,
       delayed: choice.delayed,
     };
   }
 
   async listScenarios(): Promise<AdminScenarioRow[]> {
-    await latency(320);
+    await latency(300);
     return [...this.adminRows];
   }
 
+  async getPortalSummary(): Promise<PortalSummary> {
+    await latency(140);
+    return derivePortalSummary(this.adminRows);
+  }
+
+  async getInsights(): Promise<Insight[]> {
+    await latency(140);
+    return MOCK_INSIGHTS.map((i) => ({ ...i }));
+  }
+
   async deployFlashMission(draft: FlashMissionDraft): Promise<AdminScenarioRow> {
-    await latency(700);
+    await latency(650);
     const row: AdminScenarioRow = {
       id: `scn_flash_${this.adminRows.length + 1}`,
       title: draft.title,
-      threatType: draft.threatType,
-      ageGroup: draft.ageGroup,
-      status: "LIVE",
+      category: draft.category,
+      targetGroup: draft.targetGroup,
+      status: draft.status,
       safeDecisionRate: 0,
       previousSafeDecisionRate: 0,
-      plays: 0,
+      responses: 0,
       competencies: [draft.competency],
       updatedBy: "You (Duty Officer)",
       updatedOn: "Just now",

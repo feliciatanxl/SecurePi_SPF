@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
 
 interface ModalProps {
   open: boolean;
   onClose?: () => void;
-  /** Consequence reveals are not dismissible by backdrop or Escape — the player must read them. */
+  /** Consequence reveals are not dismissible — the player must acknowledge them. */
   dismissible?: boolean;
   children: ReactNode;
   className?: string;
   labelledBy?: string;
+  /** "center" for dialogs, "right" for the admin side panel. */
+  placement?: "center" | "right";
 }
 
 export function Modal({
@@ -18,14 +20,19 @@ export function Modal({
   onClose,
   dismissible = true,
   children,
-  className = "",
+  className = "bg-surface",
   labelledBy,
+  placement = "center",
 }: ModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
 
     const previousOverflow = document.body.style.overflow;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
+    panelRef.current?.focus();
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && dismissible) onClose?.();
@@ -35,32 +42,45 @@ export function Modal({
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKey);
+      previouslyFocused?.focus?.();
     };
   }, [open, dismissible, onClose]);
 
   if (!open) return null;
 
+  const isRight = placement === "right";
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-6"
+      className={`fixed inset-0 z-50 flex ${
+        isRight
+          ? "justify-end"
+          : "items-end justify-center p-0 sm:items-center sm:p-6"
+      }`}
       role="dialog"
       aria-modal="true"
       aria-labelledby={labelledBy}
     >
       <div
-        className="absolute inset-0 bg-ink-950/80 backdrop-blur-sm"
+        className="animate-fade absolute inset-0 bg-navy-950/55"
         onClick={dismissible ? onClose : undefined}
         aria-hidden="true"
       />
       <div
-        className={`animate-pop relative w-full max-w-lg overflow-hidden rounded-t-3xl border border-white/10 shadow-2xl sm:rounded-3xl ${className}`}
+        ref={panelRef}
+        tabIndex={-1}
+        className={`animate-pop relative flex max-h-dvh w-full flex-col shadow-2xl outline-none ${
+          isRight
+            ? "h-dvh max-w-xl border-l border-line"
+            : "max-w-lg rounded-t-2xl border border-line sm:rounded-2xl"
+        } ${className}`}
       >
         {dismissible && onClose && (
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-3 top-3 z-10 rounded-full p-2 text-slate-400 transition hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-shield-400"
+            className="absolute right-2.5 top-2.5 z-10 grid h-11 w-11 place-items-center rounded-lg text-ink-muted transition hover:bg-canvas hover:text-ink"
           >
             <X className="h-4 w-4" />
           </button>

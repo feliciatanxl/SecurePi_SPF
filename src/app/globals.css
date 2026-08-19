@@ -1,38 +1,82 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   PROJECT SHIELD · ShieldQuest design tokens
+   Light, civic, youthful. Navy is reserved for hero surfaces, headers,
+   bottom navigation and consequence moments — never as a default background.
+   ========================================================================== */
+
 @theme {
-  --color-ink-950: #05080f;
-  --color-ink-900: #0a1020;
-  --color-ink-850: #0f172b;
-  --color-ink-800: #16213a;
-  --color-ink-700: #223050;
-  --color-ink-600: #33456b;
+  /* Navy — hero surfaces, headers, consequence takeover */
+  --color-navy-950: #061527;
+  --color-navy-900: #0b2545;
+  --color-navy-800: #12385f;
+  --color-navy-700: #1b4e7e;
+  --color-navy-100: #dbe5f0;
 
-  --color-shield-300: #93b8fd;
-  --color-shield-400: #60a5fa;
-  --color-shield-500: #3b82f6;
-  --color-shield-600: #2563eb;
+  /* Civic blue — primary actions */
+  --color-civic-800: #0f4a8a;
+  --color-civic-700: #14539a;
+  --color-civic-600: #1a66bc;
+  --color-civic-500: #2a7dd8;
+  --color-civic-200: #bcd6f4;
+  --color-civic-100: #ddeaf9;
+  --color-civic-50: #eff5fd;
 
-  --color-gold-300: #fcd34d;
-  --color-gold-400: #fbbf24;
-  --color-gold-500: #f0a500;
+  /* Teal — Peer Shield, secondary emphasis */
+  --color-teal-700: #12645c;
+  --color-teal-600: #17786f;
+  --color-teal-500: #1e958a;
+  --color-teal-200: #b4ddd7;
+  --color-teal-100: #d6edea;
+  --color-teal-50: #ecf7f5;
 
-  --color-safe-400: #4ade80;
-  --color-safe-500: #22c55e;
+  /* Amber — rewards, Guardians */
+  --color-amber-700: #8f5906;
+  --color-amber-600: #b8730b;
+  --color-amber-500: #e0930f;
+  --color-amber-400: #f2ae33;
+  --color-amber-200: #f8ddab;
+  --color-amber-100: #fbebcc;
+  --color-amber-50: #fdf6e7;
 
-  --color-danger-400: #f87171;
-  --color-danger-500: #ef4444;
+  /* Leaf — positive, restrained */
+  --color-leaf-700: #1f6b4a;
+  --color-leaf-600: #2a835b;
+  --color-leaf-200: #b6dcc7;
+  --color-leaf-100: #d9ede2;
+  --color-leaf-50: #eff7f2;
 
-  --animate-rise: rise 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-  --animate-pop: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-  --animate-float-up: float-up 1.6s ease-out forwards;
-  --animate-shake: shake 0.5s ease-in-out;
+  /* Coral — risk, restrained */
+  --color-coral-700: #9e3b2a;
+  --color-coral-600: #c0523c;
+  --color-coral-200: #eec4ba;
+  --color-coral-100: #f7dfd9;
+  --color-coral-50: #fdf1ee;
+
+  /* Neutrals */
+  --color-canvas: #eef1f6;
+  --color-surface: #ffffff;
+  --color-surface-sunk: #f6f8fb;
+  --color-line: #dfe4ec;
+  --color-line-strong: #c6cedb;
+
+  /* Text */
+  --color-ink: #16202e;
+  --color-ink-muted: #56637a;
+  --color-ink-soft: #5e6a7c;
+
+  --animate-rise: rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pop: pop 0.32s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  --animate-float-up: float-up 2s ease-out forwards;
+  --animate-fade: fade 0.5s ease-out both;
+  --animate-sweep: sweep 2.4s ease-out both;
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -43,7 +87,7 @@
 @keyframes pop {
   from {
     opacity: 0;
-    transform: scale(0.92);
+    transform: scale(0.96);
   }
   to {
     opacity: 1;
@@ -54,38 +98,38 @@
 @keyframes float-up {
   0% {
     opacity: 0;
-    transform: translateY(6px) scale(0.9);
+    transform: translateY(8px) scale(0.94);
   }
-  15% {
+  12% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
-  70% {
+  78% {
     opacity: 1;
-    transform: translateY(-14px) scale(1);
+    transform: translateY(-8px) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translateY(-28px) scale(0.96);
+    transform: translateY(-20px) scale(0.97);
   }
 }
 
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
+@keyframes fade {
+  from {
+    opacity: 0;
   }
-  20% {
-    transform: translateX(-6px);
+  to {
+    opacity: 1;
   }
-  40% {
-    transform: translateX(6px);
+}
+
+/* Time-passage sweep on the consequence takeover. */
+@keyframes sweep {
+  from {
+    transform: scaleX(0);
   }
-  60% {
-    transform: translateX(-4px);
-  }
-  80% {
-    transform: translateX(4px);
+  to {
+    transform: scaleX(1);
   }
 }
 
@@ -99,11 +143,28 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Slim scrollbar inside the phone frame so the mock reads as an app, not a page. */
+/* Consistent, always-visible keyboard focus across the whole prototype. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-civic-500);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
 .thin-scroll::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 .thin-scroll::-webkit-scrollbar-thumb {
-  background: rgb(255 255 255 / 0.12);
+  background: var(--color-line-strong);
   border-radius: 9999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
