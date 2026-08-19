@@ -3,7 +3,7 @@
 import { Minus, TrendingDown, TrendingUp, Zap } from "lucide-react";
 import type { AdminScenarioRow, ScenarioStatus } from "@/lib/types";
 
-const STATUS_STYLES: Record<ScenarioStatus, string> = {
+export const STATUS_STYLES: Record<ScenarioStatus, string> = {
   LIVE: "border-leaf-200 bg-leaf-50 text-leaf-700",
   DRAFT: "border-line bg-surface-sunk text-ink-muted",
   SCHEDULED: "border-civic-200 bg-civic-50 text-civic-700",
@@ -61,10 +61,13 @@ export function ScenarioTable({
   rows,
   highlightId,
   caption,
+  onSelect,
 }: {
   rows: AdminScenarioRow[];
   highlightId?: string | null;
   caption: string;
+  /** Opens the scenario detail panel. Each row title becomes the trigger. */
+  onSelect?: (row: AdminScenarioRow) => void;
 }) {
   if (rows.length === 0) {
     return (
@@ -86,11 +89,11 @@ export function ScenarioTable({
               {[
                 "Scenario",
                 "Category",
-                "Target group",
+                "Audience",
                 "Status",
                 "Safe decision rate",
                 "Responses",
-                "Last updated",
+                "Updated",
               ].map((h, i) => (
                 <th
                   key={h}
@@ -119,9 +122,23 @@ export function ScenarioTable({
                 >
                   <th scope="row" className="px-4 py-3.5 text-left font-normal">
                     <span className="flex items-center gap-2">
-                      <span className="text-[14px] font-bold text-navy-900">
-                        {row.title}
-                      </span>
+                      {onSelect ? (
+                        <button
+                          type="button"
+                          onClick={() => onSelect(row)}
+                          // Negative margin lets the hit area grow into the
+                          // cell's own padding, so the target clears 44px
+                          // without changing how the row looks.
+                          className="-my-3 block py-3 text-left text-[14px] font-bold text-civic-700 underline decoration-transparent underline-offset-2 transition hover:decoration-current"
+                        >
+                          {row.title}
+                          <span className="sr-only"> — open scenario details</span>
+                        </button>
+                      ) : (
+                        <span className="text-[14px] font-bold text-navy-900">
+                          {row.title}
+                        </span>
+                      )}
                       {row.isFlashMission && (
                         <span className="inline-flex items-center gap-1 rounded-md border border-civic-200 bg-civic-50 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-civic-700">
                           <Zap className="h-2.5 w-2.5" aria-hidden="true" />

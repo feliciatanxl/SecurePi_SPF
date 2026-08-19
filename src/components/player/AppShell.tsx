@@ -2,13 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, Home, ShieldHalf, SlidersHorizontal } from "lucide-react";
+import {
+  Compass,
+  Map,
+  ShieldHalf,
+  SlidersHorizontal,
+  TrendingUp,
+} from "lucide-react";
 import { COMPETENCY_LABEL, COMPETENCY_LETTER, type Competency } from "@/lib/types";
 import { PROTOTYPE_DISCLAIMER } from "@/lib/api/mock-data";
 
 const TABS = [
-  { href: "/", label: "Home", icon: Home },
+  { href: "/", label: "City", icon: Map },
   { href: "/peer-shield", label: "Peer Shield", icon: ShieldHalf },
+  { href: "/progress", label: "Progress", icon: TrendingUp },
   { href: "/guardians", label: "Guardians", icon: Compass },
 ] as const;
 
@@ -21,25 +28,42 @@ const FRAMEWORK: Competency[] = [
   "DEFEND",
 ];
 
+/** Routes that run full-bleed — their own top bar replaces the tab navigation. */
+const isImmersive = (pathname: string) =>
+  pathname === "/play" || pathname.startsWith("/mini-game/");
+
+/**
+ * The city board and the district routes get a wider frame on tablet and up, so
+ * the four districts can spread into a board instead of stacking forever. A
+ * scenario stays at phone width on every screen — a message thread arriving on
+ * your phone is the situation being rehearsed, and widening it would weaken that.
+ */
+const isBoard = (pathname: string) =>
+  pathname === "/" || pathname === "/progress" || pathname.startsWith("/district/");
+
 /**
  * Presentation canvas for the youth app.
  *
  * Mobile-first: on a phone this is simply the viewport. On a laptop the app
- * column is centred at phone width on a calm neutral canvas — no oversized
- * device bezel — with a context rail on very wide screens that gives a pitch
- * audience the framing they need without cluttering the product itself.
+ * column is centred on a calm neutral canvas — no oversized device bezel — with
+ * a context rail on very wide screens that gives a pitch audience the framing
+ * they need without cluttering the product itself.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // The mission runs full-bleed: its own top bar replaces the tab navigation.
-  const immersive = pathname === "/play";
+  const immersive = isImmersive(pathname);
+  const board = isBoard(pathname);
 
   return (
     <div className="min-h-dvh bg-canvas">
-      <div className="mx-auto flex min-h-dvh w-full max-w-[1180px] items-stretch justify-center gap-10 px-0 xl:h-dvh xl:min-h-0 xl:px-8 xl:py-8">
+      <div className="mx-auto flex min-h-dvh w-full max-w-[1240px] items-stretch justify-center gap-10 px-0 xl:h-dvh xl:min-h-0 xl:px-8 xl:py-8">
         <ContextRail />
 
-        <div className="relative flex w-full max-w-[440px] flex-col overflow-hidden bg-surface shadow-[0_1px_2px_rgba(11,37,69,0.06),0_16px_40px_-24px_rgba(11,37,69,0.35)] xl:rounded-3xl xl:border xl:border-line">
+        <div
+          className={`relative flex w-full flex-col overflow-hidden bg-surface shadow-[0_1px_2px_rgba(11,37,69,0.06),0_16px_40px_-24px_rgba(11,37,69,0.35)] transition-[max-width] duration-300 xl:rounded-3xl xl:border xl:border-line ${
+            board ? "max-w-[440px] md:max-w-[720px]" : "max-w-[440px]"
+          }`}
+        >
           <main
             id="main"
             className="thin-scroll flex-1 overflow-y-auto xl:rounded-t-3xl"
@@ -54,13 +78,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <ul className="flex">
                 {TABS.map(({ href, label, icon: Icon }) => {
-                  const active = pathname === href;
+                  // "City" stays lit while the player is inside a district.
+                  const active =
+                    href === "/"
+                      ? pathname === "/" || pathname.startsWith("/district/")
+                      : pathname === href;
                   return (
                     <li key={href} className="flex-1">
                       <Link
                         href={href}
                         aria-current={active ? "page" : undefined}
-                        className={`flex min-h-[52px] flex-col items-center justify-center gap-1 px-2 py-2 text-[11px] font-semibold transition ${
+                        className={`flex min-h-[52px] flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-semibold transition ${
                           active
                             ? "text-amber-400"
                             : "text-navy-100/70 hover:text-white"
@@ -71,7 +99,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           strokeWidth={active ? 2.4 : 1.8}
                           aria-hidden="true"
                         />
-                        {label}
+                        <span className="text-center leading-tight">{label}</span>
                         <span
                           aria-hidden="true"
                           className={`mt-0.5 h-0.5 w-6 rounded-full ${
@@ -94,7 +122,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 /** Pitch-time framing. Hidden below xl so the product stands on its own. */
 function ContextRail() {
   return (
-    <aside className="thin-scroll hidden w-[320px] shrink-0 flex-col justify-between overflow-y-auto py-4 xl:flex">
+    <aside className="thin-scroll hidden w-[300px] shrink-0 flex-col justify-between overflow-y-auto py-4 xl:flex">
       <div>
         <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-civic-700">
           Project SHIELD
@@ -111,7 +139,18 @@ function ContextRail() {
           as a decision, not delivered as a talk.
         </p>
 
-        <div className="mt-8">
+        <div className="mt-6 rounded-xl border border-line bg-surface p-3.5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
+            How it is structured
+          </p>
+          <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
+            District → mission node → activity → learning outcome → progress.
+            The city board is the engagement layer; the scenario engine, delayed
+            consequences and Peer Shield are the substance.
+          </p>
+        </div>
+
+        <div className="mt-6">
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
             The S.H.I.E.L.D. framework
           </p>
@@ -136,7 +175,7 @@ function ContextRail() {
       <div className="space-y-3 pt-8">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-[13px] font-semibold text-ink-muted transition hover:border-civic-200 hover:text-civic-700"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-[13px] font-semibold text-ink-muted transition hover:border-civic-200 hover:text-civic-700"
         >
           <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
           Scenario Management Portal

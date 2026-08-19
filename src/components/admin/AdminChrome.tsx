@@ -8,17 +8,20 @@ import {
   Lock,
   RotateCcw,
   Shield,
-  Zap,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Insight, PortalSummary } from "@/lib/types";
 
-export type AdminSection =
-  | "overview"
-  | "scenarios"
-  | "flash"
-  | "insights"
-  | "review";
+/**
+ * Four primary destinations.
+ *
+ * Deploying a Flash Mission used to be a fifth sidebar section, which framed it
+ * as somewhere an administrator navigates *to*. It is an action, not a place, so
+ * it now lives as a persistent control in the portal header and its content is
+ * read in the Scenario Library alongside everything else. Nothing about the
+ * Flash Mission capability itself changed.
+ */
+export type AdminSection = "overview" | "library" | "review" | "insights";
 
 export const ADMIN_NAV: {
   id: AdminSection;
@@ -26,10 +29,9 @@ export const ADMIN_NAV: {
   icon: typeof LayoutDashboard;
 }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "scenarios", label: "Scenarios", icon: ListChecks },
-  { id: "flash", label: "Flash Missions", icon: Zap },
-  { id: "insights", label: "Insights", icon: BarChart3 },
+  { id: "library", label: "Scenario Library", icon: ListChecks },
   { id: "review", label: "Content Review", icon: ClipboardCheck },
+  { id: "insights", label: "Insights", icon: BarChart3 },
 ];
 
 export function AdminSidebar({

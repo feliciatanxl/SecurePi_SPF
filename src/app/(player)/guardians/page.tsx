@@ -112,11 +112,13 @@ export default function GuardiansPage() {
           </ul>
         </section>
 
+        {/* The board decides what to practise next, so it is the right target
+            here rather than hard-coding one mission that may already be done. */}
         <Link
-          href="/play"
+          href="/"
           className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-civic-600 px-4 text-[15px] font-extrabold text-white transition hover:bg-civic-700"
         >
-          Practise a mission
+          Practise in ShieldQuest City
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>

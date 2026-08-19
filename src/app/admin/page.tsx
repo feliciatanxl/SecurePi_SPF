@@ -2,14 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  CheckCircle2,
-  ExternalLink,
-  Loader2,
-  Search,
-  Shield,
-  Zap,
-} from "lucide-react";
+import { CheckCircle2, ExternalLink, Loader2, Shield, Zap } from "lucide-react";
 import {
   AdminSection as Section,
   AdminSidebar,
@@ -19,11 +12,22 @@ import {
   SimulatedDataNote,
   type AdminSection as SectionId,
 } from "@/components/admin/AdminChrome";
+import { AdminNeedsAttention } from "@/components/admin/AdminNeedsAttention";
+import { AdminRecentContent } from "@/components/admin/AdminRecentContent";
+import { AdminReviewQueue } from "@/components/admin/AdminReviewQueue";
 import { FlashMissionPanel } from "@/components/admin/FlashMissionPanel";
+import { ScenarioDetailPanel } from "@/components/admin/ScenarioDetailPanel";
+import {
+  applyScenarioFilters,
+  EMPTY_FILTERS,
+  ScenarioFilters,
+  type ScenarioFilterState,
+} from "@/components/admin/ScenarioFilters";
 import {
   REVIEW_THRESHOLD,
   ScenarioTable,
 } from "@/components/admin/ScenarioTable";
+import { SkillCoverageChart } from "@/components/admin/SkillCoverage";
 import { Modal } from "@/components/ui/Modal";
 import { api } from "@/lib/api/client";
 import { clearDemoData } from "@/lib/state/demoStorage";
@@ -33,23 +37,30 @@ import type {
   FlashMissionDraft,
   Insight,
   PortalSummary,
+  SkillCoverage,
 } from "@/lib/types";
 
 /**
  * View 5 — Scenario Management Portal.
  *
- * A desktop-first console for reviewing how well prevention CONTENT is teaching
- * and updating it as risks evolve. Deliberately branded as a prototype admin
- * view: it is not, and must not appear to be, a deployed government system.
+ * Four destinations, one persistent action. A programme administrator opens this
+ * to answer three questions in order: what is happening, what needs attention,
+ * and what can I do next — so Overview is arranged in exactly that order and
+ * nothing else competes with it.
+ *
+ * Deliberately branded as a prototype admin view: it is not, and must not appear
+ * to be, a deployed government system.
  */
 export default function AdminPage() {
   const [section, setSection] = useState<SectionId>("overview");
   const [rows, setRows] = useState<AdminScenarioRow[]>([]);
   const [summary, setSummary] = useState<PortalSummary | null>(null);
   const [insights, setInsights] = useState<Insight[]>([]);
+  const [coverage, setCoverage] = useState<SkillCoverage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [filters, setFilters] = useState<ScenarioFilterState>(EMPTY_FILTERS);
+  const [flashOpen, setFlashOpen] = useState(false);
+  const [detail, setDetail] = useState<AdminScenarioRow | null>(null);
   const [deployed, setDeployed] = useState<AdminScenarioRow | null>(null);
 
   useEffect(() => {
@@ -58,11 +69,13 @@ export default function AdminPage() {
       api.listScenarios(),
       api.getPortalSummary(),
       api.getInsights(),
-    ]).then(([r, s, i]) => {
+      api.getSkillCoverage(),
+    ]).then(([r, s, i, c]) => {
       if (!active) return;
       setRows(r);
       setSummary(s);
       setInsights(i);
+      setCoverage(c);
       setLoading(false);
     });
     return () => {
@@ -75,8 +88,10 @@ export default function AdminPage() {
     setRows((prev) => [created, ...prev]);
     setSummary(await api.getPortalSummary());
     setDeployed(created);
-    setPanelOpen(false);
-    setSection("scenarios");
+    setFlashOpen(false);
+    // Land the administrator where the new scenario now lives.
+    setFilters(EMPTY_FILTERS);
+    setSection("library");
   }, []);
 
   /**
@@ -90,27 +105,40 @@ export default function AdminPage() {
   }, []);
 
   const filtered = useMemo(
-    () =>
-      rows.filter((r) =>
-        `${r.title} ${r.category} ${r.targetGroup}`
-          .toLowerCase()
-          .includes(query.toLowerCase()),
-      ),
-    [rows, query],
+    () => applyScenarioFilters(rows, filters),
+    [rows, filters],
   );
 
-  const flashRows = filtered.filter((r) => r.isFlashMission);
-  const reviewRows = rows.filter(
-    (r) =>
-      r.status === "LIVE" &&
-      r.responses > 0 &&
-      r.safeDecisionRate < REVIEW_THRESHOLD,
+  const categories = useMemo(
+    () => [...new Set(rows.map((r) => r.category))].sort(),
+    [rows],
   );
+  const audiences = useMemo(
+    () => [...new Set(rows.map((r) => r.targetGroup))].sort(),
+    [rows],
+  );
+
+  /** Live, scored content that is not teaching clearly enough yet. */
+  const reviewRows = useMemo(
+    () =>
+      rows
+        .filter(
+          (r) =>
+            r.status === "LIVE" &&
+            r.responses > 0 &&
+            r.safeDecisionRate < REVIEW_THRESHOLD,
+        )
+        .sort((a, b) => a.safeDecisionRate - b.safeDecisionRate),
+    [rows],
+  );
+
+  const recentRows = useMemo(() => rows.slice(0, 5), [rows]);
 
   return (
     <div className="min-h-dvh bg-canvas text-ink">
-      {/* Top bar */}
-      <header className="border-b border-line bg-surface">
+      {/* Top bar. The primary action lives here so it is reachable from
+          every section without being a destination of its own. */}
+      <header className="sticky top-0 z-30 border-b border-line bg-surface">
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
           <div className="flex items-center gap-3 lg:hidden">
             <span
@@ -128,7 +156,7 @@ export default function AdminPage() {
             Prototype admin view · demonstration environment · simulated data
           </span>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/"
               className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-line px-3 text-[13px] font-semibold text-ink-muted transition hover:border-civic-200 hover:text-civic-700"
@@ -136,6 +164,14 @@ export default function AdminPage() {
               <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
               Youth app
             </Link>
+            <button
+              type="button"
+              onClick={() => setFlashOpen(true)}
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-civic-600 px-4 text-[14px] font-bold text-white shadow-sm transition hover:bg-civic-700"
+            >
+              <Zap className="h-4 w-4" aria-hidden="true" />
+              Deploy Flash Mission
+            </button>
             <span
               aria-hidden="true"
               className="grid h-9 w-9 place-items-center rounded-full bg-navy-100 text-[12px] font-bold text-navy-800"
@@ -154,29 +190,17 @@ export default function AdminPage() {
         />
 
         <main className="min-w-0 flex-1 px-5 py-6 lg:px-8">
-          {/* Page heading */}
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-civic-700">
-                Project SHIELD
-              </p>
-              <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-navy-900">
-                Scenario Management Portal
-              </h1>
-              <p className="mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-muted">
-                Review youth learning trends and update prevention content
-                without rebuilding the application.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setPanelOpen(true)}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-civic-600 px-5 text-[14px] font-bold text-white shadow-sm transition hover:bg-civic-700"
-            >
-              <Zap className="h-4 w-4" aria-hidden="true" />
-              Deploy Flash Mission
-            </button>
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-civic-700">
+              Project SHIELD
+            </p>
+            <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-navy-900">
+              Scenario Management Portal
+            </h1>
+            <p className="mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-muted">
+              Review how well prevention content is teaching, and update it as
+              risks change — without rebuilding the application.
+            </p>
           </div>
 
           {deployed && (
@@ -217,64 +241,87 @@ export default function AdminPage() {
               {section === "overview" && (
                 <>
                   <Section
-                    title="Overview"
+                    title="What is happening"
                     description="Aggregate performance of published prevention content."
                   >
                     <PortalSummaryRow summary={summary} />
-                    <SimulatedDataNote />
                   </Section>
 
                   <Section
-                    title="Insights"
-                    description="Which topics are landing, and which need more teaching support."
+                    title="Needs attention"
+                    description={`Live scenarios teaching below the ${REVIEW_THRESHOLD}% threshold. This reflects the content, not the participants.`}
                   >
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                      {insights.map((i) => (
-                        <InsightCard key={i.id} insight={i} />
-                      ))}
-                    </div>
-                    <SimulatedDataNote>
-                      Aggregated prototype data. Individual participant
-                      performance is not displayed.
-                    </SimulatedDataNote>
+                    <AdminNeedsAttention
+                      rows={reviewRows}
+                      onOpenReview={() => setSection("review")}
+                      onSelect={setDetail}
+                    />
                   </Section>
 
-                  <Section title="Data &amp; safeguards">
-                    <DataSafeguardCard
-                      items={SAFEGUARDS}
-                      onResetDemo={handleResetDemo}
+                  <Section
+                    title="Recent content"
+                    description="The most recently added or updated scenarios."
+                    action={
+                      <button
+                        type="button"
+                        onClick={() => setSection("library")}
+                        className="inline-flex min-h-[44px] items-center text-[13px] font-bold text-civic-700 underline underline-offset-2"
+                      >
+                        Open Scenario Library
+                      </button>
+                    }
+                  >
+                    <AdminRecentContent
+                      rows={recentRows}
+                      onSelect={setDetail}
+                      highlightId={deployed?.id}
                     />
+                    <SimulatedDataNote />
                   </Section>
                 </>
               )}
 
-              {section === "scenarios" && (
+              {section === "library" && (
                 <Section
-                  title="Scenarios"
-                  description="All published, drafted and scheduled content."
-                  action={<SearchBox value={query} onChange={setQuery} count={filtered.length} total={rows.length} />}
+                  title="Scenario Library"
+                  description="All published, drafted and scheduled prevention content."
                 >
+                  <ScenarioFilters
+                    filters={filters}
+                    onChange={setFilters}
+                    categories={categories}
+                    audiences={audiences}
+                    shown={filtered.length}
+                    total={rows.length}
+                  />
                   <ScenarioTable
                     rows={filtered}
                     highlightId={deployed?.id}
-                    caption="All scenarios with target group, status and safe decision rate"
+                    onSelect={setDetail}
+                    caption="All scenarios with category, audience, status and safe decision rate"
                   />
-                  <SimulatedDataNote />
+                  <p className="text-[12px] leading-relaxed text-ink-soft">
+                    <strong className="font-bold text-ink-muted">
+                      Safe decision rate
+                    </strong>{" "}
+                    measures how clearly a scenario teaches — which topics need
+                    more support. It is not a measure of the young people who
+                    answered it. Prototype / simulated data, aggregated only.
+                  </p>
                 </Section>
               )}
 
-              {section === "flash" && (
+              {section === "review" && (
                 <Section
-                  title="Flash Missions"
-                  description="Rapid-response content published against an emerging trend."
-                  action={<SearchBox value={query} onChange={setQuery} count={flashRows.length} total={rows.filter((r) => r.isFlashMission).length} />}
+                  title="Content Review"
+                  description="Scenarios that may require clearer teaching, updated content or further review."
                 >
-                  <ScenarioTable
-                    rows={flashRows}
-                    highlightId={deployed?.id}
-                    caption="Flash Missions currently deployed"
-                  />
-                  <SimulatedDataNote />
+                  <AdminReviewQueue rows={reviewRows} onSelect={setDetail} />
+                  <SimulatedDataNote>
+                    Prototype / simulated data. Content analytics only — no
+                    individual responses, participants or risk scores are shown
+                    anywhere in this portal.
+                  </SimulatedDataNote>
                 </Section>
               )}
 
@@ -289,11 +336,19 @@ export default function AdminPage() {
                         <InsightCard key={i.id} insight={i} />
                       ))}
                     </div>
+                  </Section>
+
+                  <Section
+                    title="S.H.I.E.L.D. skill coverage"
+                    description="Which prevention skills the current content teaches well, and where more material is needed."
+                  >
+                    <SkillCoverageChart rows={coverage} />
                     <SimulatedDataNote>
-                      Aggregated prototype data. Individual participant
-                      performance is not displayed.
+                      Simulated prototype data. Aggregated across content —
+                      individual participant performance is not displayed.
                     </SimulatedDataNote>
                   </Section>
+
                   <Section title="Data &amp; safeguards">
                     <DataSafeguardCard
                       items={SAFEGUARDS}
@@ -301,19 +356,6 @@ export default function AdminPage() {
                     />
                   </Section>
                 </>
-              )}
-
-              {section === "review" && (
-                <Section
-                  title="Content review"
-                  description={`Live scenarios where fewer than ${REVIEW_THRESHOLD}% of responses chose a safer option. This indicates the content needs stronger teaching support — it is not a measure of the participants.`}
-                >
-                  <ScenarioTable
-                    rows={reviewRows}
-                    caption="Scenarios recommended for authoring review"
-                  />
-                  <SimulatedDataNote />
-                </Section>
               )}
             </div>
           )}
@@ -329,51 +371,29 @@ export default function AdminPage() {
       </div>
 
       <Modal
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
+        open={flashOpen}
+        onClose={() => setFlashOpen(false)}
         placement="right"
         className="bg-surface"
         labelledBy="flash-mission-title"
       >
         <FlashMissionPanel
           onDeploy={handleDeploy}
-          onCancel={() => setPanelOpen(false)}
+          onCancel={() => setFlashOpen(false)}
         />
       </Modal>
-    </div>
-  );
-}
 
-function SearchBox({
-  value,
-  onChange,
-  count,
-  total,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  count: number;
-  total: number;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="relative">
-        <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft"
-          aria-hidden="true"
-        />
-        <input
-          type="search"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Filter scenarios"
-          aria-label="Filter scenarios by title, category or target group"
-          className="min-h-[44px] w-56 rounded-lg border border-line-strong bg-surface py-2 pl-9 pr-3 text-[14px] outline-none transition placeholder:text-ink-soft focus:border-civic-500"
-        />
-      </div>
-      <span className="whitespace-nowrap text-[12px] text-ink-soft tabular-nums">
-        {count} of {total}
-      </span>
+      <Modal
+        open={detail !== null}
+        onClose={() => setDetail(null)}
+        placement="right"
+        className="bg-surface"
+        labelledBy="scenario-detail-title"
+      >
+        {detail && (
+          <ScenarioDetailPanel row={detail} onClose={() => setDetail(null)} />
+        )}
+      </Modal>
     </div>
   );
 }

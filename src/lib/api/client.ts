@@ -2,12 +2,15 @@ import type {
   AdminScenarioRow,
   ChoiceResult,
   ChoiceSubmission,
+  District,
   FlashMissionDraft,
   Guardian,
   Insight,
+  MiniGame,
   PlayerProfile,
   PortalSummary,
   Scenario,
+  SkillCoverage,
 } from "@/lib/types";
 import {
   FLASH_MISSIONS_KEY,
@@ -20,9 +23,12 @@ import {
   MOCK_GUARDIANS,
   MOCK_INSIGHTS,
   MOCK_PROFILE,
+  MOCK_SKILL_COVERAGE,
   MULE_ENCOUNTER,
   MULE_PEER_SHIELD,
 } from "@/lib/api/mock-data";
+import { DISTRICTS } from "@/lib/api/world-data";
+import { findMiniGame } from "@/lib/api/minigame-data";
 
 /**
  * The single seam between the UI and the backend.
@@ -34,11 +40,15 @@ import {
 export interface ShieldQuestApi {
   getProfile(): Promise<PlayerProfile>;
   getGuardians(): Promise<Guardian[]>;
+  /** The ShieldQuest City board — districts and their mission nodes. */
+  getDistricts(): Promise<District[]>;
   getScenario(id: string): Promise<Scenario>;
+  getMiniGame(id: string): Promise<MiniGame>;
   submitChoice(submission: ChoiceSubmission): Promise<ChoiceResult>;
   listScenarios(): Promise<AdminScenarioRow[]>;
   getPortalSummary(): Promise<PortalSummary>;
   getInsights(): Promise<Insight[]>;
+  getSkillCoverage(): Promise<SkillCoverage[]>;
   deployFlashMission(draft: FlashMissionDraft): Promise<AdminScenarioRow>;
 }
 
@@ -78,6 +88,19 @@ class MockApiClient implements ShieldQuestApi {
   async getGuardians(): Promise<Guardian[]> {
     await latency(120);
     return MOCK_GUARDIANS.map((g) => ({ ...g }));
+  }
+
+  async getDistricts(): Promise<District[]> {
+    await latency(120);
+    // Deep-copied so a caller can never mutate the fixture board.
+    return DISTRICTS.map((d) => ({ ...d, nodes: d.nodes.map((n) => ({ ...n })) }));
+  }
+
+  async getMiniGame(id: string): Promise<MiniGame> {
+    await latency(180);
+    const game = findMiniGame(id);
+    if (!game) throw new Error(`Unknown mini-game: ${id}`);
+    return game;
   }
 
   async getScenario(id: string): Promise<Scenario> {
@@ -124,6 +147,11 @@ class MockApiClient implements ShieldQuestApi {
   async getInsights(): Promise<Insight[]> {
     await latency(140);
     return MOCK_INSIGHTS.map((i) => ({ ...i }));
+  }
+
+  async getSkillCoverage(): Promise<SkillCoverage[]> {
+    await latency(140);
+    return MOCK_SKILL_COVERAGE.map((c) => ({ ...c }));
   }
 
   async deployFlashMission(draft: FlashMissionDraft): Promise<AdminScenarioRow> {

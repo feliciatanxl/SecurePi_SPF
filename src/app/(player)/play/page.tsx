@@ -2,6 +2,7 @@
 
 import { MissionRunner } from "@/components/player/MissionRunner";
 import { MULE_ENCOUNTER } from "@/lib/api/mock-data";
+import { NODE_EASY_MONEY } from "@/lib/api/world-data";
 
 /**
  * View 2 — Scenario Encounter.
@@ -13,11 +14,12 @@ export default function PlayPage() {
   return (
     <MissionRunner
       scenarioId={MULE_ENCOUNTER.id}
+      activityId={NODE_EASY_MONEY}
       accent="civic"
-      eyebrow="Mission"
+      eyebrow="Digi-District"
       decisionPrompt="What do you do?"
-      backHref="/"
-      backLabel="Back to missions"
+      backHref="/district/digi"
+      backLabel="Back to Digi-District"
     />
   );
 }

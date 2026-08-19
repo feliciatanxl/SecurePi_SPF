@@ -2,10 +2,10 @@ import type {
   AdminScenarioRow,
   Guardian,
   Insight,
-  MissionSummary,
   PlayerProfile,
   PortalSummary,
   Scenario,
+  SkillCoverage,
 } from "@/lib/types";
 
 /**
@@ -86,6 +86,10 @@ export const MOCK_PROFILE: PlayerProfile = {
     [GUARDIAN_BEACON]: 2,
     [GUARDIAN_SHIELDFIN]: 3,
   },
+  // The city board starts unplayed so a demonstration shows progress being
+  // earned rather than pre-filled. Personal progress only — never compared.
+  completedActivities: [],
+  currentDistrictId: "digi",
 };
 
 /* ------------------------------------------------------------------ */
@@ -373,44 +377,6 @@ export const MULE_PEER_SHIELD: Scenario = {
 };
 
 /* ------------------------------------------------------------------ */
-/* Mission home                                                        */
-/* ------------------------------------------------------------------ */
-
-export const TODAYS_MISSION: MissionSummary = {
-  id: "ms_mule",
-  scenarioId: MULE_ENCOUNTER.id,
-  category: "Money Mule Recruitment",
-  title: "Easy Money?",
-  difficulty: "Medium",
-  estimatedMinutes: 3,
-  primaryCompetency: "SPOT",
-  locked: false,
-};
-
-export const UPCOMING_MISSIONS: MissionSummary[] = [
-  {
-    id: "ms_shop_theft",
-    category: "Shop Theft & Peer Pressure",
-    title: "The Dare at Checkout",
-    difficulty: "Easy",
-    estimatedMinutes: 3,
-    primaryCompetency: "IDENTIFY",
-    locked: true,
-    lockedNote: "Unlocks after today's mission",
-  },
-  {
-    id: "ms_account_sharing",
-    category: "Account Sharing",
-    title: "Just Use Mine",
-    difficulty: "Medium",
-    estimatedMinutes: 4,
-    primaryCompetency: "EVALUATE",
-    locked: true,
-    lockedNote: "Unlocks after today's mission",
-  },
-];
-
-/* ------------------------------------------------------------------ */
 /* Scenario Management Portal                                          */
 /* ------------------------------------------------------------------ */
 
@@ -644,6 +610,22 @@ export const MOCK_INSIGHTS: Insight[] = [
     value: "72%",
     note: "Across all Peer Shield content. Private-warning and seek-help options combined.",
   },
+];
+
+/**
+ * Aggregate S.H.I.E.L.D. skill coverage across live content.
+ *
+ * This answers "which prevention skills is our content actually teaching well?"
+ * — a content-authoring question. It is not, and must never become, a per-youth
+ * competency profile.
+ */
+export const MOCK_SKILL_COVERAGE: SkillCoverage[] = [
+  { competency: "SPOT", coverage: 82, scenarios: 6 },
+  { competency: "HOLD", coverage: 65, scenarios: 5 },
+  { competency: "IDENTIFY", coverage: 71, scenarios: 3 },
+  { competency: "EVALUATE", coverage: 67, scenarios: 5 },
+  { competency: "LEAD", coverage: 79, scenarios: 3 },
+  { competency: "DEFEND", coverage: 73, scenarios: 3 },
 ];
 
 export const SAFEGUARDS: string[] = [

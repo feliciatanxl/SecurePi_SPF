@@ -15,6 +15,11 @@ import { usePlayer } from "@/lib/state/PlayerProvider";
 
 interface MissionRunnerProps {
   scenarioId: string;
+  /**
+   * City board node this mission fulfils. Completing the mission marks the node
+   * done, which is what drives World Progress and district unlocks.
+   */
+  activityId?: string;
   /** Peer Shield gets teal accents and a friend card; encounters get civic blue. */
   accent?: "civic" | "teal";
   eyebrow: string;
@@ -33,6 +38,7 @@ interface MissionRunnerProps {
 
 export function MissionRunner({
   scenarioId,
+  activityId,
   accent = "civic",
   eyebrow,
   friend,
@@ -44,7 +50,7 @@ export function MissionRunner({
   backLabel,
 }: MissionRunnerProps) {
   const router = useRouter();
-  const { profile, guardians } = usePlayer();
+  const { profile, guardians, completeActivity } = usePlayer();
   const {
     scenario,
     transcript,
@@ -64,6 +70,17 @@ export function MissionRunner({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [transcript.length, result]);
+
+  /*
+   * A decision counts as completing the node regardless of which option was
+   * chosen. The risky path is where the most learning happens — locking city
+   * progress behind picking the safe answer would turn the board into a quiz and
+   * push players to guess rather than decide.
+   */
+  const resolved = Boolean(result);
+  useEffect(() => {
+    if (resolved && activityId) completeActivity(activityId);
+  }, [resolved, activityId, completeActivity]);
 
   if (!scenario) {
     return (
@@ -102,7 +119,7 @@ export function MissionRunner({
           <Link
             href={backHref}
             aria-label={backLabel}
-            className="-ml-2 grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white/80 transition hover:bg-white/10 hover:text-white"
+            className="-ml-2 grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white/80 transition hover:bg-white/10 hover:text-white"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Link>
@@ -264,10 +281,10 @@ export function MissionRunner({
           <div className="space-y-2.5">
             <button
               type="button"
-              onClick={() => router.push("/")}
+              onClick={() => router.push(backHref)}
               className="flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-navy-900 px-4 text-[15px] font-extrabold text-white transition hover:bg-navy-800"
             >
-              Back to missions
+              {backLabel}
             </button>
             <button
               type="button"
@@ -299,7 +316,7 @@ export function MissionRunner({
 
       <ConsequenceTakeover
         consequence={consequence}
-        onContinue={() => router.push("/")}
+        onContinue={() => router.push(backHref)}
         onReplay={replay}
       />
     </div>

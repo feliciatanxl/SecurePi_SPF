@@ -19,6 +19,8 @@
   --color-civic-700: #14539a;
   --color-civic-600: #1a66bc;
   --color-civic-500: #2a7dd8;
+  /* Small text on navy: civic-500 is 3.7:1, below AA for body sizes. */
+  --color-civic-400: #5fa0e8;
   --color-civic-200: #bcd6f4;
   --color-civic-100: #ddeaf9;
   --color-civic-50: #eff5fd;
@@ -67,6 +69,9 @@
   --color-ink-soft: #5e6a7c;
 
   --animate-rise: rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-arrive: arrive 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-travel: travel 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-found: found 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both;
   --animate-pop: pop 0.32s cubic-bezier(0.34, 1.4, 0.64, 1) both;
   --animate-float-up: float-up 2s ease-out forwards;
   --animate-fade: fade 0.5s ease-out both;
@@ -123,6 +128,47 @@
   }
 }
 
+/* The player marker settling onto a district. */
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -140%) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/*
+ * Entering a district — reads as travelling in, not as a page swap.
+ * Translate only: scaling a whole page root would scale every glyph on it and
+ * make the element a containing block, for no gain over the shift.
+ */
+@keyframes travel {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* A word-search word locking in. */
+@keyframes found {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 /* Time-passage sweep on the consequence takeover. */
 @keyframes sweep {
   from {
@@ -167,4 +213,51 @@ body {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ==========================================================================
+   ShieldQuest City
+   An original illustrated district board built from CSS only — no map SDK, no
+   game engine, no bitmap artwork to ship or license.
+   ========================================================================== */
+
+/* City ground: a soft civic grid with a warm horizon wash over it. */
+.city-ground {
+  background-color: var(--color-navy-900);
+  background-image:
+    radial-gradient(
+      circle at 50% 118%,
+      rgba(242, 174, 51, 0.16) 0%,
+      transparent 58%
+    ),
+    radial-gradient(circle at 12% 8%, rgba(42, 125, 216, 0.24) 0%, transparent 46%),
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 34px 34px, 34px 34px;
+  background-position: center, center, center, center;
+}
+
+/* The route a player walks between districts. */
+.city-route {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.05),
+    rgba(242, 174, 51, 0.45),
+    rgba(255, 255, 255, 0.05)
+  );
+}
+
+/* Word-search cells: square, and never smaller than a comfortable tap. */
+.ws-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.ws-cell {
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }

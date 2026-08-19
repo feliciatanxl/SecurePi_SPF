@@ -6,7 +6,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -17,7 +16,12 @@ import {
   readDemo,
   writeDemo,
 } from "@/lib/state/demoStorage";
-import type { Deltas, Guardian, PlayerProfile } from "@/lib/types";
+import type {
+  Deltas,
+  DistrictId,
+  Guardian,
+  PlayerProfile,
+} from "@/lib/types";
 
 /**
  * Client-side mirror of the server-authoritative player state.
@@ -32,6 +36,14 @@ interface PlayerContextValue {
   applyDeltas: (deltas: Deltas) => void;
   /** Records one qualifying decision toward a Guardian's next level. */
   advanceGuardian: (guardianId: string) => void;
+  /**
+   * Marks one city activity finished. Idempotent, so replaying a mission or
+   * refreshing mid-run cannot inflate progress or double-count an unlock.
+   */
+  completeActivity: (nodeId: string) => void;
+  isCompleted: (nodeId: string) => boolean;
+  /** Moves the player's marker on the city board. */
+  travelTo: (districtId: DistrictId) => void;
   reset: () => void;
 }
 
@@ -56,6 +68,22 @@ function isValidProfile(value: unknown): value is PlayerProfile {
 }
 
 /**
+ * Fills in fields a session stored before the city board existed, so an old
+ * demo session degrades to "no activities completed" instead of crashing on an
+ * undefined array.
+ */
+function normaliseProfile(saved: PlayerProfile): PlayerProfile {
+  return {
+    ...MOCK_PROFILE,
+    ...saved,
+    completedActivities: Array.isArray(saved.completedActivities)
+      ? saved.completedActivities.filter((id): id is string => typeof id === "string")
+      : [],
+    currentDistrictId: saved.currentDistrictId ?? MOCK_PROFILE.currentDistrictId,
+  };
+}
+
+/**
  * `guardianProgress` stores the *cumulative* count of qualifying decisions, so
  * level and bar position are always derived — never two counters that can drift.
  */
@@ -72,19 +100,30 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   // render are identical — reading storage here would cause a hydration
   // mismatch. The stored session is applied in the effect below.
   const [profile, setProfile] = useState<PlayerProfile>(MOCK_PROFILE);
-  const hydrated = useRef(false);
+  /**
+   * Hydration is tracked in state, not a ref, and that distinction is
+   * load-bearing. Effects in one commit run in declaration order, so a ref set
+   * by the read effect below would already be true when the write effect ran in
+   * that same commit — and the write effect would still be closed over the
+   * fixture, clobbering the stored session before the restored profile had a
+   * chance to commit. Strict Mode's second mount then re-read the value it had
+   * just destroyed, so a refresh silently reset the whole demo.
+   *
+   * As state, `hydrated` only becomes true in the *next* commit, which is the
+   * same commit that carries the restored profile — so the first write can only
+   * ever write what was read.
+   */
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     const saved = readDemo<PlayerProfile>(PLAYER_STATE_KEY);
-    if (isValidProfile(saved)) setProfile(saved);
-    hydrated.current = true;
+    if (isValidProfile(saved)) setProfile(normaliseProfile(saved));
+    setHydrated(true);
   }, []);
 
-  // Persist only after hydration, otherwise the first write would clobber the
-  // stored session with the fixture defaults.
   useEffect(() => {
-    if (hydrated.current) writeDemo(PLAYER_STATE_KEY, profile);
-  }, [profile]);
+    if (hydrated) writeDemo(PLAYER_STATE_KEY, profile);
+  }, [hydrated, profile]);
 
   const applyDeltas = useCallback((deltas: Deltas) => {
     setProfile((prev) => ({
@@ -109,6 +148,25 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const completeActivity = useCallback((nodeId: string) => {
+    setProfile((prev) => {
+      if (prev.completedActivities.includes(nodeId)) return prev;
+      return {
+        ...prev,
+        completedActivities: [...prev.completedActivities, nodeId],
+        missionsCompleted: prev.missionsCompleted + 1,
+      };
+    });
+  }, []);
+
+  const travelTo = useCallback((districtId: DistrictId) => {
+    setProfile((prev) =>
+      prev.currentDistrictId === districtId
+        ? prev
+        : { ...prev, currentDistrictId: districtId },
+    );
+  }, []);
+
   const reset = useCallback(() => {
     clearDemoData();
     setProfile(MOCK_PROFILE);
@@ -120,9 +178,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       guardians: MOCK_GUARDIANS,
       applyDeltas,
       advanceGuardian,
+      completeActivity,
+      isCompleted: (nodeId: string) => profile.completedActivities.includes(nodeId),
+      travelTo,
       reset,
     }),
-    [profile, applyDeltas, advanceGuardian, reset],
+    [profile, applyDeltas, advanceGuardian, completeActivity, travelTo, reset],
   );
 
   return (
