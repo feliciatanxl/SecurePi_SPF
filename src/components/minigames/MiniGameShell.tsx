@@ -1,8 +1,15 @@
 "use client";
 
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, RotateCcw, Sparkles } from "lucide-react";
+import { MiniGameBadge } from "@/components/player/MissionArt";
 import { GuardianProgressNote } from "@/components/player/GuardianCard";
 import { RewardBurst } from "@/components/player/RewardBurst";
 import { SectionLabel, SkillBadge } from "@/components/ui/Badges";
@@ -59,6 +66,17 @@ export function MiniGameShell({
   const [granted, setGranted] = useState(false);
   const [burstKey, setBurstKey] = useState<number | null>(null);
   const grantedOnce = useRef(false);
+  const completionRef = useRef<HTMLDivElement>(null);
+
+  /*
+   * Finishing the task opens a panel below a full-height play surface, so on a
+   * phone the reward the player just earned starts off-screen. Bring it to
+   * them rather than making them hunt for it.
+   */
+  useEffect(() => {
+    if (!solved) return;
+    completionRef.current?.scrollIntoView({ block: "start" });
+  }, [solved]);
 
   const guardian = guardians.find((g) => g.id === game.reward.guardianId);
 
@@ -112,8 +130,14 @@ export function MiniGameShell({
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Link>
+          <span
+            aria-hidden="true"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/10 text-amber-400"
+          >
+            <MiniGameBadge gameId={game.id} className="h-5 w-5" />
+          </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/80">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/80">
               Mini-Game
             </p>
             <p className="truncate text-[15px] font-bold text-white">
@@ -127,23 +151,23 @@ export function MiniGameShell({
       </header>
 
       {/* Instruction */}
-      <div className="border-b border-amber-200 bg-amber-50 px-4 py-4">
+      <div className="border-b border-amber-200 bg-amber-50 px-4 py-3">
         <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-700">
           {progressLabel}
         </p>
-        <h1 className="mt-1 text-xl font-extrabold tracking-tight text-navy-900">
+        <h1 className="mt-0.5 text-[18px] font-extrabold leading-tight tracking-tight text-navy-900">
           {game.title}
         </h1>
-        <p className="mt-1 text-[14px] leading-relaxed text-ink">
+        <p className="mt-1 text-[13px] leading-snug text-ink">
           {game.instruction}
         </p>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-2 flex flex-wrap items-center gap-2">
           <SkillBadge
             competency={game.primaryCompetency}
             caption="Skill practised"
           />
           {guardian && (
-            <span className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-surface px-3 py-2 text-[13px] font-bold text-amber-700">
+            <span className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-surface px-2.5 py-1.5 text-[12px] font-bold text-amber-700">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               {guardian.name}
             </span>
@@ -156,7 +180,10 @@ export function MiniGameShell({
 
       {/* Completion */}
       {solved && (
-        <div className="space-y-3 border-t border-line px-4 pb-6 pt-4">
+        <div
+          ref={completionRef}
+          className="scroll-mt-16 space-y-3 border-t border-line px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3.5"
+        >
           {followUp}
 
           {readyToReward && !granted && (

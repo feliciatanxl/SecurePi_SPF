@@ -44,7 +44,12 @@ export function AdminSidebar({
   reviewCount: number;
 }) {
   return (
-    <aside className="shrink-0 border-b border-line bg-surface lg:w-60 lg:border-b-0 lg:border-r">
+    /*
+     * The portal is a working tool, so the section list stays reachable while an
+     * administrator reads down a long table — it sits under the fixed-height
+     * header on a laptop and collapses to a scrollable strip below that.
+     */
+    <aside className="shrink-0 border-b border-line bg-surface lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-60 lg:overflow-y-auto lg:border-b-0 lg:border-r">
       <div className="hidden items-center gap-2.5 px-5 py-5 lg:flex">
         <span
           aria-hidden="true"
@@ -219,19 +224,33 @@ export function AdminSection({
   title,
   description,
   action,
+  /** Count shown beside the title, e.g. how many items need attention. */
+  badge,
   children,
 }: {
   title: string;
   description?: string;
   action?: ReactNode;
+  badge?: { value: number; tone: "attention" | "neutral" };
   children: ReactNode;
 }) {
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-extrabold tracking-tight text-navy-900">
+          <h2 className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-navy-900">
             {title}
+            {badge && badge.value > 0 && (
+              <span
+                className={`rounded-md px-1.5 py-0.5 text-[12px] font-bold tabular-nums ${
+                  badge.tone === "attention"
+                    ? "bg-amber-100 text-amber-700"
+                    : "bg-navy-100 text-navy-800"
+                }`}
+              >
+                {badge.value}
+              </span>
+            )}
           </h2>
           {description && (
             <p className="mt-0.5 max-w-2xl text-[13px] leading-relaxed text-ink-muted">

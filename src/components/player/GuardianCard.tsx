@@ -1,6 +1,7 @@
 import { Check, Lock } from "lucide-react";
+import { GuardianPlate } from "@/components/player/GuardianArt";
 import { guardianStanding } from "@/lib/state/PlayerProvider";
-import { COMPETENCY_LETTER, type Guardian } from "@/lib/types";
+import type { Guardian } from "@/lib/types";
 
 /** Segmented progress bar — reads clearly on a projector and needs no colour. */
 function ProgressPips({
@@ -47,23 +48,18 @@ export function GuardianCard({
 
   return (
     <article
-      className={`rounded-2xl border p-4 ${
+      className={`rounded-2xl border p-3.5 ${
         featured
           ? "border-amber-200 bg-amber-50"
           : "border-line bg-surface"
       }`}
     >
       <div className="flex items-start gap-3">
-        <span
-          aria-hidden="true"
-          className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-lg font-extrabold ${
-            featured
-              ? "bg-amber-500 text-navy-900"
-              : "bg-navy-900 text-white"
-          }`}
-        >
-          {COMPETENCY_LETTER[guardian.competency]}
-        </span>
+        <GuardianPlate
+          guardian={guardian}
+          className="h-11 w-11 rounded-2xl text-[17px]"
+          tone={featured ? "amber" : "navy"}
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -89,7 +85,7 @@ export function GuardianCard({
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-3">
         <div className="mb-1.5 flex items-baseline justify-between">
           <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
             {guardian.skill} progress
@@ -99,7 +95,7 @@ export function GuardianCard({
           </span>
         </div>
         <ProgressPips progress={progress} target={target} emphasis={featured} />
-        <p className="mt-2.5 text-[13px] leading-relaxed text-ink-muted">
+        <p className="mt-2 text-[13px] leading-snug text-ink-muted">
           {progress === 0 && level > 1
             ? `Level ${level} reached. ${guardian.description}`
             : `Complete ${target - progress} more ${guardian.skill.toLowerCase()} decision${
@@ -111,34 +107,6 @@ export function GuardianCard({
   );
 }
 
-/** Compact one-line Guardian summary for the home overview strip. */
-export function GuardianMini({
-  guardian,
-  cumulative,
-}: {
-  guardian: Guardian;
-  cumulative: number;
-}) {
-  const { level, progress, target } = guardianStanding(guardian, cumulative);
-  return (
-    <div className="flex items-center gap-2.5">
-      <span
-        aria-hidden="true"
-        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-500 text-sm font-extrabold text-navy-900"
-      >
-        {COMPETENCY_LETTER[guardian.competency]}
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-[13px] font-bold uppercase tracking-wide text-white">
-          {guardian.name}
-        </p>
-        <p className="text-[11px] font-medium text-navy-100/80">
-          Level {level} · {progress}/{target}
-        </p>
-      </div>
-    </div>
-  );
-}
 
 /** Shown inside a debrief when a decision strengthened a Guardian. */
 export function GuardianProgressNote({ name }: { name: string }) {

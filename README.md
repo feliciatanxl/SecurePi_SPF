@@ -58,10 +58,13 @@ src/
     hooks/useWorld        Resolves the city board against the player's own
                           completions to derive unlock state and progress.
   components/
-    player/               AppShell (presentation canvas + bottom nav),
-                          WorldMap / DistrictCard / MissionNode (the city board),
-                          WorldProgress, MissionRunner and its parts. Both player
-                          missions are the same runner with a different id.
+    player/               AppShell (app frame + bottom nav), CityBoard /
+                          districtSkin / MissionNode (the city board and its
+                          district route), DistrictSheet and CityInfoSheet (the
+                          board's bottom sheets), GuardianArt / DistrictArt /
+                          MissionArt (the replaceable art slots), WorldProgress,
+                          MissionRunner and its parts. Both player missions are
+                          the same runner with a different id.
     minigames/            MiniGameShell (shared chrome + a one-time reward
                           pipeline), WordSearchGame, DecodeClueGame,
                           TransferQuestion.
@@ -70,7 +73,11 @@ src/
                           AdminNeedsAttention, AdminRecentContent,
                           AdminReviewQueue, SkillCoverage, FlashMissionPanel.
     ui/Modal.tsx          Shared dialog. `dismissible={false}` is used for the
-                          consequence reveal so it must be acknowledged.
+                          consequence reveal so it must be acknowledged. On a
+                          phone it lands as a bottom sheet, which is what the
+                          board's district and About panels use.
+    ui/ArtSlot.tsx        Renders registered artwork, or the CSS/icon
+                          placeholder until there is any. See "Artwork" below.
   app/
     (player)/             Route group sharing the AppShell chrome and one
                           PlayerProvider, so state carries across the demo.
@@ -141,8 +148,32 @@ Status is never carried by colour alone. Found words are filled *and* ticked in
 the word list *and* announced in a live region; locked nodes carry an icon and a
 text reason; remaining attempts are printed as a number beside the meter.
 
+## Artwork
+
+Every illustrated element — Guardians, districts, the player token, mission-type
+marks, mini-game badges — renders through one registry, `src/lib/brand/assets.ts`.
+Each slot is `null` and shows a CSS or icon placeholder until a file is dropped
+into `public/assets/` and named in that file; the artwork and the placeholder
+render into the same box, so nothing moves when real art arrives. The drop-in
+conventions are in `public/assets/README.md`.
+
+No layout is built around the current placeholders.
+
 ## PWA
 
-`public/manifest.webmanifest` and the icon are wired up, so the app is
-installable to the home screen. A service worker for offline scenario caching is
+`public/manifest.webmanifest` is wired up with the original ShieldQuest mark, so
+the app is installable to the home screen with a proper icon rather than a
+screenshot:
+
+    public/icon.svg           Browser tab icon and the manifest's "any" icon.
+    public/icon-maskable.svg  Same mark inside the 80% safe zone, for Android's
+                              adaptive-icon masks.
+    src/app/apple-icon.tsx    180x180 PNG touch icon for iOS, rasterised from the
+                              same artwork at build time by Next's built-in
+                              `ImageResponse` — no image pipeline, no extra
+                              dependency, nothing binary in the repository.
+
+The artwork is drawn in-house from the existing design tokens (a civic shield
+carrying one map-pin node) and deliberately has a single interior shape, so it
+still reads at 16px. A service worker for offline scenario caching is
 intentionally **not** included in the prototype.

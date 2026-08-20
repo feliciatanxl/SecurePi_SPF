@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, RotateCcw, ShieldCheck, TrendingUp, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  Loader2,
+  RotateCcw,
+  ShieldCheck,
+  TrendingUp,
+  UserRound,
+} from "lucide-react";
 import { ClueInspector } from "@/components/player/ClueInspector";
 import { ConsequenceTakeover } from "@/components/player/ConsequenceTakeover";
 import { DebriefCard } from "@/components/player/DebriefCard";
@@ -66,10 +74,34 @@ export function MissionRunner({
   } = useScenarioRun(scenarioId);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  /*
+   * Mode explainers are folded away by default. They are worth reading, but
+   * not ahead of the situation — on a phone an expanded explainer pushed the
+   * message thread most of a screen down before the player had seen anything
+   * to decide about.
+   */
+  const [aboutOpen, setAboutOpen] = useState(false);
 
+  /*
+   * Bring the outcome into view once a decision lands — the reply, then the
+   * debrief or the holding beat before a delayed consequence. Deliberately not
+   * on load: a player should read the situation from the top rather than be
+   * dropped at the bottom of the thread.
+   *
+   * Scrolling is instant rather than smooth. The app column is its own
+   * scrollport, and a smooth scroll inside it is easily interrupted by the
+   * layout shift the debrief itself causes — landing in the wrong place is a
+   * worse outcome than not animating.
+   */
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [transcript.length, result]);
+    const node = bottomRef.current;
+    if (!node) return;
+    if (result) {
+      node.scrollIntoView({ block: "end" });
+    } else {
+      node.closest("main")?.scrollTo({ top: 0 });
+    }
+  }, [result]);
 
   /*
    * A decision counts as completing the node regardless of which option was
@@ -123,70 +155,106 @@ export function MissionRunner({
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Link>
+          {/*
+            The mission bar carries the page heading. It used to be repeated as
+            a large title in the band below, which spent a block of a phone
+            screen on a label that was already on screen and stayed there.
+          */}
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/80">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/80">
               {eyebrow}
             </p>
-            <p className="truncate text-[15px] font-bold text-white">
+            <h1 className="truncate text-[16px] font-extrabold leading-tight text-white">
               {scenario.title}
-            </p>
+            </h1>
           </div>
-          <span className="shrink-0 rounded-lg bg-white/12 px-2.5 py-1 text-[12px] font-bold text-white tabular-nums">
-            {scenario.step} of {scenario.totalSteps}
+          <span className="shrink-0 rounded-lg bg-white/12 px-2 py-1 text-[11px] font-bold text-white tabular-nums">
+            {scenario.step}/{scenario.totalSteps}
           </span>
         </div>
 
-        <div className="flex flex-wrap gap-1.5 border-t border-white/10 px-4 py-2">
-          <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2 py-1 text-[11px] font-bold text-white tabular-nums">
-            <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" />
-            Trust {profile.trust}
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2 py-1 text-[11px] font-bold text-white tabular-nums">
-            <span
-              aria-hidden="true"
-              className="h-1.5 w-1.5 rounded-full bg-coral-200"
-            />
-            Risk {profile.risk}
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2 py-1 text-[11px] font-bold text-white tabular-nums">
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-            Resilience {profile.resiliencePoints}
-          </span>
-        </div>
+        {/* HUD. One strip, three numbers, always on screen. */}
+        <dl className="flex items-center gap-1.5 border-t border-white/10 px-4 py-1">
+          <HudStat
+            icon={<TrendingUp className="h-3 w-3" aria-hidden="true" />}
+            label="Trust"
+            value={profile.trust}
+          />
+          <HudStat
+            icon={
+              <span
+                aria-hidden="true"
+                className="block h-1.5 w-1.5 rounded-full bg-coral-200"
+              />
+            }
+            label="Risk"
+            value={profile.risk}
+          />
+          <HudStat
+            icon={<ShieldCheck className="h-3 w-3" aria-hidden="true" />}
+            label="Resil."
+            value={profile.resiliencePoints}
+          />
+        </dl>
       </header>
 
-      {/* Mission header */}
+      {/*
+        Mission framing. Only what a player needs before deciding: which mode
+        this is, the hook, and the situation. The mode explainer sits behind
+        "About" so it cannot push the thread off the first screen.
+      */}
       <div
-        className={`px-4 py-5 ${isTeal ? "bg-teal-50" : "bg-civic-50"} border-b ${
+        className={`px-4 py-2.5 ${isTeal ? "bg-teal-50" : "bg-civic-50"} border-b ${
           isTeal ? "border-teal-100" : "border-civic-100"
         }`}
       >
-        {modeBadge ? (
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-teal-600 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-white">
-            {modeBadge}
-          </span>
-        ) : (
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-civic-700">
+        <div className="flex items-center gap-2">
+          {modeBadge && (
+            <span className="inline-flex shrink-0 items-center rounded-md bg-teal-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-white">
+              {modeBadge}
+            </span>
+          )}
+          <p className="min-w-0 flex-1 truncate text-[10px] font-bold uppercase tracking-[0.12em] text-ink-soft">
             {scenario.category}
           </p>
-        )}
+          {note && (
+            <button
+              type="button"
+              onClick={() => setAboutOpen((v) => !v)}
+              aria-expanded={aboutOpen}
+              aria-controls="mission-about"
+              className={`-my-1.5 inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-lg px-1.5 text-[12px] font-bold transition ${
+                isTeal
+                  ? "text-teal-700 hover:text-teal-600"
+                  : "text-civic-700 hover:text-civic-800"
+              }`}
+            >
+              About
+              <span className="sr-only"> {modeBadge ?? "this mission"}</span>
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition-transform ${aboutOpen ? "rotate-180" : ""}`}
+                aria-hidden="true"
+              />
+            </button>
+          )}
+        </div>
+
         <p
-          className={`mt-2 text-[15px] font-bold leading-snug ${
+          className={`mt-1 text-[14px] font-bold leading-snug ${
             isTeal ? "text-teal-700" : "text-navy-900"
           }`}
         >
           {scenario.hook}
         </p>
-        <h1 className="mt-1.5 text-2xl font-extrabold tracking-tight text-navy-900">
-          {scenario.title}
-        </h1>
-        {modeBadge && (
-          <p className="mt-1 text-[13px] font-semibold uppercase tracking-[0.12em] text-ink-soft">
-            {scenario.category}
-          </p>
-        )}
-        {note && (
-          <p className="mt-3 rounded-xl border border-teal-200 bg-surface px-3.5 py-2.5 text-[13px] leading-relaxed text-ink">
+        <p className="mt-0.5 text-[13px] font-semibold leading-snug text-ink-muted">
+          {scenario.prompt}
+        </p>
+
+        {note && aboutOpen && (
+          <p
+            id="mission-about"
+            className="mt-2 rounded-xl border border-teal-200 bg-surface px-3 py-2 text-[12.5px] leading-snug text-ink"
+          >
             {note}
           </p>
         )}
@@ -194,20 +262,20 @@ export function MissionRunner({
 
       {/* Friend card — Peer Shield only */}
       {friend && (
-        <div className="border-b border-line px-4 py-4">
-          <div className="flex items-start gap-3 rounded-2xl border border-line bg-surface-sunk p-3.5">
+        <div className="border-b border-line px-4 py-2.5">
+          <div className="flex items-start gap-2.5 rounded-2xl border border-line bg-surface-sunk p-2.5">
             <span
               aria-hidden="true"
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-teal-600 text-base font-extrabold text-white"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-teal-600 text-[15px] font-extrabold text-white"
             >
               {friend.name.charAt(0)}
             </span>
             <div className="min-w-0">
-              <p className="flex items-center gap-1.5 text-[13px] font-extrabold uppercase tracking-wide text-navy-900">
-                <UserRound className="h-3.5 w-3.5 text-teal-700" aria-hidden="true" />
+              <p className="flex items-center gap-1.5 text-[12px] font-extrabold uppercase tracking-wide text-navy-900">
+                <UserRound className="h-3 w-3 text-teal-700" aria-hidden="true" />
                 {friend.name}
               </p>
-              <p className="mt-1 text-[14px] leading-relaxed text-ink">
+              <p className="mt-0.5 text-[13.5px] leading-snug text-ink">
                 “{friend.quote}”
               </p>
             </div>
@@ -216,16 +284,7 @@ export function MissionRunner({
       )}
 
       {/* Transcript */}
-      <div className="flex-1 space-y-3 px-4 py-4">
-        <div>
-          <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
-            The situation
-          </h2>
-          <p className="mt-1 text-[13px] font-semibold leading-relaxed text-ink-muted">
-            {scenario.prompt}
-          </p>
-        </div>
-
+      <div className="flex-1 space-y-2 px-4 py-2.5">
         {transcript.map((m) => (
           <ScenarioMessage key={m.id} message={m} accent={accent} />
         ))}
@@ -264,7 +323,7 @@ export function MissionRunner({
       </div>
 
       {/* Decision rail */}
-      <div className="sticky bottom-0 z-20 space-y-2.5 border-t border-line bg-surface/95 px-4 pb-5 pt-4 backdrop-blur">
+      <div className="sticky bottom-0 z-20 space-y-2 border-t border-line bg-surface/95 px-4 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
         {awaitingConsequence ? (
           // Holds the beat without hinting at the outcome.
           <p
@@ -319,6 +378,29 @@ export function MissionRunner({
         onContinue={() => router.push(backHref)}
         onReplay={replay}
       />
+    </div>
+  );
+}
+
+/** One HUD figure. Compact enough that three fit on one strip at 375px. */
+function HudStat({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg bg-white/10 px-2 py-1">
+      <span className="shrink-0 text-white/80">{icon}</span>
+      <dt className="truncate text-[10px] font-bold uppercase tracking-wide text-white/70">
+        {label}
+      </dt>
+      <dd className="ml-auto text-[12px] font-extrabold tabular-nums text-white">
+        {value}
+      </dd>
     </div>
   );
 }

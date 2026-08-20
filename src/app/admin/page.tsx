@@ -138,8 +138,8 @@ export default function AdminPage() {
     <div className="min-h-dvh bg-canvas text-ink">
       {/* Top bar. The primary action lives here so it is reachable from
           every section without being a destination of its own. */}
-      <header className="sticky top-0 z-30 border-b border-line bg-surface">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+      <header className="sticky top-0 z-30 border-b border-line bg-surface lg:h-16">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 lg:h-full lg:flex-nowrap lg:py-0">
           <div className="flex items-center gap-3 lg:hidden">
             <span
               aria-hidden="true"
@@ -153,16 +153,23 @@ export default function AdminPage() {
           </div>
 
           <span className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-amber-700">
-            Prototype admin view · demonstration environment · simulated data
+            Prototype admin view
+            <span className="hidden xl:inline">
+              {" "}
+              · demonstration environment · simulated data
+            </span>
           </span>
 
           <div className="flex flex-wrap items-center gap-3">
+            {/* Icon-only until there is room for the label, so the whole bar
+                stays one row on a tablet instead of wrapping to two. */}
             <Link
               href="/"
               className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-line px-3 text-[13px] font-semibold text-ink-muted transition hover:border-civic-200 hover:text-civic-700"
             >
               <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-              Youth app
+              <span className="hidden lg:inline">Youth app</span>
+              <span className="sr-only lg:hidden">Open the youth app</span>
             </Link>
             <button
               type="button"
@@ -174,7 +181,7 @@ export default function AdminPage() {
             </button>
             <span
               aria-hidden="true"
-              className="grid h-9 w-9 place-items-center rounded-full bg-navy-100 text-[12px] font-bold text-navy-800"
+              className="hidden h-9 w-9 place-items-center rounded-full bg-navy-100 text-[12px] font-bold text-navy-800 lg:grid"
             >
               DO
             </span>
@@ -191,10 +198,10 @@ export default function AdminPage() {
 
         <main className="min-w-0 flex-1 px-5 py-6 lg:px-8">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-civic-700">
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-civic-700 lg:hidden">
               Project SHIELD
             </p>
-            <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-navy-900">
+            <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-navy-900 lg:mt-0">
               Scenario Management Portal
             </h1>
             <p className="mt-1 max-w-2xl text-[14px] leading-relaxed text-ink-muted">
@@ -249,6 +256,7 @@ export default function AdminPage() {
 
                   <Section
                     title="Needs attention"
+                    badge={{ value: reviewRows.length, tone: "attention" }}
                     description={`Live scenarios teaching below the ${REVIEW_THRESHOLD}% threshold. This reflects the content, not the participants.`}
                   >
                     <AdminNeedsAttention
@@ -284,6 +292,7 @@ export default function AdminPage() {
               {section === "library" && (
                 <Section
                   title="Scenario Library"
+                  badge={{ value: rows.length, tone: "neutral" }}
                   description="All published, drafted and scheduled prevention content."
                 >
                   <ScenarioFilters
@@ -314,6 +323,7 @@ export default function AdminPage() {
               {section === "review" && (
                 <Section
                   title="Content Review"
+                  badge={{ value: reviewRows.length, tone: "attention" }}
                   description="Scenarios that may require clearer teaching, updated content or further review."
                 >
                   <AdminReviewQueue rows={reviewRows} onSelect={setDetail} />

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Check, MapPin } from "lucide-react";
-import { DISTRICT_SKIN } from "@/components/player/DistrictCard";
+import { ArrowLeft, Check, ChevronDown } from "lucide-react";
+import { DistrictPlate } from "@/components/player/DistrictArt";
+import { DISTRICT_SKIN } from "@/components/player/districtSkin";
 import { MissionNodeCard } from "@/components/player/MissionNode";
 import { useDistrict } from "@/lib/hooks/useWorld";
 import { usePlayer } from "@/lib/state/PlayerProvider";
@@ -12,17 +13,22 @@ import { usePlayer } from "@/lib/state/PlayerProvider";
 /**
  * A district route — the middle layer of the board:
  *
- *   district → mission node → activity → learning outcome → progress
+ *   district → mission stop → activity → learning outcome → progress
  *
- * Nodes are laid out as an ordered route so progression is legible, but the
+ * Stops are laid out as an ordered route so progression is legible, but the
  * player is not marched down it: everything marked open can be started in any
- * order, and locked nodes state exactly what opens them.
+ * order, and locked stops state exactly what opens them.
+ *
+ * The framing copy — what this district is about, which topics it covers — sits
+ * behind one tap rather than above the route, so the stops themselves are what
+ * a phone opens on.
  */
 export default function DistrictPage() {
   const params = useParams<{ districtId: string }>();
   const districtId = params.districtId;
   const district = useDistrict(districtId);
   const { guardians, travelTo } = usePlayer();
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   // Arriving moves the player's marker, so the board reflects where they went.
   // `travelTo` is a no-op when the marker is already here, so this settles.
@@ -52,80 +58,96 @@ export default function DistrictPage() {
   }
 
   const skin = DISTRICT_SKIN[district.id];
-  const Icon = skin.icon;
   const guardianName = (id?: string) =>
     id ? guardians.find((g) => g.id === id)?.name : undefined;
 
   return (
-    <div className="animate-travel pb-8">
-      {/* District header */}
-      <header className="bg-navy-900 px-4 pb-5 pt-[max(0.75rem,env(safe-area-inset-top))] text-white">
-        <Link
-          href="/"
-          className="-ml-2 inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-2 text-[13px] font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          ShieldQuest City
-        </Link>
-
-        <div className="mt-2 flex items-start gap-3">
-          <span
-            aria-hidden="true"
-            className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${skin.plate}`}
+    <div className="animate-travel pb-6">
+      {/* One compact bar: where you are, how far in, and the way back. */}
+      <header className="sticky top-0 z-20 bg-navy-900 px-3 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] text-white">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            aria-label="Back to ShieldQuest City"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white/80 transition hover:bg-white/10 hover:text-white"
           >
-            <Icon className="h-6 w-6" />
-          </span>
-          <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-400">
-              <MapPin className="h-3 w-3" aria-hidden="true" />
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+          </Link>
+
+          <DistrictPlate
+            districtId={district.id}
+            className="h-10 w-10 rounded-xl"
+            iconClassName="h-5 w-5"
+          />
+
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400">
               District
             </p>
-            <h1 className="mt-0.5 text-2xl font-extrabold uppercase leading-tight tracking-tight">
+            <h1 className="truncate text-[18px] font-extrabold uppercase leading-tight tracking-tight">
               {district.name}
             </h1>
           </div>
-        </div>
 
-        <p className="mt-3 text-[14px] leading-relaxed text-navy-100">
-          {district.tagline}
-        </p>
-
-        <ul className="mt-3 flex flex-wrap gap-1.5">
-          {district.topics.map((topic) => (
-            <li
-              key={topic}
-              className="rounded-md border border-white/20 bg-white/10 px-2 py-1 text-[11px] font-semibold text-white"
-            >
-              {topic}
-            </li>
-          ))}
-        </ul>
-
-        <p className="mt-4 flex items-center gap-2 border-t border-white/12 pt-3.5 text-[13px] font-semibold">
-          <span className="tabular-nums text-amber-400">
-            {district.completed} / {district.total}
-          </span>
-          <span className="text-navy-100">activities completed here</span>
           {district.cleared && (
-            <span className="ml-auto inline-flex items-center gap-1 rounded-md bg-leaf-600 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-leaf-600 px-1.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
               <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" />
-              District cleared
+              Cleared
             </span>
           )}
-        </p>
+          <span className="shrink-0 rounded-lg bg-white/12 px-2.5 py-1 text-[12px] font-bold tabular-nums text-white">
+            {district.completed}/{district.total}
+          </span>
+        </div>
       </header>
 
-      {/* The route */}
-      <div className={`border-b px-4 py-3 ${skin.header}`}>
-        <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy-900">
-          District route
-        </h2>
-        <p className="mt-0.5 text-[13px] leading-relaxed text-ink-muted">
-          Choose any open stop. Nothing here is decided by chance.
-        </p>
+      {/* Route band, with the district briefing folded away behind it. */}
+      <div className={`border-b ${skin.header}`}>
+        <div className="flex items-center justify-between gap-2 px-4 py-1.5">
+          <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy-900">
+            District route
+          </h2>
+          <button
+            type="button"
+            onClick={() => setAboutOpen((v) => !v)}
+            aria-expanded={aboutOpen}
+            aria-controls="district-about"
+            className="-my-1 inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2 text-[12px] font-bold text-navy-900/75 transition hover:text-navy-900"
+          >
+            About this district
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition-transform ${aboutOpen ? "rotate-180" : ""}`}
+              aria-hidden="true"
+            />
+          </button>
+        </div>
+
+        {aboutOpen && (
+          <div
+            id="district-about"
+            className="border-t border-navy-900/10 px-4 py-3"
+          >
+            <p className="text-[13px] leading-relaxed text-ink-muted">
+              {district.tagline}
+            </p>
+            <ul className="mt-2 flex flex-wrap gap-1.5">
+              {district.topics.map((topic) => (
+                <li
+                  key={topic}
+                  className="rounded-md border border-navy-900/15 bg-surface px-2 py-0.5 text-[11px] font-semibold text-navy-900"
+                >
+                  {topic}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">
+              Choose any open stop. Nothing here is decided by chance.
+            </p>
+          </div>
+        )}
       </div>
 
-      <ol className="relative space-y-3 px-4 py-4 pl-11">
+      <ol className="relative space-y-2.5 px-4 py-3.5 pl-11">
         {/* The route line the stops hang off. */}
         <span
           aria-hidden="true"

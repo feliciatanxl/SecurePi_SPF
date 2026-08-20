@@ -33,10 +33,10 @@ export function ClueInspector({
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls={panelId}
-          className="flex min-h-[52px] w-full items-center gap-2.5 px-4 py-3 text-left"
+          className="flex min-h-[48px] w-full items-center gap-2.5 px-3.5 py-2 text-left"
         >
           <Search className="h-4 w-4 shrink-0 text-civic-600" aria-hidden="true" />
-          <span className="flex-1 text-[14px] font-semibold text-navy-900">
+          <span className="flex-1 text-[13px] font-semibold leading-snug text-navy-900">
             {question}
           </span>
           {tagged.length > 0 && (
@@ -54,8 +54,8 @@ export function ClueInspector({
       </h2>
 
       {open && (
-        <div id={panelId} className="border-t border-line px-4 pb-4 pt-3">
-          <p className="mb-3 text-[13px] text-ink-muted">
+        <div id={panelId} className="border-t border-line px-3.5 pb-3.5 pt-2.5">
+          <p className="mb-2.5 text-[13px] text-ink-muted">
             Optional. Tag anything that feels off before you decide.
           </p>
           <ul className="flex flex-wrap gap-2">

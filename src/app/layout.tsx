@@ -10,15 +10,33 @@ const sans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "ShieldQuest — Project SHIELD",
+  // A page-level title still reads as "<page> · ShieldQuest — Project SHIELD".
+  title: {
+    default: "ShieldQuest — Project SHIELD",
+    template: "%s · ShieldQuest — Project SHIELD",
+  },
+  applicationName: "ShieldQuest",
   description:
     "Choose Right. Protect Together. Practise recognising risk, handling pressure and protecting your friends before the situation happens in real life.",
   manifest: "/manifest.webmanifest",
+  /*
+   * The favicon is the original ShieldQuest mark in `public/icon.svg`; the
+   * Apple touch icon is the same artwork rasterised by `apple-icon.tsx`.
+   * Declaring `icons` at all opts out of Next's automatic file-based icon
+   * links, so the generated `/apple-icon` route has to be named here too —
+   * without it iOS falls back to a screenshot of the page.
+   */
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-icon", type: "image/png", sizes: "180x180" }],
+  },
   appleWebApp: {
     capable: true,
     title: "ShieldQuest",
     statusBarStyle: "black-translucent",
   },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {

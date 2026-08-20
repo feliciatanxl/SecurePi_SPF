@@ -1,4 +1,4 @@
-import { DISTRICT_SKIN } from "@/components/player/DistrictCard";
+import { DISTRICT_SKIN } from "@/components/player/districtSkin";
 import type { WorldProgress as Progress } from "@/lib/types";
 
 /**

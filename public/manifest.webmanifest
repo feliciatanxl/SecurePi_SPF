@@ -1,19 +1,39 @@
 {
-  "name": "ShieldQuest — Youth Crime Prevention",
+  "id": "/",
+  "name": "ShieldQuest — Project SHIELD",
   "short_name": "ShieldQuest",
-  "description": "Practise the moment of choice: risk recognition, delayed consequences, and peer intervention.",
-  "start_url": "/play",
+  "description": "Choose Right. Protect Together. Practise spotting risk, holding the moment and protecting your friends — before it happens for real.",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#05080f",
-  "theme_color": "#05080f",
+  "background_color": "#0b2545",
+  "theme_color": "#0b2545",
+  "categories": ["education", "games"],
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "ShieldQuest City",
+      "short_name": "City",
+      "url": "/"
+    },
+    {
+      "name": "Peer Shield",
+      "short_name": "Peer Shield",
+      "url": "/peer-shield"
     }
   ]
 }

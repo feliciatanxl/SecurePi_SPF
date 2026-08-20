@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Check, Info } from "lucide-react";
+import { Check, ChevronDown, Info } from "lucide-react";
 import type { WordSearchGame as Game, WordSearchWord } from "@/lib/types";
 
 interface Cell {
@@ -66,6 +66,20 @@ export function WordSearchBoard({
   const [dragCells, setDragCells] = useState<Cell[]>([]);
   const [announce, setAnnounce] = useState("");
   const [nearMiss, setNearMiss] = useState(false);
+  /*
+   * The three ways in are still stated in full — they are just folded away on
+   * a phone, where a permanent instruction block pushes the grid itself below
+   * the fold. The same routes are announced to assistive technology through the
+   * live region and the per-cell labels regardless of this toggle.
+   */
+  const [howToOpen, setHowToOpen] = useState(false);
+  /*
+   * The full word list is a tall block that sat permanently between the grid
+   * and the next action. Every meaning is still read once, as the word lands,
+   * through the live region below the grid — this keeps the whole list one tap
+   * away without it pushing the completion step off the screen.
+   */
+  const [wordsOpen, setWordsOpen] = useState(false);
 
   const pressStart = useRef<Cell | null>(null);
   const dragging = useRef(false);
@@ -222,14 +236,37 @@ export function WordSearchBoard({
   const inDrag = (r: number, c: number) =>
     dragCells.some((d) => d.r === r && d.c === c);
 
+  const allFound = found.length === game.words.length;
+
   return (
     <div>
-      {/* How to play — three routes, stated plainly. */}
-      <p className="mb-3 flex items-start gap-2 rounded-xl border border-line bg-surface-sunk px-3 py-2.5 text-[12px] leading-relaxed text-ink-muted">
-        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        Tap the first letter, then the last letter. You can also drag across, or
-        use the arrow keys and Enter.
-      </p>
+      {/* How to play — three routes, stated plainly, one tap away. */}
+      <div className="mb-2">
+        <button
+          type="button"
+          onClick={() => setHowToOpen((v) => !v)}
+          aria-expanded={howToOpen}
+          aria-controls="ws-how-to"
+          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-2 text-[12px] font-bold text-civic-700 transition hover:text-civic-800"
+        >
+          <Info className="h-3.5 w-3.5" aria-hidden="true" />
+          How to play
+          <ChevronDown
+            className={`h-3.5 w-3.5 transition-transform ${howToOpen ? "rotate-180" : ""}`}
+            aria-hidden="true"
+          />
+        </button>
+        {howToOpen && (
+          <p
+            id="ws-how-to"
+            className="mt-1 rounded-xl border border-line bg-surface-sunk px-3 py-2.5 text-[12px] leading-relaxed text-ink-muted"
+          >
+            Tap the first letter, then the last letter. You can also drag across
+            the word, or move with the arrow keys and press Enter on the first
+            and last letters.
+          </p>
+        )}
+      </div>
 
       <div
         ref={gridRef}
@@ -279,7 +316,7 @@ export function WordSearchBoard({
       {/* Live region — the only way a screen-reader user learns a word landed. */}
       <p
         aria-live="polite"
-        className={`mt-3 min-h-[40px] rounded-xl border px-3 py-2.5 text-[13px] leading-relaxed ${
+        className={`mt-2.5 min-h-[40px] rounded-xl border px-3 py-2 text-[13px] leading-snug ${
           nearMiss
             ? "border-amber-200 bg-amber-50 text-amber-700"
             : "border-line bg-surface-sunk text-ink"
@@ -289,14 +326,64 @@ export function WordSearchBoard({
           "Six warning signs are hidden across, down and diagonally."}
       </p>
 
-      {/* Word list. Doubles as the found/not-found status without using colour. */}
-      <ul className="mt-3 space-y-1.5">
+      {/* Found counter. Doubles as the control for the full list. */}
+      <button
+        type="button"
+        onClick={() => setWordsOpen((v) => !v)}
+        aria-expanded={wordsOpen}
+        aria-controls="ws-words"
+        className={`mt-2.5 flex min-h-[48px] w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition ${
+          allFound
+            ? "border-leaf-200 bg-leaf-50"
+            : "border-line bg-surface hover:border-civic-500"
+        }`}
+      >
+        <span
+          className={`text-[11px] font-bold uppercase tracking-[0.12em] ${
+            allFound ? "text-leaf-700" : "text-ink-soft"
+          }`}
+        >
+          Found
+        </span>
+        <span
+          className={`text-[15px] font-extrabold tabular-nums ${
+            allFound ? "text-leaf-700" : "text-navy-900"
+          }`}
+        >
+          {found.length} / {game.words.length}
+        </span>
+        <span className="ml-auto flex items-center gap-1" aria-hidden="true">
+          {game.words.map((w) => (
+            <span
+              key={w.word}
+              className={`h-1.5 w-4 rounded-full ${
+                found.includes(w.word) ? "bg-leaf-700" : "bg-line-strong"
+              }`}
+            />
+          ))}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-ink-soft transition-transform ${wordsOpen ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+        <span className="sr-only">
+          {wordsOpen ? "Hide" : "Show"} the list of warning signs
+        </span>
+      </button>
+
+      {/* Word list. Status never depends on colour: each row carries a tick,
+          the word itself and a spoken found / not-found state. */}
+      <ul
+        id="ws-words"
+        hidden={!wordsOpen}
+        className="mt-1.5 space-y-1.5"
+      >
         {game.words.map((w) => {
           const isFound = found.includes(w.word);
           return (
             <li
               key={w.word}
-              className={`rounded-xl border px-3 py-2.5 ${
+              className={`rounded-xl border px-3 py-2 ${
                 isFound
                   ? "border-leaf-200 bg-leaf-50"
                   : "border-line bg-surface"
@@ -323,7 +410,7 @@ export function WordSearchBoard({
                 </span>
               </p>
               {isFound && (
-                <p className="mt-1 pl-7 text-[13px] leading-relaxed text-ink">
+                <p className="mt-0.5 pl-7 text-[13px] leading-snug text-ink">
                   {w.meaning}
                 </p>
               )}

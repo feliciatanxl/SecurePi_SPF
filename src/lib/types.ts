@@ -29,6 +29,16 @@ export const COMPETENCY_LABEL: Record<Competency, string> = {
   DEFEND: "Defend Your Community",
 };
 
+/** Framework order, used anywhere the six skills are listed together. */
+export const COMPETENCY_ORDER: Competency[] = [
+  "SPOT",
+  "HOLD",
+  "IDENTIFY",
+  "EVALUATE",
+  "LEAD",
+  "DEFEND",
+];
+
 /** The single letter shown on in-gameplay skill badges. */
 export const COMPETENCY_LETTER: Record<Competency, string> = {
   SPOT: "S",

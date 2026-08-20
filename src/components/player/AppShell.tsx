@@ -9,7 +9,7 @@ import {
   SlidersHorizontal,
   TrendingUp,
 } from "lucide-react";
-import { COMPETENCY_LABEL, COMPETENCY_LETTER, type Competency } from "@/lib/types";
+import { COMPETENCY_LABEL, COMPETENCY_LETTER, COMPETENCY_ORDER } from "@/lib/types";
 import { PROTOTYPE_DISCLAIMER } from "@/lib/api/mock-data";
 
 const TABS = [
@@ -18,15 +18,6 @@ const TABS = [
   { href: "/progress", label: "Progress", icon: TrendingUp },
   { href: "/guardians", label: "Guardians", icon: Compass },
 ] as const;
-
-const FRAMEWORK: Competency[] = [
-  "SPOT",
-  "HOLD",
-  "IDENTIFY",
-  "EVALUATE",
-  "LEAD",
-  "DEFEND",
-];
 
 /** Routes that run full-bleed — their own top bar replaces the tab navigation. */
 const isImmersive = (pathname: string) =>
@@ -55,18 +46,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const board = isBoard(pathname);
 
   return (
-    <div className="min-h-dvh bg-canvas">
-      <div className="mx-auto flex min-h-dvh w-full max-w-[1240px] items-stretch justify-center gap-10 px-0 xl:h-dvh xl:min-h-0 xl:px-8 xl:py-8">
+    /*
+     * A real app frame rather than a document: the shell owns the viewport
+     * height and `main` is the only thing that scrolls. That is what lets the
+     * city board size itself to whatever is left after the HUD and the tab bar,
+     * and it keeps the tab bar planted instead of riding up on a long page.
+     */
+    <div className="h-dvh overflow-hidden bg-canvas">
+      <div className="mx-auto flex h-full w-full max-w-[1240px] items-stretch justify-center gap-10 px-0 xl:px-8 xl:py-8">
         <ContextRail />
 
         <div
-          className={`relative flex w-full flex-col overflow-hidden bg-surface shadow-[0_1px_2px_rgba(11,37,69,0.06),0_16px_40px_-24px_rgba(11,37,69,0.35)] transition-[max-width] duration-300 xl:rounded-3xl xl:border xl:border-line ${
+          className={`relative flex h-full w-full flex-col overflow-hidden bg-surface shadow-[0_1px_2px_rgba(11,37,69,0.06),0_16px_40px_-24px_rgba(11,37,69,0.35)] transition-[max-width] duration-300 xl:rounded-3xl xl:border xl:border-line ${
             board ? "max-w-[440px] md:max-w-[720px]" : "max-w-[440px]"
           }`}
         >
           <main
             id="main"
-            className="thin-scroll flex-1 overflow-y-auto xl:rounded-t-3xl"
+            className="thin-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain xl:rounded-t-3xl"
           >
             {children}
           </main>
@@ -74,7 +71,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {!immersive && (
             <nav
               aria-label="Primary"
-              className="sticky bottom-0 z-20 border-t border-navy-800 bg-navy-900 pb-[max(0.25rem,env(safe-area-inset-bottom))] xl:rounded-b-3xl"
+              className="shrink-0 border-t border-navy-800 bg-navy-900 pb-[max(0.25rem,env(safe-area-inset-bottom))] xl:rounded-b-3xl"
             >
               <ul className="flex">
                 {TABS.map(({ href, label, icon: Icon }) => {
@@ -88,24 +85,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <Link
                         href={href}
                         aria-current={active ? "page" : undefined}
-                        className={`flex min-h-[52px] flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-semibold transition ${
+                        className={`relative flex min-h-[52px] flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[11px] font-semibold transition ${
                           active
                             ? "text-amber-400"
                             : "text-navy-100/70 hover:text-white"
                         }`}
                       >
+                        {/* Active marker sits above the label rather than
+                            adding a row, so the bar stays compact. */}
+                        <span
+                          aria-hidden="true"
+                          className={`absolute inset-x-1/2 top-0 h-0.5 w-7 -translate-x-1/2 rounded-full ${
+                            active ? "bg-amber-400" : "bg-transparent"
+                          }`}
+                        />
                         <Icon
                           className="h-5 w-5"
                           strokeWidth={active ? 2.4 : 1.8}
                           aria-hidden="true"
                         />
                         <span className="text-center leading-tight">{label}</span>
-                        <span
-                          aria-hidden="true"
-                          className={`mt-0.5 h-0.5 w-6 rounded-full ${
-                            active ? "bg-amber-400" : "bg-transparent"
-                          }`}
-                        />
                       </Link>
                     </li>
                   );
@@ -155,7 +154,7 @@ function ContextRail() {
             The S.H.I.E.L.D. framework
           </p>
           <ul className="mt-3 space-y-1.5">
-            {FRAMEWORK.map((c) => (
+            {COMPETENCY_ORDER.map((c) => (
               <li key={c} className="flex items-center gap-2.5">
                 <span
                   aria-hidden="true"

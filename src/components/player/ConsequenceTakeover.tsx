@@ -54,7 +54,7 @@ export function ConsequenceTakeover({
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-5 pb-8 pt-10 outline-none"
+        className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-5 pb-0 pt-[max(1.75rem,env(safe-area-inset-top))] outline-none"
       >
         {/* Time passage */}
         <div>
@@ -69,7 +69,7 @@ export function ConsequenceTakeover({
         </div>
 
         {/* Headline */}
-        <div className="mt-7 flex items-start gap-3">
+        <div className="mt-5 flex items-start gap-3">
           <span
             aria-hidden="true"
             className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/15 bg-white/10"
@@ -90,7 +90,7 @@ export function ConsequenceTakeover({
         </div>
 
         {/* What changed */}
-        <section className="mt-7 rounded-2xl border border-white/12 bg-white/6 p-4">
+        <section className="mt-5 rounded-2xl border border-white/12 bg-white/6 p-3.5">
           <SectionLabel tone="dark">What changed?</SectionLabel>
 
           <div className="mt-3 space-y-3">
@@ -134,7 +134,7 @@ export function ConsequenceTakeover({
         </section>
 
         {/* Why this mattered */}
-        <section className="mt-4 rounded-2xl border border-white/12 bg-white/6 p-4">
+        <section className="mt-3 rounded-2xl border border-white/12 bg-white/6 p-3.5">
           <SectionLabel tone="dark">Why this mattered</SectionLabel>
           <p className="mt-2 text-[13px] font-semibold text-white/70">
             Warning signs in the message
@@ -155,14 +155,14 @@ export function ConsequenceTakeover({
         </section>
 
         {/* Safer response */}
-        <section className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4">
+        <section className="mt-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-3.5">
           <SectionLabel tone="dark">Safer response</SectionLabel>
           <p className="mt-2 text-[14px] leading-relaxed text-white">
             {consequence.saferResponse}
           </p>
         </section>
 
-        <div className="mt-4">
+        <div className="mt-3">
           <SkillBadge
             competency={consequence.competency}
             caption="Skill to practise"
@@ -170,8 +170,12 @@ export function ConsequenceTakeover({
           />
         </div>
 
-        {/* Actions */}
-        <div className="mt-auto space-y-2.5 pt-8">
+        {/*
+          Actions. Pinned rather than parked at the foot of a long read: the
+          player must be able to leave this screen at any point, and on a phone
+          the debrief is taller than the viewport.
+        */}
+        <div className="sticky bottom-0 -mx-5 mt-auto space-y-2 border-t border-white/10 bg-navy-950/95 px-5 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
           <button
             type="button"
             onClick={onContinue}
