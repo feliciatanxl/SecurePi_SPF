@@ -1,0 +1,24 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="beacon-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FBBF24" /><stop offset="100%" stop-color="#EA580C" /></linearGradient>
+    <radialGradient id="beacon-glow" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#FEF08A" /><stop offset="100%" stop-color="#F59E0B" /></radialGradient>
+  </defs>
+  <circle cx="100" cy="90" r="70" fill="#FEF3C7" opacity="0.6" />
+  <path d="M70 150 Q70 180 80 180 H60 Q50 180 60 150 Z" fill="url(#beacon-grad)" />
+  <path d="M120 150 Q130 180 120 180 H140 Q150 180 130 150 Z" fill="url(#beacon-grad)" />
+  <path d="M40 100 C40 170, 160 170, 160 100 C160 30, 40 30, 40 100 Z" fill="url(#beacon-grad)" />
+  <circle cx="100" cy="100" r="45" fill="url(#beacon-glow)" />
+  <circle cx="100" cy="95" r="25" fill="#FEF9C3" />
+  <path d="M35 110 Q10 150 50 145" fill="none" stroke="url(#beacon-grad)" stroke-width="18" stroke-linecap="round" />
+  <path d="M165 110 Q190 150 150 145" fill="none" stroke="url(#beacon-grad)" stroke-width="18" stroke-linecap="round" />
+  <path d="M75 75 Q85 65 95 75" stroke="#9A3412" stroke-width="4" stroke-linecap="round" fill="none" />
+  <path d="M125 75 Q115 65 105 75" stroke="#9A3412" stroke-width="4" stroke-linecap="round" fill="none" />
+  <circle cx="80" cy="80" r="4" fill="#9A3412" />
+  <circle cx="120" cy="80" r="4" fill="#9A3412" />
+  <path d="M90 90 Q100 100 110 90" stroke="#9A3412" stroke-width="4" stroke-linecap="round" fill="none" />
+  <circle cx="65" cy="85" r="8" fill="#F87171" opacity="0.5" />
+  <circle cx="135" cy="85" r="8" fill="#F87171" opacity="0.5" />
+  <path d="M100 40 L100 15" stroke="#D97706" stroke-width="4" stroke-linecap="round" />
+  <circle cx="100" cy="15" r="10" fill="#FEF08A" />
+  <circle cx="100" cy="15" r="5" fill="#FFFFFF" />
+</svg>

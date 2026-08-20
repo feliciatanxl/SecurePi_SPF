@@ -217,9 +217,14 @@ export function CityBoard({
         >
           <span className="animate-arrive block -translate-y-[42px]">
             <span className="flex items-center gap-1 rounded-full border-2 border-amber-400 bg-navy-950 px-2 py-[3px] shadow-[0_6px_16px_-6px_rgba(6,21,39,0.95)]">
+              {/*
+                The token art is a disc, so it is given a shade more room than
+                the lucide mark it replaces — 2px, which the pill absorbs — to
+                keep its arrow legible at this size.
+              */}
               <ArtSlot
                 src={PLAYER_TOKEN_ART}
-                className="h-3 w-3 shrink-0 object-contain"
+                className="h-3.5 w-3.5 shrink-0 object-contain"
               >
                 <ShieldHalf
                   className="h-3 w-3 shrink-0 text-amber-400"

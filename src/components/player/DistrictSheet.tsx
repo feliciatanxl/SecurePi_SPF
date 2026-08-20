@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Check, Clock, Lock } from "lucide-react";
-import { DistrictPlate } from "@/components/player/DistrictArt";
+import { DistrictPlate, DistrictScene } from "@/components/player/DistrictArt";
 import { KIND_CHIP, MissionKindMark } from "@/components/player/MissionArt";
 import { DISTRICT_SKIN } from "@/components/player/districtSkin";
 import { Modal } from "@/components/ui/Modal";
@@ -53,7 +53,23 @@ function SheetBody({
         className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-line-strong sm:hidden"
       />
 
-      <header className={`shrink-0 border-b px-4 pb-3.5 pt-3 ${skin.header}`}>
+      {/*
+        The sheet is the one surface wide enough to show a district scene at
+        full strength, so it gets its own band rather than a wash behind the
+        header. Nothing is printed over it: the header's tagline is mid-grey,
+        and washing a scene under mid-grey text either fails AA or fades the
+        artwork to nothing. A band clears both problems at once.
+
+        It costs the stop list ~60px of a fixed-height sheet, not the page any
+        height — and the list scrolls by design when a district outgrows it.
+      */}
+      <div className="relative h-[60px] w-full shrink-0 overflow-hidden sm:h-[72px]">
+        <DistrictScene districtId={district.id} className="opacity-100" />
+      </div>
+
+      <header
+        className={`shrink-0 border-b px-4 pb-3.5 pt-3 ${skin.header}`}
+      >
         <div className="flex items-start gap-3 pr-10">
           <DistrictPlate
             districtId={district.id}

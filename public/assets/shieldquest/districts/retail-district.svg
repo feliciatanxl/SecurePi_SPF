@@ -1,0 +1,16 @@
+<svg viewBox="0 0 800 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="300" fill="#FFE4E6" />
+  <rect x="100" y="80" width="250" height="220" fill="#FECDD3" />
+  <rect x="450" y="80" width="250" height="220" fill="#FDA4AF" />
+  <path d="M80 80 L370 80 L350 40 L100 40 Z" fill="#F43F5E" />
+  <path d="M120 40 L100 80 H150 L170 40 Z" fill="#E11D48" />
+  <path d="M220 40 L200 80 H250 L270 40 Z" fill="#E11D48" />
+  <path d="M320 40 L300 80 H350 L350 40 Z" fill="#E11D48" />
+  <path d="M430 80 L720 80 L700 40 L450 40 Z" fill="#E11D48" />
+  <path d="M480 40 L460 80 H510 L530 40 Z" fill="#BE123C" />
+  <path d="M580 40 L560 80 H610 L630 40 Z" fill="#BE123C" />
+  <rect x="140" y="140" width="170" height="100" fill="#FFFFFF" stroke="#FDA4AF" stroke-width="4" />
+  <rect x="490" y="140" width="170" height="100" fill="#FFFFFF" stroke="#FDA4AF" stroke-width="4" />
+  <path d="M0 240 Q400 320 800 240 V300 H0 Z" fill="#FFF1F2" />
+  <path d="M0 260 Q400 340 800 260" stroke="#FFE4E6" stroke-width="4" fill="none" />
+</svg>

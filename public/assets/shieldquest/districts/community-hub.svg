@@ -1,0 +1,24 @@
+<svg viewBox="0 0 800 300" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="300" fill="#F0FDFA" />
+  <ellipse cx="400" cy="200" rx="350" ry="100" fill="#CCFBF1" />
+  <ellipse cx="400" cy="200" rx="250" ry="70" fill="#99F6E4" />
+  <path d="M380 200 V60 H420 V200 Z" fill="#0D9488" />
+  <circle cx="400" cy="60" r="80" fill="#2DD4BF" opacity="0.8" />
+  <circle cx="350" cy="50" r="60" fill="#14B8A6" opacity="0.9" />
+  <circle cx="460" cy="70" r="50" fill="#0F766E" opacity="0.8" />
+  <path d="M250 180 Q400 130 550 180" stroke="#0F766E" stroke-width="12" stroke-linecap="round" fill="none" />
+  <path d="M220 220 Q400 280 580 220" stroke="#0F766E" stroke-width="12" stroke-linecap="round" fill="none" />
+  <g transform="translate(300, 240)">
+    <circle cx="0" cy="0" r="10" fill="#0369A1" />
+    <path d="M-10 25 Q0 15 10 25 Z" fill="#0EA5E9" />
+  </g>
+  <g transform="translate(330, 250)">
+    <circle cx="0" cy="0" r="10" fill="#1E3A8A" />
+    <path d="M-10 25 Q0 15 10 25 Z" fill="#3B82F6" />
+  </g>
+  <g transform="translate(480, 230)">
+    <circle cx="0" cy="0" r="10" fill="#B45309" />
+    <path d="M-10 25 Q0 15 10 25 Z" fill="#F59E0B" />
+  </g>
+  <path d="M340 230 Q400 200 470 220" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="4 4" fill="none" />
+</svg>

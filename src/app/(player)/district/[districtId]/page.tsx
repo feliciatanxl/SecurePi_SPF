@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Check, ChevronDown } from "lucide-react";
-import { DistrictPlate } from "@/components/player/DistrictArt";
+import { DistrictPlate, DistrictScene } from "@/components/player/DistrictArt";
 import { DISTRICT_SKIN } from "@/components/player/districtSkin";
 import { MissionNodeCard } from "@/components/player/MissionNode";
 import { useDistrict } from "@/lib/hooks/useWorld";
@@ -103,7 +103,13 @@ export default function DistrictPage() {
 
       {/* Route band, with the district briefing folded away behind it. */}
       <div className={`border-b ${skin.header}`}>
-        <div className="flex items-center justify-between gap-2 px-4 py-1.5">
+        {/*
+          The district scene washes the route band. Behind this row only, and
+          never behind the briefing that unfolds under it — that is body copy,
+          and body copy gets a plain surface.
+        */}
+        <div className="relative isolate flex items-center justify-between gap-2 overflow-hidden px-4 py-1.5">
+          <DistrictScene districtId={district.id} className="-z-10 opacity-25" />
           <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy-900">
             District route
           </h2>

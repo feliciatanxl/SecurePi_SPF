@@ -1,0 +1,18 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fin-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2DD4BF" /><stop offset="100%" stop-color="#0F766E" /></linearGradient>
+    <linearGradient id="fin-belly" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#CCFBF1" /><stop offset="100%" stop-color="#5EEAD4" /></linearGradient>
+  </defs>
+  <path d="M100 30 Q140 10 130 70 L100 80 Z" fill="#0D9488" />
+  <path d="M60 160 Q100 200 140 160 L120 120 L80 120 Z" fill="url(#fin-grad)" />
+  <path d="M50 170 Q100 210 150 170 Q100 190 50 170 Z" fill="#0F766E" />
+  <path d="M100 40 Q150 40 160 90 Q170 140 100 170 Q30 140 40 90 Q50 40 100 40 Z" fill="url(#fin-grad)" />
+  <path d="M100 55 Q135 55 140 95 Q145 130 100 155 Q55 130 60 95 Q65 55 100 55 Z" fill="url(#fin-belly)" />
+  <path d="M30 110 Q50 140 100 130 Q70 100 50 100 Z" fill="#0F766E" />
+  <path d="M170 110 Q150 140 100 135 Q130 100 150 100 Z" fill="#0D9488" />
+  <path d="M75 80 Q85 85 90 80" stroke="#042F2E" stroke-width="5" stroke-linecap="round" fill="none" />
+  <circle cx="80" cy="88" r="4" fill="#042F2E" />
+  <path d="M125 80 Q115 85 110 80" stroke="#042F2E" stroke-width="5" stroke-linecap="round" fill="none" />
+  <circle cx="120" cy="88" r="4" fill="#042F2E" />
+  <path d="M90 105 Q100 115 110 105" stroke="#042F2E" stroke-width="4" stroke-linecap="round" fill="none" />
+</svg>

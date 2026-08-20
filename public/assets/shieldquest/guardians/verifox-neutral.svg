@@ -1,0 +1,27 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fox-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#3B82F6" /><stop offset="100%" stop-color="#1E3A8A" /></linearGradient>
+    <linearGradient id="fox-belly" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#E0F2FE" /><stop offset="100%" stop-color="#BFDBFE" /></linearGradient>
+  </defs>
+  <path d="M70 140 C10 180, -20 80, 40 60 C80 40, 90 90, 70 140" fill="url(#fox-grad)" />
+  <path d="M20 100 C0 80, 30 50, 40 60 C20 70, 20 90, 20 100" fill="#E0F2FE" />
+  <path d="M120 160 Q120 180 130 190 H100 Q90 180 100 160 Z" fill="url(#fox-grad)" />
+  <path d="M80 160 Q70 180 80 190 H50 Q40 180 60 160 Z" fill="url(#fox-grad)" />
+  <path d="M60 100 C60 150, 140 150, 130 100 Z" fill="url(#fox-grad)" />
+  <path d="M75 110 C75 140, 115 140, 115 110 Z" fill="url(#fox-belly)" />
+  <path d="M60 110 Q40 130 50 140 Q60 130 75 115" fill="url(#fox-grad)" />
+  <path d="M130 110 Q160 110 150 130 Q140 120 115 115" fill="url(#fox-grad)" />
+  <path d="M50 80 C50 30, 150 30, 140 80 C150 110, 50 110, 50 80 Z" fill="url(#fox-grad)" />
+  <path d="M60 50 L30 10 Q60 10 80 40 Z" fill="url(#fox-grad)" />
+  <path d="M55 45 L40 20 Q60 25 70 40 Z" fill="#93C5FD" />
+  <path d="M130 50 L160 10 Q130 10 110 40 Z" fill="url(#fox-grad)" />
+  <path d="M135 45 L150 20 Q130 25 120 40 Z" fill="#93C5FD" />
+  <path d="M55 85 C55 105, 135 105, 135 85 C145 60, 45 60, 55 85 Z" fill="#FFFFFF" />
+  <path d="M75 75 Q85 70 90 75" stroke="#1E3A8A" stroke-width="4" stroke-linecap="round" fill="none" />
+  <circle cx="82" cy="80" r="5" fill="#1E3A8A" /><circle cx="80" cy="78" r="2" fill="#FFFFFF" />
+  <path d="M115 75 Q105 70 100 75" stroke="#1E3A8A" stroke-width="4" stroke-linecap="round" fill="none" />
+  <circle cx="108" cy="80" r="5" fill="#1E3A8A" /><circle cx="110" cy="78" r="2" fill="#FFFFFF" />
+  <circle cx="95" cy="92" r="4" fill="#1E3A8A" />
+  <path d="M85 98 Q95 105 105 98" stroke="#1E3A8A" stroke-width="3" stroke-linecap="round" fill="none" />
+  <path d="M88 45 L93 52 L103 42" stroke="#60A5FA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+</svg>

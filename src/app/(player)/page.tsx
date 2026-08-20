@@ -13,6 +13,7 @@ import {
 import { CityBoard } from "@/components/player/CityBoard";
 import { CityInfoSheet } from "@/components/player/CityInfoSheet";
 import { DistrictSheet } from "@/components/player/DistrictSheet";
+import { GuardianPlate } from "@/components/player/GuardianArt";
 import { WorldProgress } from "@/components/player/WorldProgress";
 import { CITY_TAGLINE } from "@/lib/api/world-data";
 import { useWorld, type ResolvedDistrict } from "@/lib/hooks/useWorld";
@@ -121,12 +122,13 @@ export default function CityHome() {
           href="/progress"
           className="mt-1.5 flex items-center gap-2.5 rounded-xl border border-white/12 bg-white/8 px-2.5 py-2 transition hover:border-white/25"
         >
-          <span
-            aria-hidden="true"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-500 text-[13px] font-extrabold text-navy-900"
-          >
-            {COMPETENCY_LETTER[currentGuardian.competency]}
-          </span>
+          {/* Same 32px box the competency letter occupied, so the HUD keeps
+              its height whether the Guardian is illustrated or not. */}
+          <GuardianPlate
+            guardian={currentGuardian}
+            className="h-8 w-8 rounded-lg text-[13px]"
+            tone="amber"
+          />
           <span className="min-w-0 flex-1">
             <span className="flex items-baseline justify-between gap-2">
               <span className="truncate text-[11px] font-bold uppercase tracking-wide text-white">
