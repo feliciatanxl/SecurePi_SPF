@@ -15,14 +15,14 @@ import { BOARD_SPACES } from "@/lib/api/board-data";
  */
 
 /** Distance between space centres. */
-export const SPACING = 58;
+export const SPACING = 68;
 /** Padding before the first and after the last space. */
-export const EDGE = 34;
+export const EDGE = 42;
 /** Vertical travel of the route, peak to peak. */
-export const AMPLITUDE = 22;
+export const AMPLITUDE = 32;
 /** Vertical centre of the route within the track. */
-export const CENTRE_Y = 96;
-export const TRACK_HEIGHT = 168;
+export const CENTRE_Y = 230;
+export const TRACK_HEIGHT = 340;
 
 export const TRACK_WIDTH = EDGE * 2 + (BOARD_SPACES.length - 1) * SPACING;
 

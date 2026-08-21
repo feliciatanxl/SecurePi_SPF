@@ -5,7 +5,7 @@ import {
   MULE_ENCOUNTER,
   MULE_PEER_SHIELD,
 } from "@/lib/api/mock-data";
-import type { District, MissionNode } from "@/lib/types";
+import type { District, DistrictId, MissionNode } from "@/lib/types";
 
 /**
  * ShieldQuest City — the district board.
@@ -32,6 +32,9 @@ export const NODE_EASY_MONEY = "nd_digi_easy_money";
 export const NODE_WORD_SEARCH = "nd_digi_warning_signs";
 export const NODE_DECODE = "nd_digi_decode_clue";
 export const NODE_PEER_JAYDEN = "nd_community_jayden";
+export const NODE_DIGI_INTRO = "nd_digi_new_opportunity";
+export const NODE_DIGI_JAYDEN_BRIDGE = "nd_digi_jaydens_new_job";
+export const NODE_DIGI_FINALE = "nd_digi_group_chat_job";
 
 /*
  * The remaining node ids. Named here rather than only inline so the city board
@@ -123,6 +126,22 @@ const RETAIL_NODES: MissionNode[] = [
 
 const DIGI_NODES: MissionNode[] = [
   {
+    id: NODE_DIGI_INTRO,
+    districtId: "digi",
+    kind: "SCENARIO",
+    title: "New Opportunity",
+    summary:
+      "A promising online job starts the chapter — and Jayden is listening too.",
+    primaryCompetency: "IDENTIFY",
+    estimatedMinutes: 2,
+    availability: "PLANNED",
+    chapterRole: "Chapter setup",
+    story: {
+      character: "Jayden",
+      beat: "Jayden hears about an online job that sounds unusually easy.",
+    },
+  },
+  {
     id: NODE_EASY_MONEY,
     districtId: "digi",
     kind: "SCENARIO",
@@ -133,6 +152,11 @@ const DIGI_NODES: MissionNode[] = [
     estimatedMinutes: MULE_ENCOUNTER.estimatedMinutes,
     availability: "OPEN",
     href: "/play",
+    chapterRole: "Core scenario",
+    story: {
+      character: "Jayden",
+      beat: "The same offer asks to use a personal account to move money.",
+    },
   },
   {
     id: NODE_WORD_SEARCH,
@@ -145,6 +169,11 @@ const DIGI_NODES: MissionNode[] = [
     estimatedMinutes: 3,
     availability: "OPEN",
     href: "/mini-game/spot-the-warning-signs",
+    chapterRole: "Clue challenge",
+    story: {
+      character: "Jayden",
+      beat: "The clues begin to make the offer look less like a real job.",
+    },
   },
   {
     id: NODE_DECODE,
@@ -158,6 +187,45 @@ const DIGI_NODES: MissionNode[] = [
     availability: "UNLOCK",
     requiredInDistrict: 1,
     href: "/mini-game/decode-the-clue",
+    chapterRole: "Situation card",
+    story: {
+      character: "Jayden",
+      beat: "An urgent message adds pressure before there is time to verify.",
+    },
+  },
+  {
+    id: NODE_DIGI_JAYDEN_BRIDGE,
+    districtId: "digi",
+    kind: "PEER_SHIELD",
+    title: "Jayden's New Job",
+    summary:
+      "Jayden mentions account use and growing pressure. A private warning could help.",
+    primaryCompetency: "DEFEND",
+    guardianId: GUARDIAN_SHIELDFIN,
+    estimatedMinutes: 3,
+    availability: "PLANNED",
+    chapterRole: "Narrative bridge",
+    story: {
+      character: "Jayden",
+      beat: "Jayden is no longer just curious — someone is pushing him to act.",
+    },
+  },
+  {
+    id: NODE_DIGI_FINALE,
+    districtId: "digi",
+    kind: "SCENARIO",
+    title: "The Group Chat Job",
+    summary:
+      "District finale: the group has to decide how to protect Jayden together.",
+    primaryCompetency: "LEAD",
+    guardianId: GUARDIAN_BEACON,
+    estimatedMinutes: 4,
+    availability: "PLANNED",
+    chapterRole: "District finale",
+    story: {
+      character: "Jayden",
+      beat: "The whole thread converges in a group chat where silence has a cost.",
+    },
   },
 ];
 
@@ -234,6 +302,55 @@ export const DISTRICTS: District[] = [
 ];
 
 export const CITY_TAGLINE = "Explore the city. Spot the risk. Make the choice.";
+
+/** Narrative framing layered over the existing geographic districts. */
+export const DISTRICT_CHAPTER: Record<
+  DistrictId,
+  { label: string; title: string; intro: string }
+> = {
+  school: {
+    label: "Story arc",
+    title: "Pressure Close to Home",
+    intro: "Hold your ground when the pressure comes from people you know.",
+  },
+  retail: {
+    label: "Story arc",
+    title: "The Cost of a Dare",
+    intro: "Look past the moment and evaluate what a small dare can set in motion.",
+  },
+  digi: {
+    label: "Chapter 1",
+    title: "Too Good to Be True",
+    intro: "Follow one suspicious opportunity from its first promise to the pressure that follows.",
+  },
+  community: {
+    label: "Story arc",
+    title: "Protect Together",
+    intro: "Notice when someone else needs a quiet warning or trusted help.",
+  },
+};
+
+/** Short Guardian lines used as personality cues, never as a lecture. */
+export const GUARDIAN_DIALOGUE: Record<
+  string,
+  { briefing: string; success: string; checkpoint: string }
+> = {
+  [GUARDIAN_VERIFOX]: {
+    briefing: "Something feels off. Check the clues.",
+    success: "Good catch. You checked before you trusted.",
+    checkpoint: "Slow down. The detail that matters is usually already there.",
+  },
+  [GUARDIAN_SHIELDFIN]: {
+    briefing: "A quiet warning can protect a friend.",
+    success: "You made space for a friend to step back.",
+    checkpoint: "Protect the person without escalating the pressure.",
+  },
+  [GUARDIAN_BEACON]: {
+    briefing: "You don't have to handle it alone.",
+    success: "Good call. Trusted help is part of the plan.",
+    checkpoint: "When you are unsure, the next step can be asking for help.",
+  },
+};
 
 /** Every node across the city, flattened. Used for progress and lookups. */
 export const ALL_NODES: MissionNode[] = DISTRICTS.flatMap((d) => d.nodes);

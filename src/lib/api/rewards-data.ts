@@ -67,7 +67,7 @@ export const REWARDS: Reward[] = [
     id: "rw_verifox_success",
     category: "GUARDIANS",
     slot: "guardianAura",
-    name: "VeriFox Success Pose",
+    name: "VeriFox Success Aura",
     description:
       "A warm celebration aura around VeriFox wherever the portrait appears.",
     cost: 250,
@@ -89,7 +89,7 @@ export const REWARDS: Reward[] = [
     id: "rw_shieldfin_protector",
     category: "GUARDIANS",
     slot: "guardianAura",
-    name: "Shieldfin Peer Protector Pose",
+    name: "Shieldfin Protector Halo",
     description: "A protective halo around Shieldfin's portrait.",
     cost: 250,
     guardianId: GUARDIAN_SHIELDFIN,

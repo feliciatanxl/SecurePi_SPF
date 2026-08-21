@@ -128,12 +128,17 @@ export function CityTrack({
   }, [walking, tokenIndex]);
 
   const path = useMemo(() => routePath(), []);
+  const exploredPercent = Math.max(
+    0,
+    Math.min(100, (tokenIndex / Math.max(1, spaces.length - 1)) * 100),
+  );
 
   return (
     <div
       ref={viewportRef}
       className="thin-scroll board-camera relative w-full overflow-x-auto overflow-y-hidden overscroll-x-contain"
       style={{ height: TRACK_HEIGHT }}
+      aria-label="ShieldQuest City camera. Pan horizontally to look ahead."
     >
       <div
         className="relative"
@@ -146,33 +151,39 @@ export function CityTrack({
           return (
             <div
               key={`${band.districtId ?? "central"}-${band.first}`}
-              className="absolute inset-y-0 overflow-hidden"
+              className={`district-world absolute inset-y-0 overflow-hidden ${
+                band.districtId ? `district-world-${band.districtId}` : "district-world-central"
+              }`}
               style={{ left: box.left, width: box.width }}
             >
               {band.districtId ? (
                 <>
                   <DistrictScene
                     districtId={band.districtId}
-                    className="opacity-[0.38]"
+                    className="opacity-[0.9]"
                   />
                   <span
                     aria-hidden="true"
-                    className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-navy-950/85 to-transparent"
+                    className="absolute inset-0 bg-gradient-to-b from-white/0 via-navy-950/5 to-navy-950/45"
                   />
+                  <span aria-hidden="true" className="city-horizon absolute inset-x-0 bottom-0 h-[46%]" />
                   <p
                     aria-hidden="true"
-                    className="absolute left-2 top-1.5 truncate rounded-md bg-navy-950/70 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.14em] text-amber-400"
+                    className="absolute left-2.5 top-2 truncate rounded-md border border-white/30 bg-navy-950/78 px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.14em] text-white shadow-sm"
                   >
                     {districtNames[band.districtId]}
                   </p>
                 </>
               ) : (
-                <p
-                  aria-hidden="true"
-                  className="absolute left-2 top-1.5 truncate rounded-md bg-navy-950/70 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.14em] text-amber-400"
-                >
-                  Shield Central
-                </p>
+                <>
+                  <span aria-hidden="true" className="city-central-beacon absolute inset-0" />
+                  <p
+                    aria-hidden="true"
+                    className="absolute left-2.5 top-2 truncate rounded-md border border-amber-400/50 bg-navy-950/80 px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.14em] text-amber-400"
+                  >
+                    Shield Central
+                  </p>
+                </>
               )}
               <span
                 aria-hidden="true"
@@ -193,16 +204,32 @@ export function CityTrack({
           <path
             d={path}
             fill="none"
-            className={trailClass ?? "stroke-amber-400/35"}
-            strokeWidth={22}
+            stroke="rgba(6,21,39,0.55)"
+            strokeWidth={38}
             strokeLinecap="round"
           />
           <path
             d={path}
             fill="none"
-            stroke="rgba(255,255,255,0.16)"
+            stroke="rgba(238,241,246,0.82)"
+            strokeWidth={31}
+            strokeLinecap="round"
+          />
+          <path
+            d={path}
+            fill="none"
+            className={trailClass ?? "stroke-amber-400/55"}
+            strokeWidth={27}
+            strokeLinecap="round"
+            pathLength={100}
+            strokeDasharray={`${exploredPercent} 100`}
+          />
+          <path
+            d={path}
+            fill="none"
+            stroke="rgba(11,37,69,0.28)"
             strokeWidth={2}
-            strokeDasharray="6 9"
+            strokeDasharray="5 8"
             strokeLinecap="round"
           />
         </svg>
@@ -231,6 +258,13 @@ export function CityTrack({
                     guardian={guardian}
                     stepping={stepOrder >= 0}
                     markerCosmetic={markerCosmetic}
+                    relation={
+                      space.index === tokenIndex
+                        ? "current"
+                        : space.index < tokenIndex || space.visited
+                          ? "behind"
+                          : "ahead"
+                    }
                   />
                   {/* Movement feedback: 1 → 2 → 3 → 4 as the token counts across. */}
                   {stepOrder >= 0 && (
@@ -247,6 +281,14 @@ export function CityTrack({
                     {spaceStateLabel(space)}.
                     {space.isCurrent ? " You are here." : ""}
                   </span>
+                  {space.index === tokenIndex && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -bottom-7 left-1/2 max-w-[92px] -translate-x-1/2 truncate rounded-md bg-navy-950/85 px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wide text-white"
+                    >
+                      {space.title}
+                    </span>
+                  )}
                 </button>
               </li>
             );

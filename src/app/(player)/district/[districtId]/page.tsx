@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Check, ChevronDown } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, MessageCircle } from "lucide-react";
 import { DistrictPlate, DistrictScene } from "@/components/player/DistrictArt";
 import { DISTRICT_SKIN } from "@/components/player/districtSkin";
 import { MissionNodeCard } from "@/components/player/MissionNode";
 import { useDistrict } from "@/lib/hooks/useWorld";
 import { usePlayer } from "@/lib/state/PlayerProvider";
+import { DISTRICT_CHAPTER } from "@/lib/api/world-data";
 
 /**
  * A district route — the middle layer of the board:
@@ -58,6 +59,7 @@ export default function DistrictPage() {
   }
 
   const skin = DISTRICT_SKIN[district.id];
+  const chapter = DISTRICT_CHAPTER[district.id];
   const guardianName = (id?: string) =>
     id ? guardians.find((g) => g.id === id)?.name : undefined;
 
@@ -82,7 +84,7 @@ export default function DistrictPage() {
 
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400">
-              District
+              {chapter.label}
             </p>
             <h1 className="truncate text-[18px] font-extrabold uppercase leading-tight tracking-tight">
               {district.name}
@@ -101,6 +103,37 @@ export default function DistrictPage() {
         </div>
       </header>
 
+      <section className="relative isolate h-[148px] overflow-hidden text-white">
+        <DistrictScene districtId={district.id} className="-z-20 opacity-100" />
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950/95 via-navy-950/20 to-transparent"
+        />
+        <div className="absolute inset-x-4 bottom-4">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-300">
+            {chapter.label} · {district.completed} / {district.total} activities
+          </p>
+          <h2 className="mt-0.5 text-[25px] font-extrabold uppercase leading-none tracking-tight">
+            {chapter.title}
+          </h2>
+          <p className="mt-1 max-w-xl text-[12px] font-semibold leading-snug text-white/80">
+            {chapter.intro}
+          </p>
+        </div>
+      </section>
+
+      {district.id === "digi" && (
+        <div className="flex items-start gap-2 border-b border-civic-200 bg-civic-50 px-4 py-2.5 text-civic-800">
+          <MessageCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <p className="text-[12px] leading-snug">
+            <span className="font-extrabold uppercase tracking-wide">Jayden story thread</span>
+            <span className="block mt-0.5 text-ink-muted">
+              An easy online job becomes account pressure, then a chance to protect a friend.
+            </span>
+          </p>
+        </div>
+      )}
+
       {/* Route band, with the district briefing folded away behind it. */}
       <div className={`border-b ${skin.header}`}>
         {/*
@@ -109,9 +142,8 @@ export default function DistrictPage() {
           and body copy gets a plain surface.
         */}
         <div className="relative isolate flex items-center justify-between gap-2 overflow-hidden px-4 py-1.5">
-          <DistrictScene districtId={district.id} className="-z-10 opacity-25" />
           <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy-900">
-            District route
+            Chapter activities
           </h2>
           <button
             type="button"
@@ -147,7 +179,7 @@ export default function DistrictPage() {
               ))}
             </ul>
             <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">
-              Choose any open stop. Nothing here is decided by chance.
+              Choose any open activity. Planned story beats are labelled coming soon, and nothing here is decided by chance.
             </p>
           </div>
         )}

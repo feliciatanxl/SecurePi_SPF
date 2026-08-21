@@ -20,6 +20,7 @@ import { SpaceMark } from "@/components/player/board/SpaceMark";
 import { DISTRICT_SKIN } from "@/components/player/districtSkin";
 import { Modal } from "@/components/ui/Modal";
 import { guardianStanding, usePlayer } from "@/lib/state/PlayerProvider";
+import { GUARDIAN_DIALOGUE } from "@/lib/api/world-data";
 import type { ResolvedSpace } from "@/lib/hooks/useBoard";
 import {
   BOARD_SPACE_LABEL,
@@ -298,19 +299,20 @@ function MissionBriefing({
         </div>
 
         {guardian && (
-          <div className="flex items-center gap-3 rounded-xl border border-line bg-surface p-2.5">
-            <GuardianPlate guardian={guardian} className="h-10 w-10 rounded-xl text-[15px]" />
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-soft">
-                Guardian
+          <div className="guardian-briefing flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-2.5">
+            <GuardianPlate
+              guardian={guardian}
+              className="guardian-reaction h-12 w-12 rounded-2xl text-[15px]"
+              tone="amber"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">
+                {guardian.name} · {guardian.skill}
               </p>
-              <p className="text-[14px] font-extrabold text-navy-900">
-                {guardian.name}
+              <p className="mt-0.5 text-[13px] font-semibold leading-snug text-navy-900">
+                “{GUARDIAN_DIALOGUE[guardian.id]?.briefing ?? guardian.motto}”
               </p>
             </div>
-            <p className="ml-auto text-right text-[12px] font-semibold text-ink-muted">
-              {guardian.skill}
-            </p>
           </div>
         )}
 
@@ -494,6 +496,9 @@ function GuardianCheckpoint({
       </div>
 
       <p className="rounded-xl border border-line bg-surface-sunk px-3.5 py-3 text-[13px] leading-relaxed text-ink-muted">
+        <span className="mb-1 block font-bold text-navy-900">
+          “{GUARDIAN_DIALOGUE[guardian.id]?.checkpoint ?? guardian.motto}”
+        </span>
         Complete {remaining} more {guardian.skill.toLowerCase()}{" "}
         {remaining === 1 ? "activity" : "activities"} to strengthen{" "}
         {guardian.name}. Guardian progress comes from decisions you make — never

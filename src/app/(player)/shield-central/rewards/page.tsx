@@ -38,6 +38,7 @@ export default function RewardsPage() {
   const [tab, setTab] = useState<Tab>("FEATURED");
   const [detail, setDetail] = useState<Reward | null>(null);
   const [justUnlocked, setJustUnlocked] = useState<Reward | null>(null);
+  const [equipMessage, setEquipMessage] = useState("");
 
   const shown = useMemo(() => {
     if (tab === "FEATURED") {
@@ -75,6 +76,9 @@ export default function RewardsPage() {
       }
     >
       {/* Category tabs. */}
+      <p className="sr-only" role="status" aria-live="polite">
+        {equipMessage}
+      </p>
       <div
         role="tablist"
         aria-label="Reward categories"
@@ -105,24 +109,38 @@ export default function RewardsPage() {
           {shown.map((reward) => {
             const owned = profile.unlockedRewards.includes(reward.id);
             const equipped = equippedIn(reward.slot) === reward.id;
+            const highlighted = tab === "FEATURED" && reward.featured;
             const guardian = reward.guardianId
               ? guardians.find((g) => g.id === reward.guardianId)
               : undefined;
 
             return (
-              <li key={reward.id}>
+              <li key={reward.id} className={highlighted ? "col-span-2" : ""}>
                 <button
                   type="button"
                   onClick={() => setDetail(reward)}
-                  className="flex h-full w-full flex-col rounded-2xl border border-line bg-surface p-2.5 text-left transition hover:-translate-y-0.5 hover:border-civic-500"
+                  className={`relative flex h-full w-full flex-col rounded-2xl border bg-surface p-2.5 text-left shadow-[0_12px_30px_-26px_rgba(11,37,69,0.75)] transition hover:-translate-y-0.5 hover:border-civic-500 ${
+                    equipped
+                      ? "border-leaf-600 ring-2 ring-leaf-100"
+                      : owned
+                        ? "border-civic-200"
+                        : "border-line"
+                  }`}
                 >
+                  {highlighted && (
+                    <span className="absolute left-4 top-4 z-10 rounded-full bg-navy-950/85 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.16em] text-amber-300 backdrop-blur-sm">
+                      Featured reward
+                    </span>
+                  )}
                   <span
-                    className={`mb-2 grid h-[70px] w-full place-items-center rounded-xl bg-gradient-to-br ${reward.swatch}`}
+                    className={`mb-2 grid w-full place-items-center overflow-hidden rounded-xl bg-gradient-to-br ${reward.swatch} ${
+                      highlighted ? "h-[112px]" : "h-[70px]"
+                    }`}
                   >
                     {guardian ? (
                       <GuardianPlate
                         guardian={guardian}
-                        className="h-12 w-12 rounded-xl text-[16px]"
+                        className={`${highlighted ? "h-20 w-20 rounded-3xl" : "h-12 w-12 rounded-xl"} text-[16px] shadow-lg`}
                       />
                     ) : (
                       <Sparkles
@@ -189,10 +207,12 @@ export default function RewardsPage() {
         onUnlock={handleUnlock}
         onEquip={(r) => {
           equipReward(r.id);
+          setEquipMessage(`${r.name} equipped.`);
           setDetail(null);
         }}
         onUnequip={(r) => {
           unequipSlot(r.slot);
+          setEquipMessage(`${r.name} unequipped.`);
           setDetail(null);
         }}
         onClose={() => setDetail(null)}
@@ -201,7 +221,10 @@ export default function RewardsPage() {
       <RewardUnlocked
         reward={justUnlocked}
         onEquip={() => {
-          if (justUnlocked) equipReward(justUnlocked.id);
+          if (justUnlocked) {
+            equipReward(justUnlocked.id);
+            setEquipMessage(`${justUnlocked.name} equipped.`);
+          }
           setJustUnlocked(null);
         }}
         onClose={() => setJustUnlocked(null)}

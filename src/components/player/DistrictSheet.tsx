@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check, Clock, Lock } from "lucide-react";
+import { ArrowRight, Check, Clock, Lock, MessageCircle, Sparkles } from "lucide-react";
 import { DistrictPlate, DistrictScene } from "@/components/player/DistrictArt";
 import { KIND_CHIP, MissionKindMark } from "@/components/player/MissionArt";
+import { SkillTag } from "@/components/player/MissionNode";
 import { DISTRICT_SKIN } from "@/components/player/districtSkin";
 import { Modal } from "@/components/ui/Modal";
+import { DISTRICT_CHAPTER } from "@/lib/api/world-data";
 import type { ResolvedDistrict, ResolvedNode } from "@/lib/hooks/useWorld";
+import { usePlayer } from "@/lib/state/PlayerProvider";
 import { NODE_KIND_LABEL } from "@/lib/types";
 
 /**
@@ -44,6 +47,10 @@ function SheetBody({
   onClose: () => void;
 }) {
   const skin = DISTRICT_SKIN[district.id];
+  const chapter = DISTRICT_CHAPTER[district.id];
+  const { guardians } = usePlayer();
+  const guardianName = (id?: string) =>
+    id ? guardians.find((guardian) => guardian.id === id)?.name : undefined;
 
   return (
     <div className="flex max-h-[82dvh] min-h-0 flex-col sm:max-h-[80dvh]">
@@ -63,8 +70,20 @@ function SheetBody({
         It costs the stop list ~60px of a fixed-height sheet, not the page any
         height — and the list scrolls by design when a district outgrows it.
       */}
-      <div className="relative h-[60px] w-full shrink-0 overflow-hidden sm:h-[72px]">
+      <div className="relative h-[104px] w-full shrink-0 overflow-hidden sm:h-[118px]">
         <DistrictScene districtId={district.id} className="opacity-100" />
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-t from-navy-950/90 via-navy-950/25 to-transparent"
+        />
+        <div className="absolute inset-x-4 bottom-3 text-white">
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.22em] text-amber-300">
+            {chapter.label}
+          </p>
+          <p className="mt-0.5 text-[19px] font-extrabold uppercase leading-tight tracking-tight">
+            {chapter.title}
+          </p>
+        </div>
       </div>
 
       <header
@@ -84,7 +103,7 @@ function SheetBody({
               {district.name}
             </h2>
             <p className="mt-0.5 text-[13px] leading-snug text-ink-muted">
-              {district.tagline}
+              {chapter.intro}
             </p>
           </div>
         </div>
@@ -100,12 +119,24 @@ function SheetBody({
             </span>
           )}
         </p>
+
+        {district.id === "digi" && (
+          <p className="mt-2 flex items-center gap-2 rounded-lg border border-civic-200 bg-white/70 px-2.5 py-2 text-[11px] font-semibold leading-snug text-civic-800">
+            <MessageCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            Story thread: follow Jayden from a tempting offer to the pressure that follows.
+          </p>
+        )}
       </header>
 
       <ol className="thin-scroll min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3">
         {district.nodes.map((node, i) => (
           <li key={node.id}>
-            <SheetStop node={node} index={i} onNavigate={onClose} />
+            <SheetStop
+              node={node}
+              index={i}
+              guardianName={guardianName(node.guardianId)}
+              onNavigate={onClose}
+            />
           </li>
         ))}
       </ol>
@@ -128,10 +159,12 @@ function SheetBody({
 function SheetStop({
   node,
   index,
+  guardianName,
   onNavigate,
 }: {
   node: ResolvedNode;
   index: number;
+  guardianName?: string;
   onNavigate: () => void;
 }) {
   const locked = !node.playable;
@@ -139,23 +172,28 @@ function SheetStop({
 
   const inner = (
     <>
-      <span
-        aria-hidden="true"
-        className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border ${
+      <span className="w-8 shrink-0 pt-0.5 text-center">
+        <span className="block text-[18px] font-black leading-none tabular-nums text-navy-900">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <span
+          aria-hidden="true"
+          className={`mx-auto mt-1 grid h-6 w-6 place-items-center rounded-lg border ${
           node.completed
             ? "border-leaf-200 bg-leaf-600 text-white"
             : locked
               ? "border-line bg-surface-sunk text-ink-soft"
               : "border-navy-800 bg-navy-900 text-amber-400"
         }`}
-      >
+        >
         {node.completed ? (
           <Check className="h-4 w-4" strokeWidth={3} />
         ) : locked ? (
           <Lock className="h-3.5 w-3.5" />
         ) : (
-          <MissionKindMark kind={node.kind} className="h-4 w-4" />
+          <MissionKindMark kind={node.kind} className="h-3 w-3" />
         )}
+        </span>
       </span>
 
       <span className="min-w-0 flex-1">
@@ -165,9 +203,11 @@ function SheetStop({
           >
             {NODE_KIND_LABEL[node.kind]}
           </span>
-          <span className="text-[10px] font-semibold tabular-nums text-ink-soft">
-            Stop {index + 1}
-          </span>
+          {node.chapterRole && (
+            <span className="text-[9px] font-extrabold uppercase tracking-[0.1em] text-civic-700">
+              {node.chapterRole}
+            </span>
+          )}
         </span>
         <span className="mt-0.5 block text-[14px] font-extrabold leading-snug text-navy-900">
           {node.title}
@@ -183,6 +223,15 @@ function SheetStop({
             <span className="inline-flex items-center gap-1">
               <Clock className="h-3 w-3" aria-hidden="true" />
               {node.estimatedMinutes} min
+            </span>
+          )}
+        </span>
+        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <SkillTag competency={node.primaryCompetency} className="text-[10px]" />
+          {guardianName && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700">
+              <Sparkles className="h-3 w-3" aria-hidden="true" />
+              {guardianName}
             </span>
           )}
         </span>

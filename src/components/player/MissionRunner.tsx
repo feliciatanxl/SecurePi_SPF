@@ -23,6 +23,7 @@ import { ScenarioMessage } from "@/components/player/ScenarioMessage";
 import { useScenarioRun } from "@/lib/hooks/useScenarioRun";
 import { usePlayer } from "@/lib/state/PlayerProvider";
 import { TOKEN_AWARD, tokenKey } from "@/lib/api/rewards-data";
+import { SITUATION_CARDS } from "@/lib/api/board-data";
 
 interface MissionRunnerProps {
   scenarioId: string;
@@ -192,6 +193,12 @@ export function MissionRunner({
   const signals = scenario.clues?.length
     ? { found: taggedClues.length, total: scenario.clues.length }
     : undefined;
+  const casebookDiscovered = Boolean(
+    activityId &&
+      SITUATION_CARDS.some(
+        (card) => card.nodeId === activityId && profile.casebook.includes(card.id),
+      ),
+  );
 
   const finish = () => setCompleteOpen(true);
 
@@ -490,6 +497,7 @@ export function MissionRunner({
         signals={signals}
         tokensAwarded={tokensAwarded}
         guardianAdvanced={Boolean(result?.debrief.guardianId)}
+        casebookDiscovered={casebookDiscovered}
         onViewLearning={() => {
           setCompleteOpen(false);
           // The delayed path has no debrief card — the takeover is the lesson.

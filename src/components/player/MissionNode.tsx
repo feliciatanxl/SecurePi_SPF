@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, Check, Clock, Lock, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Clock,
+  Lock,
+  MessageCircle,
+  Sparkles,
+} from "lucide-react";
 import { KIND_CHIP, MissionKindMark } from "@/components/player/MissionArt";
 import type { ResolvedNode } from "@/lib/hooks/useWorld";
 import {
@@ -55,6 +62,9 @@ export function MissionNodeCard({
   const inner = (
     <>
       <div className="flex items-start gap-2.5">
+        <span className="w-8 shrink-0 pt-1 text-center text-[22px] font-black leading-none tabular-nums text-navy-900/85">
+          {String(index + 1).padStart(2, "0")}
+        </span>
         <span
           aria-hidden="true"
           className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border ${
@@ -82,7 +92,7 @@ export function MissionNodeCard({
               {NODE_KIND_LABEL[node.kind]}
             </span>
             <span className="text-[11px] font-semibold text-ink-soft tabular-nums">
-              Stop {index + 1}
+              {node.chapterRole ?? `Activity ${index + 1}`}
             </span>
           </div>
 
@@ -92,6 +102,16 @@ export function MissionNodeCard({
           <p className="mt-0.5 text-[13px] leading-snug text-ink-muted">
             {node.summary}
           </p>
+
+          {node.story && (
+            <p className="mt-1.5 flex items-start gap-1.5 rounded-lg bg-civic-50 px-2 py-1.5 text-[11px] leading-snug text-civic-800">
+              <MessageCircle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
+              <span>
+                <span className="font-extrabold">{node.story.character}:</span>{" "}
+                {node.story.beat}
+              </span>
+            </p>
+          )}
 
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
             <SkillTag competency={node.primaryCompetency} />

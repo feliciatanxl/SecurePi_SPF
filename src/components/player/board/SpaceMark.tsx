@@ -55,11 +55,14 @@ export function SpaceMark({
   stepping,
   /** An equipped City Style marker. Changes the completed mark, nothing else. */
   markerCosmetic = false,
+  relation = "ahead",
 }: {
   space: ResolvedSpace;
   guardian?: Guardian;
   stepping?: boolean;
   markerCosmetic?: boolean;
+  /** Exploration state relative to the player's current position. */
+  relation?: "behind" | "current" | "ahead";
 }) {
   const Icon = SPACE_ICON[space.kind];
   const dim = space.planned || space.locked;
@@ -74,8 +77,10 @@ export function SpaceMark({
           stepping ? "scale-110 ring-4 ring-amber-300/60" : ""
         } ${
           space.isCurrent
-            ? "ring-2 ring-white ring-offset-2 ring-offset-navy-950"
+            ? "animate-node-pulse scale-110 ring-2 ring-white ring-offset-2 ring-offset-navy-950"
             : ""
+        } ${relation === "ahead" && !space.isCurrent && !dim ? "opacity-75" : ""} ${
+          relation === "behind" && !space.completed ? "brightness-90" : ""
         }`}
       >
         {space.kind === "GUARDIAN_CHECKPOINT" && guardian ? (
@@ -110,6 +115,16 @@ export function SpaceMark({
           <Lock className="h-2.5 w-2.5" strokeWidth={3} />
         </span>
       )}
+      <span
+        aria-hidden="true"
+        className={`absolute -bottom-3 left-1/2 h-1 w-5 -translate-x-1/2 rounded-full ${
+          relation === "behind"
+            ? "bg-leaf-200/80"
+            : relation === "current"
+              ? "bg-amber-400"
+              : "bg-white/30"
+        }`}
+      />
     </span>
   );
 }

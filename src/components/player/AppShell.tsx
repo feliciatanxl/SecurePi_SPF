@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -8,6 +9,8 @@ import {
   ShieldHalf,
   SlidersHorizontal,
   TrendingUp,
+  Presentation,
+  X,
 } from "lucide-react";
 import { COMPETENCY_LABEL, COMPETENCY_LETTER, COMPETENCY_ORDER } from "@/lib/types";
 import { PROTOTYPE_DISCLAIMER } from "@/lib/api/mock-data";
@@ -50,6 +53,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const immersive = isImmersive(pathname);
   const board = isBoard(pathname);
+  const [presentation, setPresentation] = useState(false);
+
+  // Presentation framing is opt-in. The query parameter survives a refresh;
+  // local state survives ordinary App Router navigation without duplicating
+  // player state or wrapping the game in a second application.
+  useEffect(() => {
+    setPresentation(new URLSearchParams(window.location.search).get("presentation") === "1");
+  }, []);
+
+  const togglePresentation = () => {
+    setPresentation((current) => {
+      const next = !current;
+      const url = new URL(window.location.href);
+      if (next) url.searchParams.set("presentation", "1");
+      else url.searchParams.delete("presentation");
+      window.history.replaceState(window.history.state, "", url);
+      return next;
+    });
+  };
 
   return (
     /*
@@ -59,13 +81,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
      * and it keeps the tab bar planted instead of riding up on a long page.
      */
     <div className="h-dvh overflow-hidden bg-canvas">
-      <div className="mx-auto flex h-full w-full max-w-[1240px] items-stretch justify-center gap-10 px-0 xl:px-8 xl:py-8">
-        <ContextRail />
+      <button
+        type="button"
+        onClick={togglePresentation}
+        aria-pressed={presentation}
+        title={presentation ? "Close presentation context" : "Open presentation context"}
+        className={`fixed top-3 z-50 hidden h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface/95 text-ink-muted shadow-lg backdrop-blur transition hover:border-civic-200 hover:text-civic-700 xl:inline-flex ${
+          presentation ? "left-[254px]" : "right-3"
+        }`}
+      >
+        {presentation ? (
+          <X className="h-4 w-4" aria-hidden="true" />
+        ) : (
+          <Presentation className="h-4 w-4" aria-hidden="true" />
+        )}
+        <span className="sr-only">
+          {presentation ? "Close presentation context" : "Presentation context"}
+        </span>
+      </button>
+
+      <div
+        className={`mx-auto flex h-full w-full items-stretch justify-center px-0 xl:gap-8 xl:px-6 xl:py-4 ${
+          presentation ? "max-w-[1440px]" : "max-w-[1240px]"
+        }`}
+      >
+        {presentation && <ContextRail />}
 
         <div
           className={`relative flex h-full w-full flex-col overflow-hidden bg-surface shadow-[0_1px_2px_rgba(11,37,69,0.06),0_16px_40px_-24px_rgba(11,37,69,0.35)] transition-[max-width] duration-300 xl:rounded-3xl xl:border xl:border-line ${
             board
-              ? "max-w-[440px] md:max-w-[720px] xl:max-w-[880px]"
+              ? presentation
+                ? "max-w-[440px] md:max-w-[720px] xl:max-w-[920px]"
+                : "max-w-[440px] md:max-w-[760px] xl:max-w-[1160px]"
               : "max-w-[440px]"
           }`}
         >
@@ -134,7 +181,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 /** Pitch-time framing. Hidden below xl so the product stands on its own. */
 function ContextRail() {
   return (
-    <aside className="thin-scroll hidden w-[300px] shrink-0 flex-col justify-between overflow-y-auto py-4 xl:flex">
+    <aside className="thin-scroll hidden w-[280px] shrink-0 flex-col justify-between overflow-y-auto py-4 xl:flex">
       <div>
         <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-civic-700">
           Project SHIELD

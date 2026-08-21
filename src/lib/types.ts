@@ -444,6 +444,17 @@ export interface MissionNode {
   requiredInDistrict?: number;
   /** Where the node leads once open. Absent for PLANNED content. */
   href?: string;
+  /**
+   * Optional connective tissue for a recurring fictional character. This is
+   * presentation metadata, not a dialogue engine: it gives chapter surfaces a
+   * short story beat without changing how an activity runs or unlocks.
+   */
+  story?: {
+    character: string;
+    beat: string;
+  };
+  /** Optional chapter-facing role, e.g. "District finale". */
+  chapterRole?: string;
 }
 
 export interface District {

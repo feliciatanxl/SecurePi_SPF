@@ -20,20 +20,20 @@ export function PlayerTokenMark({
   return (
     <span className="flex flex-col items-center gap-0.5">
       <span
-        className={`animate-arrive flex items-center gap-1 rounded-full border-2 border-amber-400 bg-navy-950 px-1.5 py-[3px] shadow-[0_6px_16px_-6px_rgba(6,21,39,0.95)] ${className}`}
+        className={`animate-arrive player-token-halo flex items-center gap-1 rounded-full border-2 border-amber-400 bg-navy-950 px-2 py-1 shadow-[0_8px_22px_-5px_rgba(6,21,39,0.95)] ${className}`}
       >
         <ArtSlot
           src={PLAYER_TOKEN_ART}
-          className="h-4 w-4 shrink-0 object-contain"
+          className="h-6 w-6 shrink-0 object-contain"
         >
           <ShieldHalf
-            className="h-3.5 w-3.5 shrink-0 text-amber-400"
+            className="h-5 w-5 shrink-0 text-amber-400"
             strokeWidth={2.8}
             aria-hidden="true"
           />
         </ArtSlot>
         {showLabel && (
-          <span className="whitespace-nowrap text-[9px] font-extrabold uppercase tracking-[0.14em] text-white">
+          <span className="whitespace-nowrap text-[10px] font-extrabold uppercase tracking-[0.14em] text-white">
             You
           </span>
         )}

@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { DistrictScene } from "@/components/player/DistrictArt";
 import { GuardianPlate } from "@/components/player/GuardianArt";
 import { guardianStanding } from "@/lib/state/PlayerProvider";
+import { DISTRICT_CHAPTER, GUARDIAN_DIALOGUE } from "@/lib/api/world-data";
 import {
   COMPETENCY_LABEL,
   COMPETENCY_LETTER,
@@ -76,6 +77,9 @@ export function DistrictComplete({
             >
               {districtName}
             </h2>
+            <p className="mt-1 text-[12px] font-bold uppercase tracking-[0.14em] text-civic-200">
+              {DISTRICT_CHAPTER[districtId].title}
+            </p>
           </header>
 
           <div className="thin-scroll min-h-0 flex-1 space-y-2.5 overflow-y-auto px-5 pb-3">
@@ -146,6 +150,22 @@ export function DistrictComplete({
                 </p>
                 <p className="mt-1 text-[13px] leading-snug text-navy-100">
                   {badge.blurb}
+                </p>
+              </div>
+            )}
+
+            {guardian && (
+              <div className="flex items-center gap-3 rounded-2xl border border-amber-400/35 bg-amber-400/10 p-3.5">
+                <GuardianPlate
+                  guardian={guardian}
+                  className="guardian-reaction h-12 w-12 rounded-2xl text-base"
+                  tone="amber"
+                />
+                <p className="text-[12px] font-semibold leading-snug text-white">
+                  <span className="block text-[9px] font-extrabold uppercase tracking-[0.14em] text-amber-300">
+                    {guardian.name}
+                  </span>
+                  “{GUARDIAN_DIALOGUE[guardian.id]?.success ?? guardian.motto}”
                 </p>
               </div>
             )}

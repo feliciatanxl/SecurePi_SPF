@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BookOpen, Check, Sparkles } from "lucide-react";
+import { ArrowRight, BookMarked, BookOpen, Check, Sparkles } from "lucide-react";
 import { GuardianPlate } from "@/components/player/GuardianArt";
 import { Modal } from "@/components/ui/Modal";
 import { COMPETENCY_LABEL, COMPETENCY_LETTER, type Competency, type Guardian } from "@/lib/types";
+import { GUARDIAN_DIALOGUE } from "@/lib/api/world-data";
 
 /**
  * Mission Complete.
@@ -28,6 +29,7 @@ export function MissionComplete({
   signals,
   tokensAwarded,
   guardianAdvanced,
+  casebookDiscovered = false,
   onViewLearning,
   onClose,
 }: {
@@ -38,6 +40,7 @@ export function MissionComplete({
   signals?: { found: number; total: number };
   tokensAwarded: number;
   guardianAdvanced: boolean;
+  casebookDiscovered?: boolean;
   onViewLearning: () => void;
   onClose: () => void;
 }) {
@@ -52,7 +55,7 @@ export function MissionComplete({
         <header className="shrink-0 px-5 pb-3 pt-6 text-center">
           <span
             aria-hidden="true"
-            className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-leaf-100 text-leaf-700"
+            className="animate-stamp mx-auto grid h-16 w-16 place-items-center rounded-full border-4 border-leaf-200 bg-leaf-100 text-leaf-700 shadow-[0_8px_22px_-16px_rgba(31,107,74,0.8)]"
           >
             <Check className="h-8 w-8" strokeWidth={3} />
           </span>
@@ -68,6 +71,24 @@ export function MissionComplete({
         </header>
 
         <div className="thin-scroll min-h-0 flex-1 space-y-2 overflow-y-auto px-5 pb-3">
+          {guardian && (
+            <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-3">
+              <GuardianPlate
+                guardian={guardian}
+                className="guardian-reaction h-14 w-14 rounded-2xl text-lg"
+                tone="amber"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-amber-700">
+                  {guardian.name} reacts
+                </p>
+                <p className="mt-0.5 text-[13px] font-semibold leading-snug text-navy-900">
+                  “{GUARDIAN_DIALOGUE[guardian.id]?.success ?? guardian.motto}”
+                </p>
+              </div>
+            </div>
+          )}
+
           <Row
             label={`${COMPETENCY_LABEL[competency]} practised`}
             badge={
@@ -89,6 +110,15 @@ export function MissionComplete({
                   {signals.found} / {signals.total}
                 </span>
               }
+            />
+          )}
+
+          {casebookDiscovered && (
+            <Row
+              tone="civic"
+              label="Case file recorded"
+              badge={<BookMarked className="h-4 w-4 text-civic-700" aria-hidden="true" />}
+              value={<Check className="h-4 w-4 text-leaf-700" strokeWidth={3} />}
             />
           )}
 
