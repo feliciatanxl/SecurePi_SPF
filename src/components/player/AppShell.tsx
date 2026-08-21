@@ -26,26 +26,44 @@ const isImmersive = (pathname: string) =>
   pathname === "/play" || pathname.startsWith("/mini-game/");
 
 /**
- * The city board and the district routes get a wider frame on tablet and up,
- * and wider again on a laptop: the board camera then shows more of the city
- * route at once — around six spaces on a phone, twelve on a tablet, fifteen on
- * a laptop — without any of them being a different board.
- *
- * A scenario stays at phone width on every screen. A message thread arriving on
- * your phone is the situation being rehearsed, and widening it would weaken that.
+ * The city board and the district routes get a wider content column on tablet
+ * and up, and wider again on a laptop: the board camera then shows more of the
+ * city route at once — around six spaces on a phone, twelve on a tablet,
+ * fifteen on a laptop — without any of them being a different board.
  */
 const isBoard = (pathname: string) =>
-  pathname === "/game" ||
   pathname === "/progress" ||
   pathname.startsWith("/district/") ||
   pathname.startsWith("/shield-central");
 
 /**
+ * Routes that lay themselves out and must reach `main` untouched.
+ *
+ * Each of these roots on `min-h-full`, which only resolves against a parent
+ * with a definite height — `main` has one, an inserted measuring wrapper would
+ * not. They own their desktop composition instead: the city board fills the
+ * viewport, Peer Shield splits into two columns, and a solo scenario keeps its
+ * own reading column.
+ */
+const ownsItsLayout = (pathname: string) =>
+  pathname === "/game" ||
+  pathname === "/peer-shield" ||
+  pathname === "/play" ||
+  pathname.startsWith("/mini-game/");
+
+/**
  * Presentation canvas for the youth app.
  *
- * Mobile-first: on a phone this is simply the viewport. On a laptop the app
- * column is centred on a dark navy ShieldQuest canvas, with full-screen
- * immersive layout for /game and an opt-in context rail for pitch presentations.
+ * Mobile-first: on a phone this is simply the viewport.
+ *
+ * On a laptop the normal player experience *is* the viewport too. There is no
+ * outer navy canvas with a smaller rounded app card floating on it: a player
+ * who opens ShieldQuest on a laptop should feel they opened ShieldQuest, not a
+ * phone screenshot embedded in a web page. The shell runs full-bleed, and each
+ * surface decides how wide its own content should read.
+ *
+ * Presentation Mode is the deliberate exception — see `ContextRail`. There the
+ * framing is the point, so the card, the rail and the pitch chrome all stay.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -53,6 +71,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const immersive = isImmersive(pathname);
   const board = isBoard(pathname);
   const isGame = pathname === "/game";
+  const selfLaidOut = ownsItsLayout(pathname);
   const [presentation, setPresentation] = useState(false);
 
   // Presentation framing is opt-in via query parameter (?presentation=1).
@@ -81,25 +100,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
      */
     <div className="h-dvh overflow-hidden bg-navy-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-navy-900 via-navy-950 to-navy-950 text-ink">
       <div
-        className={`mx-auto flex h-full w-full items-stretch justify-center ${
+        className={`flex h-full w-full items-stretch justify-center ${
           presentation
-            ? "max-w-[1440px] px-0 xl:gap-8 xl:px-6 xl:py-4"
-            : isGame
-              ? "max-w-[1536px] px-0 xl:px-4 xl:py-2"
-              : "max-w-[1240px] px-0 xl:gap-8 xl:px-6 xl:py-4"
+            ? "mx-auto max-w-[1440px] px-0 xl:gap-8 xl:px-6 xl:py-4"
+            : ""
         }`}
       >
         {presentation && <ContextRail onClose={exitPresentation} />}
 
         <div
-          className={`relative flex h-full w-full flex-col overflow-hidden shadow-[0_1px_2px_rgba(11,37,69,0.06),0_16px_40px_-24px_rgba(11,37,69,0.35)] transition-[max-width] duration-300 ${
+          className={`relative flex h-full w-full flex-col overflow-hidden ${
             presentation
-              ? "max-w-[440px] md:max-w-[720px] xl:max-w-[920px] bg-surface xl:rounded-3xl xl:border xl:border-line"
+              ? "mx-auto max-w-[440px] bg-surface shadow-[0_1px_2px_rgba(11,37,69,0.06),0_16px_40px_-24px_rgba(11,37,69,0.35)] transition-[max-width] duration-300 md:max-w-[720px] xl:max-w-[920px] xl:rounded-3xl xl:border xl:border-line"
               : isGame
-                ? "max-w-[440px] md:max-w-[760px] xl:max-w-[1480px] bg-navy-900 xl:rounded-2xl xl:border xl:border-white/10"
-                : board
-                  ? "max-w-[440px] md:max-w-[760px] xl:max-w-[1160px] bg-surface xl:rounded-3xl xl:border xl:border-line"
-                  : "max-w-[440px] bg-surface xl:rounded-3xl xl:border xl:border-line"
+                ? "bg-navy-900"
+                : "bg-surface"
           }`}
         >
           {/*
@@ -110,20 +125,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <main
             id="main"
             className={`thin-scroll text-scale min-h-0 flex-1 overflow-y-auto overscroll-contain ${
-              presentation || !isGame ? "xl:rounded-t-3xl" : "xl:rounded-t-2xl"
+              presentation ? "xl:rounded-t-3xl" : ""
             }`}
           >
-            {children}
+            {presentation || selfLaidOut ? (
+              children
+            ) : (
+              /*
+                A measuring column for the routes that were designed against a
+                phone-to-tablet width. Removing the outer card must not leave
+                their content stretched across 2560px, so the *frame* goes and
+                the *measure* stays.
+              */
+              <div
+                className={`mx-auto w-full ${
+                  board
+                    ? "max-w-[440px] md:max-w-[860px] xl:max-w-[1160px]"
+                    : "max-w-[440px] md:max-w-[560px]"
+                }`}
+              >
+                {children}
+              </div>
+            )}
           </main>
 
           {!immersive && (
             <nav
               aria-label="Primary"
               className={`shrink-0 border-t border-navy-800 bg-navy-900 pb-[max(0.25rem,env(safe-area-inset-bottom))] ${
-                presentation || !isGame ? "xl:rounded-b-3xl" : "xl:rounded-b-2xl"
+                presentation ? "xl:rounded-b-3xl" : ""
               }`}
             >
-              <ul className="mx-auto flex max-w-[640px] xl:max-w-[720px]">
+              <ul className="mx-auto flex max-w-[640px] xl:max-w-[860px]">
                 {TABS.map(({ href, label, icon: Icon }) => {
                   // "City" stays lit while the player is inside a district.
                   const active =
@@ -135,7 +168,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <Link
                         href={href}
                         aria-current={active ? "page" : undefined}
-                        className={`relative flex min-h-[52px] flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[11px] font-semibold transition ${
+                        className={`relative flex min-h-[52px] flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[11px] font-semibold transition xl:min-h-[58px] xl:text-[12px] ${
                           active
                             ? "text-amber-400"
                             : "text-navy-100/70 hover:text-white"

@@ -142,16 +142,47 @@ export function findReward(id: string): Reward | undefined {
 /* ------------------------------------------------------------------ */
 
 /**
- * Onboarding token choices.
+ * Onboarding token choices — the four ShieldQuest Explorers.
  *
- * Shape and colour only. No avatars, no names, no gender, no age, nothing that
- * asks a young person to describe themselves in order to play.
+ * A colour and a crest, and nothing else. No gender, no age, no ethnicity, no
+ * school and no personality: nothing here asks a young person to describe
+ * themselves in order to play, and nothing here changes how the game behaves.
+ * The four are drawn by `PlayerAvatar`, which keys off these ids.
+ *
+ * The ids are the values written to a saved profile, so they are fixed. The
+ * artwork in front of them can be redrawn as often as it likes; `pt_shield` has
+ * to keep meaning `pt_shield`.
  */
 export const PLAYER_TOKENS = [
-  { id: "pt_shield", name: "Shield", swatch: "bg-amber-500", ring: "ring-amber-400" },
-  { id: "pt_beacon", name: "Beacon", swatch: "bg-civic-600", ring: "ring-civic-400" },
-  { id: "pt_wave", name: "Wave", swatch: "bg-teal-600", ring: "ring-teal-400" },
-  { id: "pt_leaf", name: "Leaf", swatch: "bg-leaf-600", ring: "ring-leaf-200" },
+  {
+    id: "pt_shield",
+    name: "Shield",
+    /** Cosmetic only. Never a role, an ability or a description of the player. */
+    descriptor: "Amber gear, shield crest",
+    swatch: "bg-amber-500",
+    ring: "ring-amber-400",
+  },
+  {
+    id: "pt_beacon",
+    name: "Beacon",
+    descriptor: "Blue gear, signal crest",
+    swatch: "bg-civic-600",
+    ring: "ring-civic-400",
+  },
+  {
+    id: "pt_wave",
+    name: "Wave",
+    descriptor: "Teal gear, wave crest",
+    swatch: "bg-teal-600",
+    ring: "ring-teal-400",
+  },
+  {
+    id: "pt_leaf",
+    name: "Leaf",
+    descriptor: "Green gear, leaf crest",
+    swatch: "bg-leaf-600",
+    ring: "ring-leaf-200",
+  },
 ] as const;
 
 export const DEFAULT_PLAYER_TOKEN = PLAYER_TOKENS[0].id;

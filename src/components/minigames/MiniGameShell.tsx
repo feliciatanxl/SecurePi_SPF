@@ -117,7 +117,13 @@ export function MiniGameShell({
   const coins = game.reward.deltas.coins ?? 0;
 
   return (
-    <div className="relative flex min-h-full flex-col">
+    /*
+      A mini-game keeps a phone-width column on every screen. The shell around
+      it runs full-bleed now, so the measure has to live here — a word search
+      stretched across a 2560px display is not a bigger word search, it is an
+      unplayable one.
+    */
+    <div className="relative mx-auto flex min-h-full w-full max-w-[440px] flex-col md:max-w-[560px] xl:border-x xl:border-line">
       {burstKey !== null && (
         <RewardBurst
           key={burstKey}

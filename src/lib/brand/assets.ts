@@ -71,7 +71,15 @@ export const DISTRICT_SCENE_ART: Record<DistrictId, ArtSlotSource> = {
   community: `${SHIELDQUEST}/districts/community-hub.svg`,
 };
 
-/** The marker that travels the city route. */
+/**
+ * The V2.2 board marker — a single blue disc.
+ *
+ * Registered but no longer rendered. The player chooses one of four Explorers
+ * during onboarding, and the marker has to be the one they chose: a fixed disc
+ * made that choice invisible the moment the game started. `PlayerAvatarMark`
+ * draws the four instead, so the marker varies by colour *and* crest and stays
+ * legible at 24px. Kept for the wider board treatments it was drawn for.
+ */
 export const PLAYER_TOKEN_ART: ArtSlotSource = `${SHIELDQUEST}/board/player-token.svg`;
 
 /**

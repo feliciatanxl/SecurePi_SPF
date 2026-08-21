@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CircleHelp } from "lucide-react";
 import { DistrictScene } from "@/components/player/DistrictArt";
 import { SpaceMark, spaceStateLabel } from "@/components/player/board/SpaceMark";
@@ -42,6 +42,18 @@ function snap(el: HTMLDivElement, left: number) {
   el.style.scrollBehavior = inline;
 }
 
+/**
+ * How far the camera may zoom in on a large screen.
+ *
+ * Zooming buys board depth and spends route overview, so the ceiling is set
+ * where the trade stops paying: at 2.0 a 1920px screen still shows around
+ * fifteen spaces at once, which is the whole point of a camera that pans rather
+ * than a board that shrinks. Below the ceiling the stage fills the camera
+ * exactly, so there is never a strip of dead board under it; above it the stage
+ * is centred, so an unusually tall viewport letterboxes rather than gaps.
+ */
+const MAX_ZOOM = 2;
+
 export function CityTrack({
   spaces,
   /** Where the token is drawn. Steps ahead of the persisted position mid-move. */
@@ -52,6 +64,8 @@ export function CityTrack({
   districtNames,
   discoveredDistricts,
   onOpenSpace,
+  /** The Explorer chosen during onboarding. Cosmetic; the marker only. */
+  playerTokenId,
   /** Cosmetic route colour, if one is equipped. */
   trailClass,
   tokenClass,
@@ -65,11 +79,44 @@ export function CityTrack({
   districtNames: Record<DistrictId, string>;
   discoveredDistricts: DistrictId[];
   onOpenSpace: (space: ResolvedSpace) => void;
+  playerTokenId: string;
   trailClass?: string;
   tokenClass?: string;
   markerCosmetic?: boolean;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
+
+  /*
+   * Camera zoom.
+   *
+   * The board geometry is fixed arithmetic — one set of coordinates that the
+   * route line, the spaces, the district bands and the token all agree on. A
+   * laptop gives the board far more vertical room than a phone does, and the
+   * way to spend it is to zoom the whole camera in rather than to stretch the
+   * board: a uniform scale cannot distort the district artwork, cannot pull the
+   * route away from the spaces, and needs no second copy of the geometry.
+   *
+   * The factor is whatever the container was actually given, so the board fills
+   * its share of the viewport exactly at every screen size instead of matching
+   * a list of breakpoints. On a phone the container is the board height, the
+   * factor is 1, and nothing about the mobile board changes.
+   */
+  const [zoom, setZoom] = useState(1);
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      const next = Math.min(MAX_ZOOM, Math.max(1, el.clientHeight / TRACK_HEIGHT));
+      // Rounded, so a one-pixel resize cannot churn the whole board.
+      setZoom(Math.round(next * 100) / 100);
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   /** Contiguous runs of spaces belonging to the same district. */
   const bands = useMemo(() => {
@@ -109,13 +156,13 @@ export function CityTrack({
     lastPan.current = tokenIndex;
     const stepped = previous !== null && Math.abs(tokenIndex - previous) === 1;
 
-    const target = spaceX(tokenIndex) - el.clientWidth / 2;
+    const target = spaceX(tokenIndex) * zoom - el.clientWidth / 2;
     if (stepped) {
       el.scrollLeft = target;
       return;
     }
     snap(el, target);
-  }, [tokenIndex]);
+  }, [tokenIndex, zoom]);
 
   /*
    * And once the walk is over, land the camera exactly. An animated pan can be
@@ -127,8 +174,8 @@ export function CityTrack({
   useEffect(() => {
     const el = viewportRef.current;
     if (!el || walking) return;
-    snap(el, spaceX(tokenIndex) - el.clientWidth / 2);
-  }, [walking, tokenIndex]);
+    snap(el, spaceX(tokenIndex) * zoom - el.clientWidth / 2);
+  }, [walking, tokenIndex, zoom]);
 
   const path = useMemo(() => routePath(), []);
   const exploredPercent = Math.max(
@@ -139,13 +186,32 @@ export function CityTrack({
   return (
     <div
       ref={viewportRef}
-      className="thin-scroll board-camera relative w-full overflow-x-auto overflow-y-hidden overscroll-x-contain"
-      style={{ height: TRACK_HEIGHT }}
+      /*
+       * `flex-1` with a floor rather than a fixed height: on a phone the floor
+       * is the whole of it (340px, matching TRACK_HEIGHT, so a phone renders
+       * exactly the board it always did), and on a laptop the board grows into
+       * whatever is left between the HUD and the roll control.
+       *
+       * The desktop floor is lower than the track. On a short laptop — 1280×720
+       * — that is the difference between cropping a little scenery off the top
+       * and bottom of the board and pushing the roll control off the screen, and
+       * the stage is centred so what gets cropped is scenery rather than route.
+       */
+      className="thin-scroll board-camera relative flex min-h-[340px] w-full flex-1 overflow-x-auto overflow-y-hidden overscroll-x-contain xl:min-h-[248px]"
       aria-label="ShieldQuest City camera. Pan horizontally to look ahead."
     >
+      {/* Sizing box: the zoomed footprint, which is what the camera pans over. */}
       <div
-        className="relative mx-auto"
-        style={{ width: TRACK_WIDTH, height: TRACK_HEIGHT }}
+        className="relative m-auto shrink-0"
+        style={{ width: TRACK_WIDTH * zoom, height: TRACK_HEIGHT * zoom }}
+      >
+      <div
+        className="absolute left-0 top-0 origin-top-left"
+        style={{
+          width: TRACK_WIDTH,
+          height: TRACK_HEIGHT,
+          transform: zoom === 1 ? undefined : `scale(${zoom})`,
+        }}
       >
         {/* District scenery. The V2.2 scenes sit under the route they belong
             to, so the track visibly travels through four places. */}
@@ -337,8 +403,9 @@ export function CityTrack({
             top: spaceY(tokenIndex) - 22,
           }}
         >
-          <PlayerTokenMark className={tokenClass} />
+          <PlayerTokenMark tokenId={playerTokenId} className={tokenClass} />
         </div>
+      </div>
       </div>
     </div>
   );

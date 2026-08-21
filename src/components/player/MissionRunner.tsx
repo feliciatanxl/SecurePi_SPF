@@ -46,6 +46,18 @@ interface MissionRunnerProps {
   skillCaption?: string;
   backHref: string;
   backLabel: string;
+  /**
+   * Opt in to the two-column laptop composition: the situation on the left,
+   * the decision on the right.
+   *
+   * Off by default, and deliberately so. A solo scenario is a message thread
+   * arriving on your phone, and that *is* the situation being rehearsed — it
+   * keeps a phone-width reading column on every screen. Peer Shield is the
+   * opposite case: the player is a bystander weighing evidence against a
+   * response, and on a laptop those two things belong side by side rather than
+   * a scroll apart.
+   */
+  desktopSplit?: boolean;
 }
 
 export function MissionRunner({
@@ -60,6 +72,7 @@ export function MissionRunner({
   skillCaption = "Skill practised",
   backHref,
   backLabel,
+  desktopSplit = false,
 }: MissionRunnerProps) {
   const router = useRouter();
   const { profile, guardians, completeActivity, awardTokens } = usePlayer();
@@ -205,8 +218,24 @@ export function MissionRunner({
   const bigReward = Boolean(result?.delayed) && Boolean(result?.flashAmount);
   const rewardOpen = bigReward && !rewardSeen && !consequence;
 
+  /*
+   * The measure of the mission itself.
+   *
+   * Without the split this is a phone-width reading column, centred — the shell
+   * around it is full-bleed now, so the column has to own its own width. With
+   * the split it is the widescreen composition, capped so the two panes stay a
+   * pair rather than drifting to opposite edges of a 2560px screen.
+   */
+  const measure = desktopSplit
+    ? "mx-auto w-full max-w-[440px] md:max-w-[720px] xl:max-w-[1400px]"
+    : "mx-auto w-full max-w-[440px] md:max-w-[560px]";
+
   return (
-    <div className="relative flex min-h-full flex-col">
+    <div
+      className={`relative flex min-h-full flex-col ${measure} ${
+        desktopSplit ? "" : "xl:border-x xl:border-line"
+      }`}
+    >
       {burst && !bigReward && (
         <RewardBurst
           key={burst.key}
@@ -220,7 +249,7 @@ export function MissionRunner({
       <header
         className={`sticky top-0 z-20 ${isTeal ? "bg-teal-700" : "bg-navy-900"}`}
       >
-        <div className="flex items-center gap-3 px-4 pb-2.5 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className={`flex items-center gap-3 px-4 pb-2.5 pt-[max(0.75rem,env(safe-area-inset-top))] ${desktopSplit ? "xl:gap-4 xl:px-6 xl:pb-3 xl:pt-4" : ""}`}>
           <Link
             href={backHref}
             aria-label={backLabel}
@@ -247,7 +276,7 @@ export function MissionRunner({
         </div>
 
         {/* HUD. One strip, three numbers, always on screen. */}
-        <dl className="flex items-center gap-1.5 border-t border-white/10 px-4 py-1">
+        <dl className={`flex items-center gap-1.5 border-t border-white/10 px-4 py-1 ${desktopSplit ? "xl:gap-3 xl:px-6 xl:py-2" : ""}`}>
           <HudStat
             icon={<TrendingUp className="h-3 w-3" aria-hidden="true" />}
             label="Trust"
@@ -279,7 +308,7 @@ export function MissionRunner({
       <div
         className={`px-4 py-2.5 ${isTeal ? "bg-teal-50" : "bg-civic-50"} border-b ${
           isTeal ? "border-teal-100" : "border-civic-100"
-        }`}
+        } ${desktopSplit ? "xl:px-6 xl:py-3.5" : ""}`}
       >
         <div className="flex items-center gap-2">
           {modeBadge && (
@@ -333,9 +362,29 @@ export function MissionRunner({
         )}
       </div>
 
+      {/*
+        Situation and decision.
+
+        One flex column on a phone — friend card, thread, then the decision rail
+        pinned to the bottom, exactly as before. On a laptop the same two groups
+        become two columns: what happened on the left, what you do about it on
+        the right, both on screen at once instead of a scroll apart.
+      */}
+      <div
+        className={`flex min-h-0 flex-1 flex-col ${
+          desktopSplit
+            ? "xl:grid xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] xl:items-start xl:gap-7 xl:px-6 xl:py-5"
+            : ""
+        }`}
+      >
+        <div className="flex min-w-0 flex-1 flex-col">
       {/* Friend card — Peer Shield only */}
       {friend && (
-        <div className="border-b border-line px-4 py-2.5">
+        <div
+          className={`border-b border-line px-4 py-2.5 ${
+            desktopSplit ? "xl:rounded-2xl xl:border xl:px-4 xl:py-3" : ""
+          }`}
+        >
           <div className="flex items-start gap-2.5 rounded-2xl border border-line bg-surface-sunk p-2.5">
             <span
               aria-hidden="true"
@@ -356,8 +405,15 @@ export function MissionRunner({
         </div>
       )}
 
-      {/* Transcript */}
-      <div className="flex-1 space-y-2 px-4 py-2.5">
+      {/*
+        Transcript. Capped on a laptop: a message thread read at 700px is still
+        a message thread, and one read at 1400px is a document.
+      */}
+      <div
+        className={`flex-1 space-y-2 px-4 py-2.5 ${
+          desktopSplit ? "xl:max-w-[700px] xl:px-0 xl:py-3" : ""
+        }`}
+      >
         {transcript.map((m) => (
           <ScenarioMessage key={m.id} message={m} accent={accent} />
         ))}
@@ -394,9 +450,20 @@ export function MissionRunner({
 
         <div ref={bottomRef} />
       </div>
+        </div>
 
-      {/* Decision rail */}
-      <div className="sticky bottom-0 z-20 space-y-2 border-t border-line bg-surface/95 px-4 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+      {/*
+        Decision rail. A pinned bar at the bottom of a phone; the right-hand
+        pane on a laptop, where it sticks near the top of the column so the
+        response options stay put while the thread is read beside them.
+      */}
+      <div
+        className={`sticky bottom-0 z-20 space-y-2 border-t border-line bg-surface/95 px-4 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur ${
+          desktopSplit
+            ? "xl:bottom-auto xl:top-5 xl:self-start xl:rounded-2xl xl:border xl:bg-surface xl:px-5 xl:pb-5 xl:pt-4 xl:shadow-[0_18px_44px_-32px_rgba(11,37,69,0.55)]"
+            : ""
+        }`}
+      >
         {awaitingConsequence ? (
           // Holds the beat without hinting at the outcome.
           <p
@@ -441,7 +508,11 @@ export function MissionRunner({
           </div>
         ) : (
           <>
-            <h2 className="text-[13px] font-bold text-navy-900">
+            <h2
+              className={`text-[13px] font-bold text-navy-900 ${
+                desktopSplit ? "xl:text-[16px] xl:leading-snug" : ""
+              }`}
+            >
               {decisionPrompt}
             </h2>
             {scenario.choices.map((choice, i) => (
@@ -456,6 +527,7 @@ export function MissionRunner({
             ))}
           </>
         )}
+      </div>
       </div>
 
       <RewardTakeover

@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+/*
+ * `tall:` — a desktop screen with vertical room to spend.
+ *
+ * The city screen is a fixed composition: header, board, roll control, chapter
+ * strip, tab bar, all on screen at once and none of them scrolled to. Whether
+ * the controls can afford to be larger is therefore a question about viewport
+ * *height* as much as width — a 1366×768 laptop is as wide as a 1366×1024 one
+ * and has 256px less to give. This is what lets the board fill a 1080p screen
+ * without pushing the roll control off a 768p one.
+ *
+ * The width half of the query is not decoration. A 430×932 phone is taller than
+ * a 1366×768 laptop, and a desktop-sized control on a phone is exactly the
+ * mobile regression this pass exists to avoid.
+ */
+@custom-variant tall (@media (min-width: 1280px) and (min-height: 900px));
+
 /* ==========================================================================
    PROJECT SHIELD · ShieldQuest design tokens
    Light, civic, youthful. Navy is reserved for hero surfaces, headers,

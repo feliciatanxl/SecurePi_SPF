@@ -185,8 +185,34 @@ export function CityHomeExperience() {
     : "Shield Central";
 
   return (
-    <div className="city-home flex min-h-full flex-col overflow-hidden bg-navy-900 text-white">
-      <header className="shrink-0 px-3.5 pb-2 pt-[max(0.55rem,env(safe-area-inset-top))] md:px-5 md:pt-3 xl:px-6 xl:pb-2.5 xl:pt-3">
+    <div
+      /*
+        A definite height at desktop, not just a minimum. The board is the item
+        that gives way when the screen is short, and flexbox will only shrink an
+        item inside a container whose height it actually knows — with a bare
+        `min-height` the column simply grew to fit the board and pushed the roll
+        control off the bottom. `overflow-y-auto` is the safety net: if a player
+        has turned text size up far enough that even the shrunk layout does not
+        fit, the controls stay reachable instead of being clipped away.
+      */
+      className="city-home flex min-h-full flex-col overflow-hidden bg-navy-900 text-white xl:h-full xl:overflow-y-auto"
+    >
+      {/*
+        One column for the whole city screen, so the header, the board, the roll
+        control and the chapter strip share a measure and stay aligned with each
+        other. It grows to fill the viewport — the board is the flexible part —
+        which is what keeps the tab bar planted at the bottom instead of leaving
+        a field of empty navy above it on a laptop.
+
+        `min-h-0` matters more than it looks. The board zooms itself to fill the
+        height it is given, which makes the zoomed stage the board section's
+        content-based minimum — and a flex item that will not shrink below its
+        own content turns that into a ratchet the board can only grow through.
+        Letting this column and the board shrink is what lets the layout settle
+        instead of pushing the roll control off a short laptop screen.
+      */}
+      <div className="mx-auto flex w-full flex-1 flex-col xl:min-h-0 2xl:max-w-[1840px]">
+      <header className="shrink-0 px-3.5 pb-2 pt-[max(0.55rem,env(safe-area-inset-top))] md:px-5 md:pt-3 xl:px-6 xl:pb-2.5 xl:pt-3 tall:pb-3 tall:pt-4">
         <div className="flex items-center gap-2 xl:gap-4">
           <div className="min-w-0 flex-1">
             <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-amber-400 xl:text-[10px]">
@@ -257,11 +283,27 @@ export function CityHomeExperience() {
         </div>
       )}
 
+      {/*
+        The board is the flexible row. On a phone it is exactly as tall as the
+        track, as before; on a laptop it shares whatever the header, the roll
+        control and the chapter strip do not need with the action row below —
+        which is what makes the illustrated city the strongest object on the
+        screen rather than a shallow strip with a field of navy under it.
+
+        The flex basis is a fixed 440px — the board at rest: 44px of board bar,
+        340px of track, 56px of city map. It has to be a constant rather than
+        `auto`, because the board zooms itself to whatever height it is given: a
+        content-derived basis would make this row claim a larger share of the
+        free space every time it grew, and the two would chase each other.
+
+        It takes two shares of the spare height to the action row one, so a
+        larger screen mostly buys more city rather than more padding.
+      */}
       <section
         aria-labelledby="city-board"
-        className="city-board-frame relative mx-3 shrink-0 overflow-hidden rounded-[28px] border border-white/15 shadow-[0_18px_46px_-24px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.12)] md:mx-4 xl:mx-6"
+        className="city-board-frame relative mx-3 flex shrink-0 flex-col overflow-hidden rounded-[28px] border border-white/15 shadow-[0_18px_46px_-24px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.12)] md:mx-4 xl:mx-6 xl:min-h-0 xl:flex-[2_1_440px] 2xl:max-h-[60dvh]"
       >
-        <div className="relative z-30 flex h-10 items-center justify-between gap-2 border-b border-white/10 bg-navy-950/88 px-3.5 backdrop-blur-sm xl:px-5">
+        <div className="relative z-30 flex h-10 shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-navy-950/88 px-3.5 backdrop-blur-sm xl:h-11 xl:px-5">
           <h2
             id="city-board"
             className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-amber-400 xl:text-[11px]"
@@ -284,12 +326,13 @@ export function CityHomeExperience() {
           districtNames={districtNames}
           discoveredDistricts={profile.discoveredDistricts}
           onOpenSpace={openSpaceDirectly}
+          playerTokenId={profile.playerTokenId}
           trailClass={equippedIn("routeTrail") ? "stroke-civic-500/65" : undefined}
           tokenClass={equippedIn("playerToken") ? "!border-civic-400" : undefined}
           markerCosmetic={Boolean(equippedIn("boardMarker"))}
         />
 
-        <div className="relative z-30 bg-gradient-to-t from-navy-950 via-navy-950/90 to-transparent px-2.5 pb-2.5 pt-2 xl:px-4">
+        <div className="relative z-30 shrink-0 bg-gradient-to-t from-navy-950 via-navy-950/90 to-transparent px-2.5 pb-2.5 pt-2 xl:px-4">
           <BoardMiniMap spaces={spaces} completed={boardCompleted} total={boardPlayable} />
         </div>
 
@@ -312,7 +355,12 @@ export function CityHomeExperience() {
         )}
       </section>
 
-      <div className="shrink-0 space-y-2 px-3 pb-2.5 pt-2 xl:mx-auto xl:w-full xl:max-w-[1100px] xl:px-6 xl:pb-2.5 xl:pt-2.5">
+      {/*
+        The action row keeps a reading measure of its own. The board can be as
+        wide as the screen, but a roll control and four chapter cards stretched
+        across 2560px stop being a group and become four unrelated corners.
+      */}
+      <div className="flex shrink-0 flex-col justify-center space-y-2 px-3 pb-2.5 pt-2 xl:mx-auto xl:w-full xl:max-w-[1180px] xl:space-y-2.5 xl:px-6 xl:pb-3 xl:pt-3 tall:space-y-3 tall:pb-4 tall:pt-3.5 xl:grow 2xl:max-w-[1320px]">
         <DiceRoller
           phase={turn.phase}
           value={turn.value}
@@ -321,7 +369,7 @@ export function CityHomeExperience() {
         />
 
         <nav aria-label="City chapter progress">
-          <ul className="grid grid-cols-4 gap-1.5 xl:gap-2.5">
+          <ul className="grid grid-cols-4 gap-1.5 xl:gap-2.5 tall:gap-3.5">
             {districts.map((district) => {
               const isCurrent = district.id === current?.districtId;
               const state = !district.discovered
@@ -343,7 +391,7 @@ export function CityHomeExperience() {
                     type="button"
                     onClick={() => openDistrictDirectly(district)}
                     aria-current={isCurrent ? "location" : undefined}
-                    className={`chapter-chip relative flex min-h-[58px] w-full flex-col justify-end overflow-hidden rounded-xl border px-1.5 pb-1.5 pt-2 text-left transition hover:-translate-y-0.5 hover:border-white/45 xl:min-h-[60px] xl:px-2.5 xl:pb-2 xl:pt-2.5 ${
+                    className={`chapter-chip relative flex min-h-[58px] w-full flex-col justify-end overflow-hidden rounded-xl border px-1.5 pb-1.5 pt-2 text-left transition hover:-translate-y-0.5 hover:border-white/45 xl:min-h-[86px] xl:rounded-2xl xl:px-3.5 xl:pb-2.5 xl:pt-3 tall:min-h-[104px] tall:pb-3 tall:pt-3.5 ${
                       isCurrent
                         ? "border-amber-400 bg-white/14"
                         : "border-white/14 bg-white/8"
@@ -364,14 +412,14 @@ export function CityHomeExperience() {
                       }`}
                     />
                     <span className="relative flex w-full items-center justify-between gap-1">
-                      <span className="min-w-0 flex-1 truncate text-[9px] font-extrabold uppercase tracking-wide xl:text-[10px]">
+                      <span className="min-w-0 flex-1 truncate text-[9px] font-extrabold uppercase tracking-wide xl:text-[11px] tall:text-[13px]">
                         {district.id === "digi" ? "Digi" : district.name.split(" ")[0]}
                       </span>
-                      <span className="text-[9px] font-extrabold tabular-nums text-amber-300 xl:text-[10px]">
+                      <span className="text-[9px] font-extrabold tabular-nums text-amber-300 xl:text-[10.5px] tall:text-[12px]">
                         {progressLabel}
                       </span>
                     </span>
-                    <span className="relative mt-0.5 block w-full truncate text-[8px] font-bold uppercase tracking-[0.08em] text-white/65 xl:text-[9px]">
+                    <span className="relative mt-0.5 block w-full truncate text-[8px] font-bold uppercase tracking-[0.08em] text-white/65 xl:text-[9.5px] tall:mt-1 tall:text-[11px]">
                       {state}
                     </span>
                     <span className="sr-only">
@@ -390,6 +438,7 @@ export function CityHomeExperience() {
             {progress.completed}/{progress.total} activities
           </span>
         </p>
+      </div>
       </div>
 
       <SpaceSheet
@@ -474,7 +523,7 @@ function CurrentQuest({
   const competency = space.node?.primaryCompetency ?? space.card?.competency;
 
   return (
-    <div className="pointer-events-none absolute left-3 top-[50px] z-30 max-w-[240px] rounded-2xl border border-white/25 bg-navy-950/82 px-3 py-2 shadow-lg backdrop-blur-sm md:max-w-[290px]">
+    <div className="pointer-events-none absolute left-3 top-[50px] z-30 max-w-[240px] rounded-2xl border border-white/25 bg-navy-950/82 px-3 py-2 shadow-lg backdrop-blur-sm md:max-w-[290px] xl:left-5 xl:top-[58px] xl:max-w-[340px] xl:px-4 xl:py-2.5">
       <p className="text-[8px] font-extrabold uppercase tracking-[0.2em] text-amber-400">
         Current quest
       </p>

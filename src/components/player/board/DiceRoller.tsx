@@ -64,19 +64,19 @@ export function DiceRoller({
   const showing = phase === "result" || phase === "moving";
 
   return (
-    <div className="dice-action-panel flex items-center gap-2.5 rounded-2xl border border-white/15 bg-white/8 p-1.5 shadow-[0_10px_26px_-20px_rgba(0,0,0,0.9)]">
+    <div className="dice-action-panel flex items-center gap-2.5 rounded-2xl border border-white/15 bg-white/8 p-1.5 shadow-[0_10px_26px_-20px_rgba(0,0,0,0.9)] tall:rounded-[26px] tall:p-2">
       <div className="min-w-0 flex-1">
         {showing && value !== null ? (
           <p
-            className="flex min-h-[58px] items-center justify-center gap-3 rounded-xl border-2 border-amber-400 bg-navy-900 px-3"
+            className="flex min-h-[58px] items-center justify-center gap-3 rounded-xl border-2 border-amber-400 bg-navy-900 px-3 tall:min-h-[80px] tall:gap-5 tall:rounded-2xl"
             role="status"
             aria-live="polite"
           >
-            <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-amber-400">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-amber-400 tall:text-[14px]">
               You rolled
             </span>
-            <Die value={value} className="h-10 w-10" />
-            <span className="text-[26px] font-extrabold leading-none tabular-nums text-white">
+            <Die value={value} className="h-10 w-10 tall:h-14 tall:w-14" />
+            <span className="text-[26px] font-extrabold leading-none tabular-nums text-white tall:text-[36px]">
               {value}
             </span>
           </p>
@@ -85,19 +85,19 @@ export function DiceRoller({
             type="button"
             onClick={onRoll}
             disabled={disabled || rolling}
-            className="group flex min-h-[58px] w-full items-center justify-between gap-3 rounded-xl border-b-4 border-amber-700 bg-gradient-to-r from-amber-500 to-amber-400 px-4 text-[15px] font-extrabold uppercase tracking-[0.1em] text-navy-900 transition hover:brightness-105 active:translate-y-[3px] active:border-b-0 disabled:cursor-not-allowed disabled:opacity-60"
+            className="group flex min-h-[58px] w-full items-center justify-between gap-3 rounded-xl border-b-4 border-amber-700 bg-gradient-to-r from-amber-500 to-amber-400 px-4 text-[15px] font-extrabold uppercase tracking-[0.1em] text-navy-900 transition hover:brightness-105 active:translate-y-[3px] active:border-b-0 disabled:cursor-not-allowed disabled:opacity-60 tall:min-h-[80px] tall:rounded-2xl tall:px-7 tall:text-[18px]"
           >
             <span className="flex min-w-0 flex-col items-start leading-tight">
-              <span className="text-[9px] font-bold tracking-[0.2em] text-navy-900/70">
+              <span className="text-[9px] font-bold tracking-[0.2em] text-navy-900/70 tall:text-[11px]">
                 Your turn
               </span>
               <span>{rolling ? "Rolling…" : "Roll dice"}</span>
-              <span className="mt-0.5 text-[9px] font-semibold normal-case tracking-normal text-navy-900/70">
+              <span className="mt-0.5 text-[9px] font-semibold normal-case tracking-normal text-navy-900/70 tall:text-[12px]">
                 Move through ShieldQuest City
               </span>
             </span>
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-navy-900/10 transition group-hover:scale-105">
-              <Die value={rolling ? 6 : 4} className="h-9 w-9" tumbling={rolling} />
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-navy-900/10 transition group-hover:scale-105 tall:h-16 tall:w-16 tall:rounded-2xl">
+              <Die value={rolling ? 6 : 4} className="h-9 w-9 tall:h-12 tall:w-12" tumbling={rolling} />
             </span>
           </button>
         )}

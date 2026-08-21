@@ -9,6 +9,10 @@ import { NODE_PEER_JAYDEN } from "@/lib/api/world-data";
  *
  * Same threat, but the player is the bystander. Constructive intervention pays
  * Community Resilience; staying silent costs it.
+ *
+ * `desktopSplit` is set here and nowhere else: a bystander is weighing what
+ * they can see against what they could do, and on a laptop those two things
+ * belong side by side. A phone keeps the stacked layout.
  */
 export default function PeerShieldPage() {
   return (
@@ -28,6 +32,7 @@ export default function PeerShieldPage() {
       skillCaption="Peer Shield skill"
       backHref="/district/community"
       backLabel="Back to Community Hub"
+      desktopSplit
     />
   );
 }
