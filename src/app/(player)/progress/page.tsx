@@ -251,7 +251,7 @@ export default function ProgressPage() {
                 Pick any stop on the city board to make a start.
               </p>
               <Link
-                href="/"
+                href="/game"
                 className="mt-3 inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-civic-600 px-5 text-[14px] font-bold text-white transition hover:bg-civic-700"
               >
                 Open ShieldQuest City

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import { CircleHelp } from "lucide-react";
 import { DistrictScene } from "@/components/player/DistrictArt";
 import { SpaceMark, spaceStateLabel } from "@/components/player/board/SpaceMark";
 import {
@@ -49,6 +50,7 @@ export function CityTrack({
   steppingIndices,
   guardians,
   districtNames,
+  discoveredDistricts,
   onOpenSpace,
   /** Cosmetic route colour, if one is equipped. */
   trailClass,
@@ -61,6 +63,7 @@ export function CityTrack({
   steppingIndices: number[];
   guardians: Guardian[];
   districtNames: Record<DistrictId, string>;
+  discoveredDistricts: DistrictId[];
   onOpenSpace: (space: ResolvedSpace) => void;
   trailClass?: string;
   tokenClass?: string;
@@ -148,6 +151,9 @@ export function CityTrack({
             to, so the track visibly travels through four places. */}
         {bands.map((band) => {
           const box = bandBox(band.first, band.last);
+          const discovered = band.districtId
+            ? discoveredDistricts.includes(band.districtId)
+            : true;
           return (
             <div
               key={`${band.districtId ?? "central"}-${band.first}`}
@@ -160,19 +166,43 @@ export function CityTrack({
                 <>
                   <DistrictScene
                     districtId={band.districtId}
-                    className="opacity-[0.9]"
+                    className={
+                      discovered
+                        ? "opacity-[0.9]"
+                        : "opacity-[0.58] saturate-50 grayscale-[0.2]"
+                    }
                   />
                   <span
                     aria-hidden="true"
-                    className="absolute inset-0 bg-gradient-to-b from-white/0 via-navy-950/5 to-navy-950/45"
+                    className={`absolute inset-0 ${
+                      discovered
+                        ? "bg-gradient-to-b from-white/0 via-navy-950/5 to-navy-950/45"
+                        : "bg-gradient-to-b from-white/28 via-white/16 to-navy-950/42"
+                    }`}
                   />
                   <span aria-hidden="true" className="city-horizon absolute inset-x-0 bottom-0 h-[46%]" />
-                  <p
-                    aria-hidden="true"
-                    className="absolute left-2.5 top-2 truncate rounded-md border border-white/30 bg-navy-950/78 px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.14em] text-white shadow-sm"
+                  <div
+                    className={`absolute left-2.5 top-2 max-w-[190px] rounded-lg border px-2.5 py-1.5 shadow-sm backdrop-blur-sm ${
+                      discovered
+                        ? "border-white/30 bg-navy-950/78 text-white"
+                        : "border-navy-900/22 bg-white/86 text-navy-950"
+                    }`}
                   >
-                    {districtNames[band.districtId]}
-                  </p>
+                    <p className="truncate text-[9px] font-extrabold uppercase tracking-[0.14em]">
+                      {districtNames[band.districtId]}
+                    </p>
+                    {!discovered && (
+                      <>
+                        <p className="mt-0.5 flex items-center gap-1 text-[8px] font-extrabold uppercase tracking-[0.08em] text-navy-700">
+                          <CircleHelp className="h-3 w-3 shrink-0" aria-hidden="true" />
+                          Undiscovered
+                        </p>
+                        <p className="mt-0.5 text-[8px] font-semibold leading-tight text-navy-700">
+                          Travel here to discover this chapter.
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </>
               ) : (
                 <>
@@ -240,6 +270,9 @@ export function CityTrack({
             const guardian = space.guardianId
               ? guardians.find((g) => g.id === space.guardianId)
               : undefined;
+            const districtDiscovered = space.districtId
+              ? discoveredDistricts.includes(space.districtId)
+              : true;
 
             return (
               <li
@@ -256,6 +289,7 @@ export function CityTrack({
                   <SpaceMark
                     space={space}
                     guardian={guardian}
+                    discovered={districtDiscovered}
                     stepping={stepOrder >= 0}
                     markerCosmetic={markerCosmetic}
                     relation={
@@ -278,7 +312,7 @@ export function CityTrack({
                   <span className="sr-only">
                     Space {space.index + 1} of {spaces.length}.{" "}
                     {BOARD_SPACE_LABEL[space.kind]}. {space.title}.{" "}
-                    {spaceStateLabel(space)}.
+                    {spaceStateLabel(space, districtDiscovered)}.
                     {space.isCurrent ? " You are here." : ""}
                   </span>
                   {space.index === tokenIndex && (

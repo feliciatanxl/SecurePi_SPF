@@ -189,7 +189,7 @@ export default function AdminPage() {
             {/* Icon-only until there is room for the label, so the whole bar
                 stays one row on a tablet instead of wrapping to two. */}
             <Link
-              href="/"
+              href="/game"
               className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-line px-3 text-[13px] font-semibold text-ink-muted transition hover:border-civic-200 hover:text-civic-700"
             >
               <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
@@ -226,7 +226,7 @@ export default function AdminPage() {
             scenario table at 1440px with no measure is a row of numbers a long
             way from the title they belong to.
           */}
-        <main className="mx-auto min-w-0 max-w-[1180px] flex-1 px-5 py-7 lg:px-8">
+        <main id="main" className="mx-auto min-w-0 max-w-[1180px] flex-1 px-5 py-7 lg:px-8">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-civic-700 lg:hidden">
               Project SHIELD

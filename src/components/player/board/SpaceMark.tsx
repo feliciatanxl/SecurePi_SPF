@@ -1,5 +1,6 @@
 import {
   Award,
+  CalendarClock,
   Check,
   Shield as ShieldMark,
   Gamepad2,
@@ -56,6 +57,7 @@ export function SpaceMark({
   /** An equipped City Style marker. Changes the completed mark, nothing else. */
   markerCosmetic = false,
   relation = "ahead",
+  discovered = true,
 }: {
   space: ResolvedSpace;
   guardian?: Guardian;
@@ -63,9 +65,11 @@ export function SpaceMark({
   markerCosmetic?: boolean;
   /** Exploration state relative to the player's current position. */
   relation?: "behind" | "current" | "ahead";
+  /** False while the surrounding district is still only a city teaser. */
+  discovered?: boolean;
 }) {
   const Icon = SPACE_ICON[space.kind];
-  const dim = space.planned || space.locked;
+  const dim = discovered && (space.planned || space.locked);
 
   return (
     <span className="relative block">
@@ -74,6 +78,8 @@ export function SpaceMark({
         className={`grid h-[42px] w-[42px] place-items-center border-2 shadow-[0_5px_12px_-6px_rgba(6,21,39,0.95)] transition ${
           SPACE_SKIN[space.kind]
         } ${dim ? "opacity-45 saturate-50" : ""} ${
+          !discovered ? "opacity-55 saturate-50" : ""
+        } ${
           stepping ? "scale-110 ring-4 ring-amber-300/60" : ""
         } ${
           space.isCurrent
@@ -107,12 +113,18 @@ export function SpaceMark({
           )}
         </span>
       )}
-      {dim && !space.completed && (
+      {discovered && (space.planned || space.locked) && !space.completed && (
         <span
           aria-hidden="true"
-          className="absolute -right-1.5 -top-1.5 grid h-[19px] w-[19px] place-items-center rounded-full border-2 border-navy-950 bg-navy-800 text-navy-100"
+          className={`absolute -right-1.5 -top-1.5 grid h-[19px] w-[19px] place-items-center rounded-full border-2 border-navy-950 text-white ${
+            space.planned ? "bg-coral-600" : "bg-navy-800"
+          }`}
         >
-          <Lock className="h-2.5 w-2.5" strokeWidth={3} />
+          {space.planned ? (
+            <CalendarClock className="h-2.5 w-2.5" strokeWidth={2.8} />
+          ) : (
+            <Lock className="h-2.5 w-2.5" strokeWidth={3} />
+          )}
         </span>
       )}
       <span
@@ -130,10 +142,15 @@ export function SpaceMark({
 }
 
 /** The state sentence read to assistive technology, and shown in the legend. */
-export function spaceStateLabel(space: ResolvedSpace): string {
+export function spaceStateLabel(
+  space: ResolvedSpace,
+  discovered = true,
+): string {
+  if (!discovered) return "Undiscovered district";
   if (space.completed) return "Completed";
   if (space.planned) return "Coming soon";
-  if (space.locked) return "Locked";
+  if (space.locked) return "Locked by progress";
+  if (space.node?.playable) return "Available";
   if (space.visited) return "Visited";
   return "Not visited yet";
 }

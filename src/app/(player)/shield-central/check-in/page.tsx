@@ -178,7 +178,7 @@ function CheckRunner({
 
         <div className="space-y-2">
           <Link
-            href="/"
+            href="/game"
             className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-civic-600 px-4 text-[15px] font-extrabold text-white transition hover:bg-civic-700"
           >
             Back to ShieldQuest City

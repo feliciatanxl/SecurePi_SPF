@@ -10,14 +10,37 @@ const sans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  // A page-level title still reads as "<page> · ShieldQuest — Project SHIELD".
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  ),
   title: {
-    default: "ShieldQuest — Project SHIELD",
-    template: "%s · ShieldQuest — Project SHIELD",
+    default: "Project SHIELD — ShieldQuest",
+    template: "%s · Project SHIELD",
   },
-  applicationName: "ShieldQuest",
+  applicationName: "Project SHIELD",
   description:
-    "Choose Right. Protect Together. Practise recognising risk, handling pressure and protecting your friends before the situation happens in real life.",
+    "A youth-led interactive crime-prevention experience that helps young people practise recognising risk, making safer decisions and protecting their peers.",
+  openGraph: {
+    title: "Project SHIELD — ShieldQuest",
+    description:
+      "A youth-led interactive crime-prevention experience for practising safer decisions and protecting peers.",
+    type: "website",
+    images: [
+      {
+        url: "/og.png",
+        width: 1731,
+        height: 909,
+        alt: "Project SHIELD — ShieldQuest. Choose Right. Protect Together. Working prototype.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Project SHIELD — ShieldQuest",
+    description:
+      "A youth-led interactive crime-prevention experience for practising safer decisions and protecting peers.",
+    images: ["/og.png"],
+  },
   manifest: "/manifest.webmanifest",
   /*
    * The favicon is the original ShieldQuest mark in `public/icon.svg`; the

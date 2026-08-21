@@ -1,7 +1,16 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Clock, Lock, MessageCircle, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarClock,
+  Check,
+  CirclePlay,
+  Lock,
+  MessageCircle,
+  Sparkles,
+} from "lucide-react";
 import { DistrictPlate, DistrictScene } from "@/components/player/DistrictArt";
 import { KIND_CHIP, MissionKindMark } from "@/components/player/MissionArt";
 import { SkillTag } from "@/components/player/MissionNode";
@@ -169,6 +178,13 @@ function SheetStop({
 }) {
   const locked = !node.playable;
   const planned = node.availability === "PLANNED";
+  const { acknowledgeNewUnlocks } = usePlayer();
+
+  useEffect(() => {
+    if (!node.newlyUnlocked) return;
+    const timer = setTimeout(acknowledgeNewUnlocks, 2600);
+    return () => clearTimeout(timer);
+  }, [acknowledgeNewUnlocks, node.newlyUnlocked]);
 
   const inner = (
     <>
@@ -188,6 +204,8 @@ function SheetStop({
         >
         {node.completed ? (
           <Check className="h-4 w-4" strokeWidth={3} />
+        ) : planned ? (
+          <CalendarClock className="h-3.5 w-3.5" />
         ) : locked ? (
           <Lock className="h-3.5 w-3.5" />
         ) : (
@@ -216,13 +234,32 @@ function SheetStop({
           {node.completed ? (
             "Completed — replay any time"
           ) : planned ? (
-            "Coming soon"
+            "Coming soon — prototype expansion"
           ) : locked ? (
-            `Locked — complete ${node.remainingToUnlock} more here`
+            <>
+              <span className="block">
+                Locked by progress — complete {node.remainingToUnlock} more here
+              </span>
+              <span className="mt-0.5 block tabular-nums text-navy-900">
+                {node.unlockCompleted} / {node.unlockRequired} completed
+              </span>
+            </>
           ) : (
-            <span className="inline-flex items-center gap-1">
-              <Clock className="h-3 w-3" aria-hidden="true" />
-              {node.estimatedMinutes} min
+            <span
+              className={`inline-flex items-center gap-1 ${
+                node.newlyUnlocked ? "text-amber-700" : "text-civic-700"
+              }`}
+              role={node.newlyUnlocked ? "status" : undefined}
+              aria-live={node.newlyUnlocked ? "polite" : undefined}
+            >
+              {node.newlyUnlocked ? (
+                <Sparkles className="h-3 w-3" aria-hidden="true" />
+              ) : (
+                <CirclePlay className="h-3 w-3" aria-hidden="true" />
+              )}
+              {node.newlyUnlocked
+                ? "Activity unlocked"
+                : `Available · ${node.estimatedMinutes} min`}
             </span>
           )}
         </span>

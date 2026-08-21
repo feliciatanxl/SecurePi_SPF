@@ -17,6 +17,11 @@ export interface ResolvedNode extends MissionNode {
   playable: boolean;
   /** How many more activities in this district are needed. Only when locked. */
   remainingToUnlock: number;
+  /** Progress toward an UNLOCK requirement, shown as x / y completed. */
+  unlockCompleted: number;
+  unlockRequired: number;
+  /** Brief one-time presentation after a completion crosses the requirement. */
+  newlyUnlocked: boolean;
 }
 
 export interface ResolvedDistrict extends District {
@@ -25,6 +30,8 @@ export interface ResolvedDistrict extends District {
   total: number;
   /** True once every playable node in the district is done. */
   cleared: boolean;
+  /** Travel/direct entry has revealed this district's chapter. */
+  discovered: boolean;
 }
 
 /**
@@ -40,13 +47,16 @@ export interface ResolvedDistrict extends District {
  * to be earnable.
  */
 export function useWorld() {
-  const { profile } = usePlayer();
+  const { profile, newlyUnlockedNodeIds } = usePlayer();
   const completed = profile.completedActivities;
 
   return useMemo(() => {
     const districts: ResolvedDistrict[] = DISTRICTS.map((district) => {
-      const doneInDistrict = district.nodes.filter((n) =>
-        completed.includes(n.id),
+      const builtNodes = district.nodes.filter(
+        (node) => node.availability !== "PLANNED",
+      );
+      const doneInDistrict = builtNodes.filter((node) =>
+        completed.includes(node.id),
       ).length;
 
       const nodes: ResolvedNode[] = district.nodes.map((node) => {
@@ -61,6 +71,12 @@ export function useWorld() {
             node.availability === "OPEN" ||
             (node.availability === "UNLOCK" && shortfall === 0),
           remainingToUnlock: node.availability === "UNLOCK" ? shortfall : 0,
+          unlockCompleted:
+            node.availability === "UNLOCK"
+              ? Math.min(doneInDistrict, needed)
+              : 0,
+          unlockRequired: node.availability === "UNLOCK" ? needed : 0,
+          newlyUnlocked: newlyUnlockedNodeIds.includes(node.id),
         };
       });
 
@@ -72,8 +88,9 @@ export function useWorld() {
         ...district,
         nodes,
         completed: doneInDistrict,
-        total: district.nodes.length,
+        total: playableTotal,
         cleared: playableTotal > 0 && doneInDistrict >= playableTotal,
+        discovered: profile.discoveredDistricts.includes(district.id),
       };
     });
 
@@ -89,7 +106,12 @@ export function useWorld() {
     };
 
     return { districts, progress, currentDistrictId: profile.currentDistrictId };
-  }, [completed, profile.currentDistrictId]);
+  }, [
+    completed,
+    newlyUnlockedNodeIds,
+    profile.currentDistrictId,
+    profile.discoveredDistricts,
+  ]);
 }
 
 /** Single district view, resolved the same way. Returns null for a bad id. */

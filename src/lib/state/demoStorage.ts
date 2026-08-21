@@ -18,8 +18,9 @@ export const FLASH_MISSIONS_KEY = "shieldquest-demo-flash-missions";
  * Stored shapes are versioned per key, not globally.
  *
  * The player profile grew a board position, Shield Tokens, unlocked cosmetics
- * and a casebook when the roll-and-move layer landed, so it moved to v2. The
- * deployed Flash Missions did not change shape at all, and a single global
+ * and a casebook when the roll-and-move layer landed (v2), then persistent
+ * district discovery (v3). The deployed Flash Missions did not change shape at
+ * all, and a single global
  * version number would have thrown them away for no reason — which, mid-
  * demonstration, is exactly the failure this module exists to prevent.
  *
@@ -27,7 +28,7 @@ export const FLASH_MISSIONS_KEY = "shieldquest-demo-flash-missions";
  * back to the fixture.
  */
 export const SCHEMA_VERSIONS: Record<string, number> = {
-  [PLAYER_STATE_KEY]: 2,
+  [PLAYER_STATE_KEY]: 3,
   [FLASH_MISSIONS_KEY]: 1,
 };
 

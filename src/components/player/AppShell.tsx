@@ -16,7 +16,7 @@ import { COMPETENCY_LABEL, COMPETENCY_LETTER, COMPETENCY_ORDER } from "@/lib/typ
 import { PROTOTYPE_DISCLAIMER } from "@/lib/api/mock-data";
 
 const TABS = [
-  { href: "/", label: "City", icon: Map },
+  { href: "/game", label: "City", icon: Map },
   { href: "/peer-shield", label: "Peer Shield", icon: ShieldHalf },
   { href: "/progress", label: "Progress", icon: TrendingUp },
   { href: "/guardians", label: "Guardians", icon: Compass },
@@ -36,7 +36,7 @@ const isImmersive = (pathname: string) =>
  * your phone is the situation being rehearsed, and widening it would weaken that.
  */
 const isBoard = (pathname: string) =>
-  pathname === "/" ||
+  pathname === "/game" ||
   pathname === "/progress" ||
   pathname.startsWith("/district/") ||
   pathname.startsWith("/shield-central");
@@ -137,8 +137,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {TABS.map(({ href, label, icon: Icon }) => {
                   // "City" stays lit while the player is inside a district.
                   const active =
-                    href === "/"
-                      ? pathname === "/" || pathname.startsWith("/district/")
+                    href === "/game"
+                      ? pathname === "/game" || pathname.startsWith("/district/")
                       : pathname === href;
                   return (
                     <li key={href} className="flex-1">

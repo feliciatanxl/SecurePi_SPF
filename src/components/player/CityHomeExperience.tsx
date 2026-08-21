@@ -20,6 +20,7 @@ import { SPACE_ICON } from "@/components/player/board/SpaceMark";
 import { SpaceSheet } from "@/components/player/board/SpaceSheet";
 import { CityInfoSheet } from "@/components/player/CityInfoSheet";
 import { DistrictScene } from "@/components/player/DistrictArt";
+import { DistrictDiscovery } from "@/components/player/DistrictDiscovery";
 import { DistrictSheet } from "@/components/player/DistrictSheet";
 import { GuardianPlate } from "@/components/player/GuardianArt";
 import { Modal } from "@/components/ui/Modal";
@@ -39,14 +40,18 @@ import {
 
 /** City-first presentation wrapped around the existing ShieldQuest turn. */
 export function CityHomeExperience() {
-  const { profile, guardians, equippedIn } = usePlayer();
-  const { districts, progress, currentDistrictId } = useWorld();
+  const { profile, guardians, equippedIn, discoverDistrict } = usePlayer();
+  const { districts, progress } = useWorld();
   const { spaces, current, position, boardCompleted, boardPlayable } = useBoard();
   const reducedMotion = useReducedMotion(profile.settings.reducedMotion);
 
   const [landedSpace, setLandedSpace] = useState<ResolvedSpace | null>(null);
   const [landingSpace, setLandingSpace] = useState<ResolvedSpace | null>(null);
   const [openDistrict, setOpenDistrict] = useState<ResolvedDistrict | null>(null);
+  const [discoveryDistrict, setDiscoveryDistrict] =
+    useState<ResolvedDistrict | null>(null);
+  const [discoveryLanding, setDiscoveryLanding] =
+    useState<ResolvedSpace | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [cityAlert, setCityAlert] = useState<AdminScenarioRow | null>(null);
   const [alertOpen, setAlertOpen] = useState(false);
@@ -75,13 +80,24 @@ export function CityHomeExperience() {
       setLandingSpace(destination);
       const reveal = () => {
         setLandingSpace(null);
-        setLandedSpace(destination);
+        const newlyDiscovered =
+          destination.districtId &&
+          !profile.discoveredDistricts.includes(destination.districtId);
+        if (newlyDiscovered) {
+          setDiscoveryLanding(destination);
+          setDiscoveryDistrict(
+            districts.find((district) => district.id === destination.districtId) ??
+              null,
+          );
+        } else {
+          setLandedSpace(destination);
+        }
       };
 
       if (reducedMotion) reveal();
       else landingTimer.current = setTimeout(reveal, 540);
     },
-    [reducedMotion, spaces],
+    [districts, profile.discoveredDistricts, reducedMotion, spaces],
   );
 
   const turn = useDiceTurn({
@@ -104,7 +120,45 @@ export function CityHomeExperience() {
   const openSpaceDirectly = (space: ResolvedSpace) => {
     if (landingTimer.current) clearTimeout(landingTimer.current);
     setLandingSpace(null);
+    if (
+      space.districtId &&
+      !profile.discoveredDistricts.includes(space.districtId)
+    ) {
+      const district = districts.find((item) => item.id === space.districtId);
+      if (district) {
+        discoverDistrict(district.id);
+        setDiscoveryLanding(space);
+        setDiscoveryDistrict(district);
+        return;
+      }
+    }
     setLandedSpace(space);
+  };
+
+  const openDistrictDirectly = (district: ResolvedDistrict) => {
+    if (!district.discovered) {
+      discoverDistrict(district.id);
+      setDiscoveryLanding(null);
+      setDiscoveryDistrict(district);
+      return;
+    }
+    setOpenDistrict(district);
+  };
+
+  const closeDiscovery = () => {
+    const landed = discoveryLanding;
+    setDiscoveryDistrict(null);
+    setDiscoveryLanding(null);
+    if (landed) setLandedSpace(landed);
+  };
+
+  const exploreDiscoveredDistrict = () => {
+    const district = discoveryDistrict;
+    setDiscoveryDistrict(null);
+    setDiscoveryLanding(null);
+    setLandedSpace(null);
+    turn.endTurn();
+    if (district) setOpenDistrict({ ...district, discovered: true });
   };
 
   const currentPlace = current?.districtId
@@ -112,14 +166,19 @@ export function CityHomeExperience() {
     : "Shield Central";
 
   const suggestedQuest = useMemo(() => {
-    if (current?.node?.playable) return current;
+    const isDiscovered = (space: ResolvedSpace) =>
+      !space.districtId || profile.discoveredDistricts.includes(space.districtId);
+    if (current?.node?.playable && isDiscovered(current)) return current;
     const looped = [...spaces.slice(position + 1), ...spaces.slice(0, position + 1)];
     return (
-      looped.find((space) => space.node?.playable && !space.completed) ??
-      looped.find((space) => space.node?.playable) ??
+      looped.find(
+        (space) =>
+          isDiscovered(space) && space.node?.playable && !space.completed,
+      ) ??
+      looped.find((space) => isDiscovered(space) && space.node?.playable) ??
       current
     );
-  }, [current, position, spaces]);
+  }, [current, position, profile.discoveredDistricts, spaces]);
 
   const suggestedDistrict = suggestedQuest?.districtId
     ? districtNames[suggestedQuest.districtId]
@@ -223,6 +282,7 @@ export function CityHomeExperience() {
           steppingIndices={turn.steppingIndices}
           guardians={guardians}
           districtNames={districtNames}
+          discoveredDistricts={profile.discoveredDistricts}
           onOpenSpace={openSpaceDirectly}
           trailClass={equippedIn("routeTrail") ? "stroke-civic-500/65" : undefined}
           tokenClass={equippedIn("playerToken") ? "!border-civic-400" : undefined}
@@ -263,21 +323,25 @@ export function CityHomeExperience() {
         <nav aria-label="City chapter progress">
           <ul className="grid grid-cols-4 gap-1.5">
             {districts.map((district) => {
-              const isCurrent = district.id === (current?.districtId ?? currentDistrictId);
-              const hasPlayable = district.nodes.some((node) => node.playable);
-              const state = district.cleared
-                ? "Completed"
-                : isCurrent
-                  ? "Current"
-                  : hasPlayable
-                    ? "Available"
-                    : "Coming soon";
+              const isCurrent = district.id === current?.districtId;
+              const state = !district.discovered
+                ? "Undiscovered"
+                : district.cleared
+                  ? "Completed"
+                  : "Discovered";
+              const progressLabel = !district.discovered
+                ? "Discover"
+                : district.cleared
+                  ? "Complete"
+                  : district.total > 0
+                    ? `${district.completed}/${district.total}`
+                    : "Chapter";
 
               return (
                 <li key={district.id} className="min-w-0">
                   <button
                     type="button"
-                    onClick={() => setOpenDistrict(district)}
+                    onClick={() => openDistrictDirectly(district)}
                     aria-current={isCurrent ? "location" : undefined}
                     className={`chapter-chip relative flex min-h-[58px] w-full flex-col justify-end overflow-hidden rounded-xl border px-1.5 pb-1.5 pt-2 text-left transition hover:-translate-y-0.5 hover:border-white/45 ${
                       isCurrent
@@ -285,24 +349,33 @@ export function CityHomeExperience() {
                         : "border-white/14 bg-white/8"
                     }`}
                   >
-                    <DistrictScene districtId={district.id} className="opacity-45" />
+                    <DistrictScene
+                      districtId={district.id}
+                      className={
+                        district.discovered
+                          ? "opacity-45"
+                          : "opacity-30 saturate-50 grayscale-[0.2]"
+                      }
+                    />
                     <span
                       aria-hidden="true"
-                      className="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-950/80 to-navy-950/10"
+                      className={`absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-950/80 ${
+                        district.discovered ? "to-navy-950/10" : "to-white/18"
+                      }`}
                     />
                     <span className="relative flex w-full items-center justify-between gap-1">
                       <span className="min-w-0 flex-1 truncate text-[9px] font-extrabold uppercase tracking-wide">
                         {district.id === "digi" ? "Digi" : district.name.split(" ")[0]}
                       </span>
                       <span className="text-[9px] font-extrabold tabular-nums text-amber-300">
-                        {district.completed}/{district.total}
+                        {progressLabel}
                       </span>
                     </span>
                     <span className="relative mt-0.5 block w-full truncate text-[8px] font-bold uppercase tracking-[0.08em] text-white/65">
                       {state}
                     </span>
                     <span className="sr-only">
-                      Open {district.name}, {DISTRICT_CHAPTER[district.id].label}: {DISTRICT_CHAPTER[district.id].title}. {district.completed} of {district.total} activities completed. {state}.
+                      Open {district.name}, {DISTRICT_CHAPTER[district.id].label}: {DISTRICT_CHAPTER[district.id].title}. {district.total > 0 ? `${district.completed} of ${district.total} built activities completed.` : "Chapter available; activities are planned for prototype expansion."} {state}.
                     </span>
                   </button>
                 </li>
@@ -330,6 +403,11 @@ export function CityHomeExperience() {
         onClose={closeSheet}
       />
       <DistrictSheet district={openDistrict} onClose={() => setOpenDistrict(null)} />
+      <DistrictDiscovery
+        district={discoveryDistrict}
+        onClose={closeDiscovery}
+        onExplore={exploreDiscoveredDistrict}
+      />
       <CityInfoSheet open={aboutOpen} onClose={() => setAboutOpen(false)} spaces={spaces} />
       <CityAlertSheet alert={alertOpen ? cityAlert : null} onClose={() => setAlertOpen(false)} />
     </div>

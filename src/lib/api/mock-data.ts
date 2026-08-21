@@ -90,6 +90,9 @@ export const MOCK_PROFILE: PlayerProfile = {
   // The city board starts unplayed so a demonstration shows progress being
   // earned rather than pre-filled. Personal progress only — never compared.
   completedActivities: [],
+  // Shield Central is the starting hub. The four learning districts are
+  // revealed through travel or intentional direct entry.
+  discoveredDistricts: [],
   currentDistrictId: "digi",
 
   // The token starts on Shield Central, which is where a turn begins.

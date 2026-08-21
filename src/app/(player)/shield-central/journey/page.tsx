@@ -115,7 +115,7 @@ export default function JourneyPage() {
               Nothing completed yet
             </p>
             <Link
-              href="/"
+              href="/game"
               className="mt-3 inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-civic-600 px-5 text-[14px] font-bold text-white transition hover:bg-civic-700"
             >
               Take your first turn

@@ -254,7 +254,7 @@ export function MiniGameShell({
 
               <div className="space-y-2.5 pt-1">
                 <Link
-                  href="/"
+                  href="/game"
                   className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl border-b-4 border-civic-800 bg-civic-600 px-4 text-[15px] font-extrabold uppercase tracking-[0.06em] text-white transition hover:bg-civic-700 active:translate-y-[3px] active:border-b-0"
                 >
                   Return to city

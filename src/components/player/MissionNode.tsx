@@ -1,7 +1,12 @@
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
+  CalendarClock,
   Check,
+  CirclePlay,
   Clock,
   Lock,
   MessageCircle,
@@ -9,6 +14,7 @@ import {
 } from "lucide-react";
 import { KIND_CHIP, MissionKindMark } from "@/components/player/MissionArt";
 import type { ResolvedNode } from "@/lib/hooks/useWorld";
+import { usePlayer } from "@/lib/state/PlayerProvider";
 import {
   COMPETENCY_LABEL,
   COMPETENCY_LETTER,
@@ -58,6 +64,13 @@ export function MissionNodeCard({
 }) {
   const locked = !node.playable;
   const planned = node.availability === "PLANNED";
+  const { acknowledgeNewUnlocks } = usePlayer();
+
+  useEffect(() => {
+    if (!node.newlyUnlocked) return;
+    const timer = setTimeout(acknowledgeNewUnlocks, 2600);
+    return () => clearTimeout(timer);
+  }, [acknowledgeNewUnlocks, node.newlyUnlocked]);
 
   const inner = (
     <>
@@ -77,6 +90,8 @@ export function MissionNodeCard({
         >
           {node.completed ? (
             <Check className="h-4 w-4" strokeWidth={3} />
+          ) : planned ? (
+            <CalendarClock className="h-4 w-4" />
           ) : locked ? (
             <Lock className="h-4 w-4" />
           ) : (
@@ -143,21 +158,45 @@ export function MissionNodeCard({
           Completed — replay any time
         </p>
       ) : planned ? (
-        <p className="mt-2.5 flex items-center gap-1.5 border-t border-line pt-2 text-[12px] font-bold uppercase tracking-wide text-ink-soft">
-          <Lock className="h-3.5 w-3.5" aria-hidden="true" />
-          Coming soon
+        <p className="mt-2.5 flex items-center gap-1.5 border-t border-coral-200 pt-2 text-[12px] font-bold uppercase tracking-wide text-coral-700">
+          <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
+          Coming soon · Planned for prototype expansion
         </p>
       ) : locked ? (
-        <p className="mt-3 flex items-center gap-1.5 border-t border-line pt-2.5 text-[12px] font-semibold text-ink-soft">
-          <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <span>
-            <span className="font-bold uppercase tracking-wide">Locked</span> —
-            complete {node.remainingToUnlock} more{" "}
-            {node.remainingToUnlock === 1 ? "activity" : "activities"} in this
-            district
-          </span>
+        <div className="mt-3 border-t border-line pt-2.5 text-[12px] text-ink-soft">
+          <p className="flex items-start gap-1.5 font-semibold">
+            <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span>
+              <span className="font-bold uppercase tracking-wide">
+                Locked by progress
+              </span>{" "}
+              — complete {node.remainingToUnlock} more{" "}
+              {node.remainingToUnlock === 1 ? "activity" : "activities"} in this
+              district
+            </span>
+          </p>
+          <p className="mt-1 pl-5 font-bold tabular-nums text-navy-900">
+            {node.unlockCompleted} / {node.unlockRequired} completed
+          </p>
+        </div>
+      ) : (
+        <p
+          className={`mt-2.5 flex items-center gap-1.5 border-t pt-2 text-[12px] font-bold uppercase tracking-wide ${
+            node.newlyUnlocked
+              ? "border-amber-200 text-amber-700"
+              : "border-civic-100 text-civic-700"
+          }`}
+          role={node.newlyUnlocked ? "status" : undefined}
+          aria-live={node.newlyUnlocked ? "polite" : undefined}
+        >
+          {node.newlyUnlocked ? (
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+          ) : (
+            <CirclePlay className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+          {node.newlyUnlocked ? "Activity unlocked" : "Available"}
         </p>
-      ) : null}
+      )}
     </>
   );
 

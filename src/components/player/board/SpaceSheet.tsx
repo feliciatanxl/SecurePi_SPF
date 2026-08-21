@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Award,
+  CalendarClock,
   Check,
   Clock,
   Lock,
@@ -349,23 +350,35 @@ function MissionBriefing({
           </button>
         ) : (
           <p className="flex items-start gap-2 rounded-xl border border-line bg-surface-sunk px-3.5 py-3 text-[13px] leading-relaxed text-ink-muted">
-            <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            {space.planned ? (
+              <CalendarClock
+                className="mt-0.5 h-4 w-4 shrink-0 text-coral-700"
+                aria-hidden="true"
+              />
+            ) : (
+              <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            )}
             <span>
               {space.planned ? (
                 <>
-                  <span className="font-bold uppercase tracking-wide">
+                  <span className="font-bold uppercase tracking-wide text-coral-700">
                     Coming soon
                   </span>{" "}
-                  — this activity is designed but not built in this prototype.
+                  — planned for prototype expansion. This activity is designed
+                  but not built yet.
                 </>
               ) : (
                 <>
                   <span className="font-bold uppercase tracking-wide">
-                    Locked
+                    Locked by progress
                   </span>{" "}
                   — complete {node?.remainingToUnlock ?? 1} more{" "}
                   {(node?.remainingToUnlock ?? 1) === 1 ? "activity" : "activities"}{" "}
                   in {districtName}.
+                  <span className="mt-1 block font-bold tabular-nums text-navy-900">
+                    {node?.unlockCompleted ?? 0} / {node?.unlockRequired ?? 0}{" "}
+                    completed
+                  </span>
                 </>
               )}
             </span>

@@ -156,7 +156,7 @@ export function MissionComplete({
 
         <div className="shrink-0 space-y-2 border-t border-line px-5 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-3">
           <Link
-            href="/"
+            href="/game"
             onClick={onClose}
             className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border-b-4 border-civic-800 bg-civic-600 px-4 text-[15px] font-extrabold uppercase tracking-[0.08em] text-white transition hover:bg-civic-700 active:translate-y-[3px] active:border-b-0"
           >

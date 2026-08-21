@@ -3,7 +3,7 @@
   "name": "ShieldQuest — Project SHIELD",
   "short_name": "ShieldQuest",
   "description": "Choose Right. Protect Together. Practise spotting risk, holding the moment and protecting your friends — before it happens for real.",
-  "start_url": "/",
+  "start_url": "/game",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -28,7 +28,7 @@
     {
       "name": "ShieldQuest City",
       "short_name": "City",
-      "url": "/"
+      "url": "/game"
     },
     {
       "name": "Peer Shield",

@@ -11,8 +11,13 @@ import {
   type ReactNode,
 } from "react";
 import { MOCK_GUARDIANS, MOCK_PROFILE } from "@/lib/api/mock-data";
-import { DISTRICT_BADGES, normaliseBoardPosition } from "@/lib/api/board-data";
+import {
+  BOARD_SPACES,
+  DISTRICT_BADGES,
+  normaliseBoardPosition,
+} from "@/lib/api/board-data";
 import { findReward } from "@/lib/api/rewards-data";
+import { DISTRICTS, findNode } from "@/lib/api/world-data";
 import {
   clearDemoData,
   PLAYER_STATE_KEY,
@@ -53,7 +58,12 @@ interface PlayerContextValue {
    */
   completeActivity: (nodeId: string) => void;
   isCompleted: (nodeId: string) => boolean;
-  /** Moves the player's marker on the city board. */
+  /** Node ids whose progress requirement was met by the latest completion. */
+  newlyUnlockedNodeIds: string[];
+  acknowledgeNewUnlocks: () => void;
+  /** Reveals a district chapter without granting a learning reward. */
+  discoverDistrict: (districtId: DistrictId) => void;
+  /** Moves the player's marker and intentionally discovers the district. */
   travelTo: (districtId: DistrictId) => void;
 
   /* -- Board ------------------------------------------------------------- */
@@ -99,6 +109,18 @@ const clamp = (n: number, min = 0, max = 100) => Math.min(max, Math.max(min, n))
 const stringArray = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 
+const DISTRICT_IDS = new Set<DistrictId>([
+  "school",
+  "retail",
+  "digi",
+  "community",
+]);
+
+const districtArray = (value: unknown): DistrictId[] =>
+  stringArray(value).filter((id): id is DistrictId =>
+    DISTRICT_IDS.has(id as DistrictId),
+  );
+
 /**
  * Only accept a stored profile that still looks like a profile. A partial or
  * hand-edited value falls back to the fixture rather than rendering NaN.
@@ -127,20 +149,29 @@ function isValidProfile(value: unknown): value is Partial<PlayerProfile> {
  */
 function normaliseProfile(saved: Partial<PlayerProfile>): PlayerProfile {
   const merged = { ...MOCK_PROFILE, ...saved } as PlayerProfile;
+  const visitedSpaces = Array.isArray(saved.visitedSpaces)
+    ? saved.visitedSpaces
+        .filter((n): n is number => typeof n === "number" && Number.isFinite(n))
+        .map(normaliseBoardPosition)
+    : [];
+  const discoveredDistricts =
+    saved.discoveredDistricts === undefined
+      ? districtArray([
+          saved.currentDistrictId,
+          ...visitedSpaces.map((index) => BOARD_SPACES[index]?.districtId),
+        ])
+      : districtArray(saved.discoveredDistricts);
 
   return {
     ...merged,
     completedActivities: stringArray(saved.completedActivities),
+    discoveredDistricts,
     currentDistrictId: saved.currentDistrictId ?? MOCK_PROFILE.currentDistrictId,
 
     boardPosition: normaliseBoardPosition(
       typeof saved.boardPosition === "number" ? saved.boardPosition : 0,
     ),
-    visitedSpaces: Array.isArray(saved.visitedSpaces)
-      ? saved.visitedSpaces
-          .filter((n): n is number => typeof n === "number" && Number.isFinite(n))
-          .map(normaliseBoardPosition)
-      : [],
+    visitedSpaces,
     shieldTokens:
       typeof saved.shieldTokens === "number" && Number.isFinite(saved.shieldTokens)
         ? Math.max(0, Math.trunc(saved.shieldTokens))
@@ -213,6 +244,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
    * ever write what was read.
    */
   const [hydrated, setHydrated] = useState(false);
+  const [newlyUnlockedNodeIds, setNewlyUnlockedNodeIds] = useState<string[]>([]);
 
   /**
    * Grant keys already paid, tracked synchronously alongside the profile.
@@ -294,6 +326,29 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const completeActivity = useCallback((nodeId: string) => {
+    const current = profileRef.current;
+    if (!current.completedActivities.includes(nodeId)) {
+      const completedNode = findNode(nodeId);
+      const district = completedNode
+        ? DISTRICTS.find((item) => item.id === completedNode.districtId)
+        : undefined;
+      if (district) {
+        const completedBefore = district.nodes.filter((node) =>
+          current.completedActivities.includes(node.id),
+        ).length;
+        const completedAfter = completedBefore + 1;
+        const unlocked = district.nodes
+          .filter(
+            (node) =>
+              node.availability === "UNLOCK" &&
+              (node.requiredInDistrict ?? 0) > completedBefore &&
+              (node.requiredInDistrict ?? 0) <= completedAfter,
+          )
+          .map((node) => node.id);
+        if (unlocked.length > 0) setNewlyUnlockedNodeIds(unlocked);
+      }
+    }
+
     setProfile((prev) => {
       if (prev.completedActivities.includes(nodeId)) return prev;
       return {
@@ -304,22 +359,44 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const travelTo = useCallback((districtId: DistrictId) => {
+  const acknowledgeNewUnlocks = useCallback(() => {
+    setNewlyUnlockedNodeIds([]);
+  }, []);
+
+  const discoverDistrict = useCallback((districtId: DistrictId) => {
     setProfile((prev) =>
-      prev.currentDistrictId === districtId
+      prev.discoveredDistricts.includes(districtId)
         ? prev
-        : { ...prev, currentDistrictId: districtId },
+        : {
+            ...prev,
+            discoveredDistricts: [...prev.discoveredDistricts, districtId],
+          },
     );
+  }, []);
+
+  const travelTo = useCallback((districtId: DistrictId) => {
+    setProfile((prev) => ({
+      ...prev,
+      currentDistrictId: districtId,
+      discoveredDistricts: prev.discoveredDistricts.includes(districtId)
+        ? prev.discoveredDistricts
+        : [...prev.discoveredDistricts, districtId],
+    }));
   }, []);
 
   const moveToSpace = useCallback((index: number) => {
     const target = normaliseBoardPosition(index);
+    const districtId = BOARD_SPACES[target]?.districtId;
     setProfile((prev) => ({
       ...prev,
       boardPosition: target,
       visitedSpaces: prev.visitedSpaces.includes(target)
         ? prev.visitedSpaces
         : [...prev.visitedSpaces, target],
+      discoveredDistricts:
+        districtId && !prev.discoveredDistricts.includes(districtId)
+          ? [...prev.discoveredDistricts, districtId]
+          : prev.discoveredDistricts,
     }));
   }, []);
 
@@ -454,6 +531,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const reset = useCallback(() => {
     clearDemoData();
     grantedKeys.current = new Set();
+    setNewlyUnlockedNodeIds([]);
     setProfile(MOCK_PROFILE);
   }, []);
 
@@ -466,6 +544,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       advanceGuardian,
       completeActivity,
       isCompleted: (nodeId: string) => profile.completedActivities.includes(nodeId),
+      newlyUnlockedNodeIds,
+      acknowledgeNewUnlocks,
+      discoverDistrict,
       travelTo,
       moveToSpace,
       awardTokens,
@@ -490,6 +571,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       applyDeltas,
       advanceGuardian,
       completeActivity,
+      newlyUnlockedNodeIds,
+      acknowledgeNewUnlocks,
+      discoverDistrict,
       travelTo,
       moveToSpace,
       awardTokens,

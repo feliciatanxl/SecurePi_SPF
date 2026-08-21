@@ -49,7 +49,7 @@ export default function MiniGamePage() {
           This mini-game is not part of the prototype yet.
         </p>
         <Link
-          href="/"
+          href="/game"
           className="mt-5 inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-navy-900 px-5 text-[15px] font-bold text-white"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -80,7 +80,7 @@ export default function MiniGamePage() {
 /** Where "back" goes — the district the node belongs to. */
 function districtHref(nodeId: string) {
   const node = findNode(nodeId);
-  return node ? `/district/${node.districtId}` : "/";
+  return node ? `/district/${node.districtId}` : "/game";
 }
 
 /* ------------------------------------------------------------------ */

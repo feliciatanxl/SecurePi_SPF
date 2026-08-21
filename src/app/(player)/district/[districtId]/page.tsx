@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Check, ChevronDown, MessageCircle } from "lucide-react";
 import { DistrictPlate, DistrictScene } from "@/components/player/DistrictArt";
+import { DistrictDiscovery } from "@/components/player/DistrictDiscovery";
 import { DISTRICT_SKIN } from "@/components/player/districtSkin";
 import { MissionNodeCard } from "@/components/player/MissionNode";
 import { useDistrict } from "@/lib/hooks/useWorld";
@@ -28,15 +29,21 @@ export default function DistrictPage() {
   const params = useParams<{ districtId: string }>();
   const districtId = params.districtId;
   const district = useDistrict(districtId);
-  const { guardians, travelTo } = usePlayer();
+  const { guardians, hydrated, profile, travelTo } = usePlayer();
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [discoveryOpen, setDiscoveryOpen] = useState(false);
+  const evaluatedVisit = useRef<string | null>(null);
 
   // Arriving moves the player's marker, so the board reflects where they went.
   // `travelTo` is a no-op when the marker is already here, so this settles.
   const arrivedAt = district?.id;
   useEffect(() => {
-    if (arrivedAt) travelTo(arrivedAt);
-  }, [arrivedAt, travelTo]);
+    if (!hydrated || !arrivedAt || evaluatedVisit.current === arrivedAt) return;
+    evaluatedVisit.current = arrivedAt;
+    const firstVisit = !profile.discoveredDistricts.includes(arrivedAt);
+    travelTo(arrivedAt);
+    if (firstVisit) setDiscoveryOpen(true);
+  }, [arrivedAt, hydrated, profile.discoveredDistricts, travelTo]);
 
   if (!district) {
     return (
@@ -48,7 +55,7 @@ export default function DistrictPage() {
           That part of ShieldQuest City does not exist yet.
         </p>
         <Link
-          href="/"
+          href="/game"
           className="mt-5 inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-navy-900 px-5 text-[15px] font-bold text-white"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -64,12 +71,13 @@ export default function DistrictPage() {
     id ? guardians.find((g) => g.id === id)?.name : undefined;
 
   return (
-    <div className="animate-travel pb-6">
+    <>
+      <div className="animate-travel pb-6">
       {/* One compact bar: where you are, how far in, and the way back. */}
       <header className="sticky top-0 z-20 bg-navy-900 px-3 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] text-white">
         <div className="flex items-center gap-2">
           <Link
-            href="/"
+            href="/game"
             aria-label="Back to ShieldQuest City"
             className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white/80 transition hover:bg-white/10 hover:text-white"
           >
@@ -98,7 +106,9 @@ export default function DistrictPage() {
             </span>
           )}
           <span className="shrink-0 rounded-lg bg-white/12 px-2.5 py-1 text-[12px] font-bold tabular-nums text-white">
-            {district.completed}/{district.total}
+            {district.total > 0
+              ? `${district.completed}/${district.total}`
+              : "Chapter"}
           </span>
         </div>
       </header>
@@ -214,13 +224,18 @@ export default function DistrictPage() {
 
       <div className="px-4">
         <Link
-          href="/"
+          href="/game"
           className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border-2 border-line px-4 text-[14px] font-semibold text-ink transition hover:border-civic-500 hover:text-civic-700"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back to ShieldQuest City
         </Link>
       </div>
-    </div>
+      </div>
+      <DistrictDiscovery
+        district={discoveryOpen ? district : null}
+        onExplore={() => setDiscoveryOpen(false)}
+      />
+    </>
   );
 }

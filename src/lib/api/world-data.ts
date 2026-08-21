@@ -82,8 +82,7 @@ const SCHOOL_NODES: MissionNode[] = [
     primaryCompetency: "DEFEND",
     guardianId: GUARDIAN_SHIELDFIN,
     estimatedMinutes: 3,
-    availability: "UNLOCK",
-    requiredInDistrict: 2,
+    availability: "PLANNED",
   },
 ];
 
@@ -119,8 +118,7 @@ const RETAIL_NODES: MissionNode[] = [
     primaryCompetency: "DEFEND",
     guardianId: GUARDIAN_SHIELDFIN,
     estimatedMinutes: 3,
-    availability: "UNLOCK",
-    requiredInDistrict: 2,
+    availability: "PLANNED",
   },
 ];
 
@@ -261,8 +259,7 @@ const COMMUNITY_NODES: MissionNode[] = [
     summary: "Predict the delayed consequence before the scenario shows it.",
     primaryCompetency: "EVALUATE",
     estimatedMinutes: 2,
-    availability: "UNLOCK",
-    requiredInDistrict: 2,
+    availability: "PLANNED",
   },
 ];
 
@@ -309,22 +306,23 @@ export const DISTRICT_CHAPTER: Record<
   { label: string; title: string; intro: string }
 > = {
   school: {
-    label: "Story arc",
+    label: "Chapter 1",
     title: "Pressure Close to Home",
-    intro: "Hold your ground when the pressure comes from people you know.",
+    intro:
+      "Explore situations about peer pressure, risky requests and everyday choices.",
   },
   retail: {
-    label: "Story arc",
+    label: "Chapter 2",
     title: "The Cost of a Dare",
     intro: "Look past the moment and evaluate what a small dare can set in motion.",
   },
   digi: {
-    label: "Chapter 1",
+    label: "Chapter 3",
     title: "Too Good to Be True",
     intro: "Follow one suspicious opportunity from its first promise to the pressure that follows.",
   },
   community: {
-    label: "Story arc",
+    label: "Chapter 4",
     title: "Protect Together",
     intro: "Notice when someone else needs a quiet warning or trusted help.",
   },

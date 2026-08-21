@@ -77,7 +77,7 @@ export default function SettingsPage() {
               type="button"
               onClick={() => {
                 restartOnboarding();
-                router.push("/");
+                router.push("/game");
               }}
               className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl border border-line bg-surface px-3.5 text-left transition hover:border-civic-500"
             >
@@ -153,7 +153,7 @@ export default function SettingsPage() {
               onClick={() => {
                 reset();
                 setConfirmReset(false);
-                router.push("/");
+                router.push("/game");
               }}
               className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-coral-600 px-4 text-[15px] font-extrabold text-white transition hover:bg-coral-700"
             >

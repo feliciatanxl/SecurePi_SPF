@@ -130,7 +130,7 @@ export function CasebookCollection() {
       </ul>
 
       <Link
-        href="/"
+        href="/game"
         className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border-2 border-line px-4 text-[14px] font-semibold text-ink transition hover:border-civic-500 hover:text-civic-700"
       >
         Explore the city

@@ -218,6 +218,12 @@ export interface PlayerProfile {
    * compared against another participant.
    */
   completedActivities: string[];
+  /**
+   * Districts the player has physically reached or intentionally opened.
+   * Discovery reveals a chapter; it does not award currency or count as
+   * learning completion.
+   */
+  discoveredDistricts: DistrictId[];
   /** Where the player's marker currently sits on the city board. */
   currentDistrictId: DistrictId;
 
