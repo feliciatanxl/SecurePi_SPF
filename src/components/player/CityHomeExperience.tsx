@@ -186,13 +186,13 @@ export function CityHomeExperience() {
 
   return (
     <div className="city-home flex min-h-full flex-col overflow-hidden bg-navy-900 text-white">
-      <header className="shrink-0 px-3.5 pb-2 pt-[max(0.55rem,env(safe-area-inset-top))]">
-        <div className="flex items-center gap-2">
+      <header className="shrink-0 px-3.5 pb-2 pt-[max(0.55rem,env(safe-area-inset-top))] md:px-5 md:pt-3 xl:px-6 xl:pb-2.5 xl:pt-3">
+        <div className="flex items-center gap-2 xl:gap-4">
           <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-amber-400">
+            <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-amber-400 xl:text-[10px]">
               Project SHIELD
             </p>
-            <h1 className="text-[20px] font-extrabold leading-none tracking-tight">
+            <h1 className="text-[20px] font-extrabold leading-none tracking-tight xl:text-[22px]">
               Shield<span className="text-civic-400">Quest</span>
               <span className="sr-only"> — {CITY_TAGLINE}</span>
             </h1>
@@ -233,7 +233,7 @@ export function CityHomeExperience() {
       </header>
 
       {cityAlert && (
-        <div className="shrink-0 px-3 pb-2">
+        <div className="shrink-0 px-3 pb-2 md:px-5 xl:px-6">
           <button
             type="button"
             onClick={() => setAlertOpen(true)}
@@ -259,16 +259,16 @@ export function CityHomeExperience() {
 
       <section
         aria-labelledby="city-board"
-        className="city-board-frame relative mx-3 shrink-0 overflow-hidden rounded-[28px] border border-white/15 shadow-[0_18px_46px_-24px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.12)]"
+        className="city-board-frame relative mx-3 shrink-0 overflow-hidden rounded-[28px] border border-white/15 shadow-[0_18px_46px_-24px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.12)] md:mx-4 xl:mx-6"
       >
-        <div className="relative z-30 flex h-10 items-center justify-between gap-2 border-b border-white/10 bg-navy-950/88 px-3.5 backdrop-blur-sm">
+        <div className="relative z-30 flex h-10 items-center justify-between gap-2 border-b border-white/10 bg-navy-950/88 px-3.5 backdrop-blur-sm xl:px-5">
           <h2
             id="city-board"
-            className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-amber-400"
+            className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-amber-400 xl:text-[11px]"
           >
             ShieldQuest City
           </h2>
-          <p className="flex min-w-0 items-center gap-1.5 text-[10px] font-bold text-white/85">
+          <p className="flex min-w-0 items-center gap-1.5 text-[10px] font-bold text-white/85 xl:text-[11px]">
             <MapPin className="h-3.5 w-3.5 shrink-0 text-amber-400" aria-hidden="true" />
             <span className="truncate">{currentPlace}</span>
           </p>
@@ -289,7 +289,7 @@ export function CityHomeExperience() {
           markerCosmetic={Boolean(equippedIn("boardMarker"))}
         />
 
-        <div className="relative z-30 bg-gradient-to-t from-navy-950 via-navy-950/90 to-transparent px-2.5 pb-2.5 pt-2">
+        <div className="relative z-30 bg-gradient-to-t from-navy-950 via-navy-950/90 to-transparent px-2.5 pb-2.5 pt-2 xl:px-4">
           <BoardMiniMap spaces={spaces} completed={boardCompleted} total={boardPlayable} />
         </div>
 
@@ -312,7 +312,7 @@ export function CityHomeExperience() {
         )}
       </section>
 
-      <div className="shrink-0 space-y-2 px-3 pb-2.5 pt-2">
+      <div className="shrink-0 space-y-2 px-3 pb-2.5 pt-2 xl:mx-auto xl:w-full xl:max-w-[1100px] xl:px-6 xl:pb-2.5 xl:pt-2.5">
         <DiceRoller
           phase={turn.phase}
           value={turn.value}
@@ -321,7 +321,7 @@ export function CityHomeExperience() {
         />
 
         <nav aria-label="City chapter progress">
-          <ul className="grid grid-cols-4 gap-1.5">
+          <ul className="grid grid-cols-4 gap-1.5 xl:gap-2.5">
             {districts.map((district) => {
               const isCurrent = district.id === current?.districtId;
               const state = !district.discovered
@@ -343,7 +343,7 @@ export function CityHomeExperience() {
                     type="button"
                     onClick={() => openDistrictDirectly(district)}
                     aria-current={isCurrent ? "location" : undefined}
-                    className={`chapter-chip relative flex min-h-[58px] w-full flex-col justify-end overflow-hidden rounded-xl border px-1.5 pb-1.5 pt-2 text-left transition hover:-translate-y-0.5 hover:border-white/45 ${
+                    className={`chapter-chip relative flex min-h-[58px] w-full flex-col justify-end overflow-hidden rounded-xl border px-1.5 pb-1.5 pt-2 text-left transition hover:-translate-y-0.5 hover:border-white/45 xl:min-h-[60px] xl:px-2.5 xl:pb-2 xl:pt-2.5 ${
                       isCurrent
                         ? "border-amber-400 bg-white/14"
                         : "border-white/14 bg-white/8"
@@ -364,14 +364,14 @@ export function CityHomeExperience() {
                       }`}
                     />
                     <span className="relative flex w-full items-center justify-between gap-1">
-                      <span className="min-w-0 flex-1 truncate text-[9px] font-extrabold uppercase tracking-wide">
+                      <span className="min-w-0 flex-1 truncate text-[9px] font-extrabold uppercase tracking-wide xl:text-[10px]">
                         {district.id === "digi" ? "Digi" : district.name.split(" ")[0]}
                       </span>
-                      <span className="text-[9px] font-extrabold tabular-nums text-amber-300">
+                      <span className="text-[9px] font-extrabold tabular-nums text-amber-300 xl:text-[10px]">
                         {progressLabel}
                       </span>
                     </span>
-                    <span className="relative mt-0.5 block w-full truncate text-[8px] font-bold uppercase tracking-[0.08em] text-white/65">
+                    <span className="relative mt-0.5 block w-full truncate text-[8px] font-bold uppercase tracking-[0.08em] text-white/65 xl:text-[9px]">
                       {state}
                     </span>
                     <span className="sr-only">
@@ -384,7 +384,7 @@ export function CityHomeExperience() {
           </ul>
         </nav>
 
-        <p className="text-center text-[9px] leading-tight text-white/55">
+        <p className="text-center text-[9px] leading-tight text-white/55 xl:text-[11px]">
           The dice moves you. Your decisions shape what you learn. {" "}
           <span className="font-bold text-white/75">
             {progress.completed}/{progress.total} activities
@@ -424,7 +424,7 @@ function CompactHud({
   tokens: number;
 }) {
   return (
-    <dl className="flex items-center gap-1">
+    <dl className="flex items-center gap-1 xl:gap-2">
       <HudChip icon={<Coins className="h-3.5 w-3.5" />} label="Coins" value={coins} tone="amber" />
       <HudChip icon={<ShieldHalf className="h-3.5 w-3.5" />} label="Resilience" value={resilience} tone="teal" />
       <HudChip icon={<Sparkles className="h-3.5 w-3.5" />} label="Shield Tokens" value={tokens} tone="civic" />
@@ -451,7 +451,7 @@ function HudChip({
         : "text-civic-200";
 
   return (
-    <div className="flex h-8 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-white/12 bg-white/8 px-2.5 md:flex-none">
+    <div className="flex h-8 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-white/12 bg-white/8 px-2.5 md:flex-none xl:h-9 xl:px-3">
       <dt className={`shrink-0 ${toneClass}`}>
         <span aria-hidden="true">{icon}</span>
         <span className="sr-only">{label}</span>

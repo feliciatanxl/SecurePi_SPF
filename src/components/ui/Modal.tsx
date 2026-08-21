@@ -13,6 +13,8 @@ interface ModalProps {
   labelledBy?: string;
   /** "center" for dialogs, "right" for the admin side panel. */
   placement?: "center" | "right";
+  /** Sizing variant: default (max-w-lg) or wide (max-w-2xl for About modal). */
+  size?: "default" | "wide";
 }
 
 export function Modal({
@@ -23,6 +25,7 @@ export function Modal({
   className = "bg-surface",
   labelledBy,
   placement = "center",
+  size = "default",
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -75,7 +78,9 @@ export function Modal({
             // and the scenario detail panel, narrow enough that the portal
             // behind it stays readable rather than being replaced.
             ? "h-dvh max-w-[480px] border-l border-line"
-            : "max-w-lg rounded-t-2xl border border-line sm:rounded-2xl"
+            : size === "wide"
+              ? "max-w-2xl rounded-t-2xl border border-line sm:rounded-2xl"
+              : "max-w-lg rounded-t-2xl border border-line sm:rounded-2xl"
         } ${className}`}
       >
         {dismissible && onClose && (

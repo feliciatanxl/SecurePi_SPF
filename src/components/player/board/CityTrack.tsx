@@ -144,7 +144,7 @@ export function CityTrack({
       aria-label="ShieldQuest City camera. Pan horizontally to look ahead."
     >
       <div
-        className="relative"
+        className="relative mx-auto"
         style={{ width: TRACK_WIDTH, height: TRACK_HEIGHT }}
       >
         {/* District scenery. The V2.2 scenes sit under the route they belong

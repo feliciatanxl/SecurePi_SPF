@@ -35,6 +35,7 @@ export function CityInfoSheet({
       open={open}
       onClose={onClose}
       labelledBy="about-sheet-title"
+      size="wide"
       className="bg-surface"
     >
       <div className="flex max-h-[82dvh] min-h-0 flex-col">
