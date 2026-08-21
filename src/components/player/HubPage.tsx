@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
+import {
+  PlayerSheet,
+  sheetMeasure,
+  type SheetMeasure,
+} from "@/components/player/PlayerSheet";
 
 /**
  * Shared chrome for the Shield Central pages.
@@ -17,6 +22,7 @@ export function HubPage({
   backHref = "/shield-central",
   backLabel = "Back to Shield Central",
   action,
+  measure = "wide",
   children,
 }: {
   eyebrow: string;
@@ -26,38 +32,58 @@ export function HubPage({
   backLabel?: string;
   /** Optional trailing element in the header, e.g. a balance. */
   action?: ReactNode;
+  /**
+   * How wide the page reads on a laptop. Defaults to the grid measure; a page
+   * of prose or of toggle rows says so, because "as wide as the screen" is the
+   * wrong answer for both.
+   */
+  measure?: SheetMeasure;
   children: ReactNode;
 }) {
   return (
-    <div className="pb-8">
-      <header className="sticky top-0 z-20 bg-navy-900 px-3 pb-3 pt-[max(0.5rem,env(safe-area-inset-top))] text-white">
-        <div className="flex items-center gap-2">
-          <Link
-            href={backHref}
-            aria-label={backLabel}
-            className="-ml-1 grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white/80 transition hover:bg-white/10 hover:text-white"
-          >
-            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
-          </Link>
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400">
-              {eyebrow}
-            </p>
-            <h1 className="truncate text-[19px] font-extrabold uppercase leading-tight tracking-tight">
-              {title}
-            </h1>
+    <PlayerSheet
+      measure={measure}
+      className="pb-8"
+      /*
+        The bar spans the shell while its contents keep the sheet measure. That
+        way the page chrome belongs to the application — the same as the tab bar
+        does at the other end of the screen — without stranding the title
+        several hundred pixels from the column it introduces.
+      */
+      header={
+        <header className="sticky top-0 z-20 bg-navy-900 px-3 pb-3 pt-[max(0.5rem,env(safe-area-inset-top))] text-white xl:px-6">
+          <div className={sheetMeasure(measure)}>
+            <div className="flex items-center gap-2">
+              <Link
+                href={backHref}
+                aria-label={backLabel}
+                className="-ml-1 grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white/80 transition hover:bg-white/10 hover:text-white"
+              >
+                <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+              </Link>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400">
+                  {eyebrow}
+                </p>
+                <h1 className="truncate text-[19px] font-extrabold uppercase leading-tight tracking-tight xl:text-[24px]">
+                  {title}
+                </h1>
+              </div>
+              {action}
+            </div>
+            {intro && (
+              <p className="mt-1.5 px-1 text-[12.5px] leading-snug text-navy-100 xl:max-w-[80ch] xl:text-[13.5px]">
+                {intro}
+              </p>
+            )}
           </div>
-          {action}
-        </div>
-        {intro && (
-          <p className="mt-1.5 px-1 text-[12.5px] leading-snug text-navy-100">
-            {intro}
-          </p>
-        )}
-      </header>
-
-      <div className="space-y-3.5 px-4 pt-3.5">{children}</div>
-    </div>
+        </header>
+      }
+    >
+      <div className="space-y-3.5 px-4 pt-3.5 xl:space-y-5 xl:px-6 xl:pt-5">
+        {children}
+      </div>
+    </PlayerSheet>
   );
 }
 

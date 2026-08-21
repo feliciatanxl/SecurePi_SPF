@@ -116,14 +116,21 @@ export function MiniGameShell({
   const stats = deltaLines(game.reward.deltas);
   const coins = game.reward.deltas.coins ?? 0;
 
+  /*
+    The measure for the game itself.
+
+    A word search stretched across a 2560px display is not a bigger word search,
+    it is an unplayable one, so the grid keeps close to the width it was designed
+    at. What changes on a laptop is where that width is enforced: the activity
+    bar, the instruction band and the completion footer run edge to edge like the
+    tab bar does, and only the play surface is centred inside them. Bands that
+    stop short of the window edge are what make a page read as a phone frame
+    parked on a desktop.
+  */
+  const band = "mx-auto w-full xl:max-w-[600px]";
+
   return (
-    /*
-      A mini-game keeps a phone-width column on every screen. The shell around
-      it runs full-bleed now, so the measure has to live here — a word search
-      stretched across a 2560px display is not a bigger word search, it is an
-      unplayable one.
-    */
-    <div className="relative mx-auto flex min-h-full w-full max-w-[440px] flex-col md:max-w-[560px] xl:border-x xl:border-line">
+    <div className="relative mx-auto flex min-h-full w-full max-w-[440px] flex-col md:max-w-[560px] xl:max-w-none">
       {burstKey !== null && (
         <RewardBurst
           key={burstKey}
@@ -135,7 +142,7 @@ export function MiniGameShell({
 
       {/* Activity bar */}
       <header className="sticky top-0 z-20 bg-navy-900">
-        <div className="flex items-center gap-3 px-4 pb-2.5 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className={`${band} flex items-center gap-3 px-4 pb-2.5 pt-[max(0.75rem,env(safe-area-inset-top))]`}>
           <Link
             href={backHref}
             aria-label={backLabel}
@@ -164,7 +171,8 @@ export function MiniGameShell({
       </header>
 
       {/* Instruction */}
-      <div className="border-b border-amber-200 bg-amber-50 px-4 py-3">
+      <div className="border-b border-amber-200 bg-amber-50">
+        <div className={`${band} px-4 py-3`}>
         <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-700">
           {progressLabel}
         </p>
@@ -186,16 +194,18 @@ export function MiniGameShell({
             </span>
           )}
         </div>
+        </div>
       </div>
 
       {/* Play surface */}
-      <div className={`flex-1 ${surfaceClassName}`}>{children}</div>
+      <div className={`${band} flex-1 ${surfaceClassName}`}>{children}</div>
 
       {/* Completion */}
       {solved && (
+        <div className="border-t border-line">
         <div
           ref={completionRef}
-          className="scroll-mt-16 space-y-3 border-t border-line px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3.5"
+          className={`${band} scroll-mt-16 space-y-3 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3.5`}
         >
           {followUp}
 
@@ -283,6 +293,7 @@ export function MiniGameShell({
               </div>
             </section>
           )}
+        </div>
         </div>
       )}
     </div>

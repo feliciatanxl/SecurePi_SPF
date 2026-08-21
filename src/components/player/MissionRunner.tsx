@@ -219,23 +219,33 @@ export function MissionRunner({
   const rewardOpen = bigReward && !rewardSeen && !consequence;
 
   /*
-   * The measure of the mission itself.
+   * The measure of the mission.
    *
-   * Without the split this is a phone-width reading column, centred — the shell
-   * around it is full-bleed now, so the column has to own its own width. With
-   * the split it is the widescreen composition, capped so the two panes stay a
-   * pair rather than drifting to opposite edges of a 2560px screen.
+   * On a laptop the mission surface spans the shell either way, and the measure
+   * lives *inside* it — on the contents of each band. The root only carries a
+   * width below xl, where the viewport is the measure anyway.
+   *
+   * That split matters. A mission bar, a HUD strip and a decision rail that all
+   * stop 600px short of the window edge read as a phone frame parked on the
+   * desktop, however little chrome is drawn around them: what makes a page look
+   * like a separate document is its bands ending, not its borders. Running the
+   * bands edge to edge and centring only the reading content is what the rest of
+   * ShieldQuest does, so a solo scenario does it too.
+   *
+   * The two differ only in how wide the reading content is allowed to be: a
+   * bystander weighing evidence against a response gets two columns inside
+   * 1400px, and a message thread you are living through stays a thread.
    */
   const measure = desktopSplit
-    ? "mx-auto w-full max-w-[440px] md:max-w-[720px] xl:max-w-[1400px]"
-    : "mx-auto w-full max-w-[440px] md:max-w-[560px]";
+    ? "mx-auto w-full max-w-[440px] md:max-w-[720px] xl:max-w-none"
+    : "mx-auto w-full max-w-[440px] md:max-w-[560px] xl:max-w-none";
+  /** The inner measure, applied to the contents of every full-bleed band. */
+  const band = desktopSplit
+    ? "mx-auto w-full xl:max-w-[1400px]"
+    : "mx-auto w-full xl:max-w-[700px]";
 
   return (
-    <div
-      className={`relative flex min-h-full flex-col ${measure} ${
-        desktopSplit ? "" : "xl:border-x xl:border-line"
-      }`}
-    >
+    <div className={`relative flex min-h-full flex-col ${measure}`}>
       {burst && !bigReward && (
         <RewardBurst
           key={burst.key}
@@ -249,7 +259,7 @@ export function MissionRunner({
       <header
         className={`sticky top-0 z-20 ${isTeal ? "bg-teal-700" : "bg-navy-900"}`}
       >
-        <div className={`flex items-center gap-3 px-4 pb-2.5 pt-[max(0.75rem,env(safe-area-inset-top))] ${desktopSplit ? "xl:gap-4 xl:px-6 xl:pb-3 xl:pt-4" : ""}`}>
+        <div className={`${band} flex items-center gap-3 px-4 pb-2.5 pt-[max(0.75rem,env(safe-area-inset-top))] ${desktopSplit ? "xl:gap-4 xl:px-6 xl:pb-3 xl:pt-4" : ""}`}>
           <Link
             href={backHref}
             aria-label={backLabel}
@@ -276,7 +286,8 @@ export function MissionRunner({
         </div>
 
         {/* HUD. One strip, three numbers, always on screen. */}
-        <dl className={`flex items-center gap-1.5 border-t border-white/10 px-4 py-1 ${desktopSplit ? "xl:gap-3 xl:px-6 xl:py-2" : ""}`}>
+        <div className="border-t border-white/10">
+        <dl className={`${band} flex items-center gap-1.5 px-4 py-1 ${desktopSplit ? "xl:gap-3 xl:px-6 xl:py-2" : ""}`}>
           <HudStat
             icon={<TrendingUp className="h-3 w-3" aria-hidden="true" />}
             label="Trust"
@@ -298,6 +309,7 @@ export function MissionRunner({
             value={profile.resiliencePoints}
           />
         </dl>
+        </div>
       </header>
 
       {/*
@@ -306,10 +318,11 @@ export function MissionRunner({
         "About" so it cannot push the thread off the first screen.
       */}
       <div
-        className={`px-4 py-2.5 ${isTeal ? "bg-teal-50" : "bg-civic-50"} border-b ${
+        className={`${isTeal ? "bg-teal-50" : "bg-civic-50"} border-b ${
           isTeal ? "border-teal-100" : "border-civic-100"
-        } ${desktopSplit ? "xl:px-6 xl:py-3.5" : ""}`}
+        }`}
       >
+      <div className={`${band} px-4 py-2.5 ${desktopSplit ? "xl:px-6 xl:py-3.5" : ""}`}>
         <div className="flex items-center gap-2">
           {modeBadge && (
             <span className="inline-flex shrink-0 items-center rounded-md bg-teal-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-white">
@@ -361,6 +374,7 @@ export function MissionRunner({
           </p>
         )}
       </div>
+      </div>
 
       {/*
         Situation and decision.
@@ -373,11 +387,13 @@ export function MissionRunner({
       <div
         className={`flex min-h-0 flex-1 flex-col ${
           desktopSplit
-            ? "xl:grid xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] xl:items-start xl:gap-7 xl:px-6 xl:py-5"
+            ? `${band} xl:grid xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] xl:items-start xl:gap-7 xl:px-6 xl:py-5`
             : ""
         }`}
       >
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div
+          className={`flex min-w-0 flex-1 flex-col ${desktopSplit ? "" : band}`}
+        >
       {/* Friend card — Peer Shield only */}
       {friend && (
         <div
@@ -458,12 +474,17 @@ export function MissionRunner({
         response options stay put while the thread is read beside them.
       */}
       <div
-        className={`sticky bottom-0 z-20 space-y-2 border-t border-line bg-surface/95 px-4 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur ${
+        className={`sticky bottom-0 z-20 border-t border-line bg-surface/95 backdrop-blur ${
           desktopSplit
-            ? "xl:bottom-auto xl:top-5 xl:self-start xl:rounded-2xl xl:border xl:bg-surface xl:px-5 xl:pb-5 xl:pt-4 xl:shadow-[0_18px_44px_-32px_rgba(11,37,69,0.55)]"
+            ? "xl:bottom-auto xl:top-5 xl:self-start xl:rounded-2xl xl:border xl:bg-surface xl:shadow-[0_18px_44px_-32px_rgba(11,37,69,0.55)]"
             : ""
         }`}
       >
+        <div
+          className={`space-y-2 px-4 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-3 ${
+            desktopSplit ? "xl:px-5 xl:pb-5 xl:pt-4" : band
+          }`}
+        >
         {awaitingConsequence ? (
           // Holds the beat without hinting at the outcome.
           <p
@@ -527,6 +548,7 @@ export function MissionRunner({
             ))}
           </>
         )}
+        </div>
       </div>
       </div>
 

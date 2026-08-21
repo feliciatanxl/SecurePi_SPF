@@ -26,32 +26,6 @@ const isImmersive = (pathname: string) =>
   pathname === "/play" || pathname.startsWith("/mini-game/");
 
 /**
- * The city board and the district routes get a wider content column on tablet
- * and up, and wider again on a laptop: the board camera then shows more of the
- * city route at once — around six spaces on a phone, twelve on a tablet,
- * fifteen on a laptop — without any of them being a different board.
- */
-const isBoard = (pathname: string) =>
-  pathname === "/progress" ||
-  pathname.startsWith("/district/") ||
-  pathname.startsWith("/shield-central");
-
-/**
- * Routes that lay themselves out and must reach `main` untouched.
- *
- * Each of these roots on `min-h-full`, which only resolves against a parent
- * with a definite height — `main` has one, an inserted measuring wrapper would
- * not. They own their desktop composition instead: the city board fills the
- * viewport, Peer Shield splits into two columns, and a solo scenario keeps its
- * own reading column.
- */
-const ownsItsLayout = (pathname: string) =>
-  pathname === "/game" ||
-  pathname === "/peer-shield" ||
-  pathname === "/play" ||
-  pathname.startsWith("/mini-game/");
-
-/**
  * Presentation canvas for the youth app.
  *
  * Mobile-first: on a phone this is simply the viewport.
@@ -69,9 +43,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const immersive = isImmersive(pathname);
-  const board = isBoard(pathname);
   const isGame = pathname === "/game";
-  const selfLaidOut = ownsItsLayout(pathname);
   const [presentation, setPresentation] = useState(false);
 
   // Presentation framing is opt-in via query parameter (?presentation=1).
@@ -114,7 +86,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               ? "mx-auto max-w-[440px] bg-surface shadow-[0_1px_2px_rgba(11,37,69,0.06),0_16px_40px_-24px_rgba(11,37,69,0.35)] transition-[max-width] duration-300 md:max-w-[720px] xl:max-w-[920px] xl:rounded-3xl xl:border xl:border-line"
               : isGame
                 ? "bg-navy-900"
-                : "bg-surface"
+                /*
+                  Light surfaces on a phone, where the page *is* the viewport.
+                  On a laptop the content sits on the civic canvas instead, so
+                  the space either side of a measured column reads as the
+                  application's own workspace rather than as blank browser page
+                  the app happens to be sitting in. Each route paints its own
+                  sheet on top; see `PlayerSheet`.
+                */
+                : "bg-surface xl:bg-canvas"
           }`}
         >
           {/*
@@ -128,25 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               presentation ? "xl:rounded-t-3xl" : ""
             }`}
           >
-            {presentation || selfLaidOut ? (
-              children
-            ) : (
-              /*
-                A measuring column for the routes that were designed against a
-                phone-to-tablet width. Removing the outer card must not leave
-                their content stretched across 2560px, so the *frame* goes and
-                the *measure* stays.
-              */
-              <div
-                className={`mx-auto w-full ${
-                  board
-                    ? "max-w-[440px] md:max-w-[860px] xl:max-w-[1160px]"
-                    : "max-w-[440px] md:max-w-[560px]"
-                }`}
-              >
-                {children}
-              </div>
-            )}
+            {children}
           </main>
 
           {!immersive && (

@@ -70,7 +70,7 @@ export default function TrustedHelpPage() {
   const [open, setOpen] = useState<string | null>(CATEGORIES[0].id);
 
   return (
-    <HubPage eyebrow="Shield Central" title="Trusted Help">
+    <HubPage eyebrow="Shield Central" title="Trusted Help" measure="reading">
       <section className="flex items-start gap-3 rounded-2xl border border-civic-200 bg-civic-50 p-3.5">
         <GuardianPlate
           guardian={beacon}

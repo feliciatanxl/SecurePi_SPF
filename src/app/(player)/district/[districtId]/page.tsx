@@ -8,6 +8,7 @@ import { DistrictPlate, DistrictScene } from "@/components/player/DistrictArt";
 import { DistrictDiscovery } from "@/components/player/DistrictDiscovery";
 import { DISTRICT_SKIN } from "@/components/player/districtSkin";
 import { MissionNodeCard } from "@/components/player/MissionNode";
+import { PlayerSheet, sheetMeasure } from "@/components/player/PlayerSheet";
 import { useDistrict } from "@/lib/hooks/useWorld";
 import { usePlayer } from "@/lib/state/PlayerProvider";
 import { DISTRICT_CHAPTER } from "@/lib/api/world-data";
@@ -72,10 +73,19 @@ export default function DistrictPage() {
 
   return (
     <>
-      <div className="animate-travel pb-6">
-      {/* One compact bar: where you are, how far in, and the way back. */}
-      <header className="sticky top-0 z-20 bg-navy-900 px-3 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] text-white">
-        <div className="flex items-center gap-2">
+      <PlayerSheet
+        className="animate-travel pb-6"
+        /*
+          The bar and the district hero span the shell; the activity route below
+          keeps a measure. A chapter should own the screen on a laptop — that is
+          what makes it feel like arriving somewhere — without the stop cards
+          being dragged 2000px apart from the titles they belong to.
+        */
+        header={
+          <>
+            {/* One compact bar: where you are, how far in, and the way back. */}
+            <header className="sticky top-0 z-20 bg-navy-900 px-3 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] text-white xl:px-6">
+              <div className={`${sheetMeasure()} flex items-center gap-2`}>
           <Link
             href="/game"
             aria-label="Back to ShieldQuest City"
@@ -109,28 +119,33 @@ export default function DistrictPage() {
             {district.total > 0
               ? `${district.completed}/${district.total}`
               : "Chapter"}
-          </span>
-        </div>
-      </header>
+              </span>
+              </div>
+            </header>
 
-      <section className="relative isolate h-[148px] overflow-hidden text-white">
-        <DistrictScene districtId={district.id} className="-z-20 opacity-100" />
-        <span
-          aria-hidden="true"
-          className="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950/95 via-navy-950/20 to-transparent"
-        />
-        <div className="absolute inset-x-4 bottom-4">
+            <section className="relative isolate h-[148px] overflow-hidden text-white xl:h-[300px] 2xl:h-[340px]">
+              <DistrictScene districtId={district.id} className="-z-20 opacity-100" />
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 -z-10 bg-gradient-to-t from-navy-950/95 via-navy-950/20 to-transparent"
+              />
+              <div className="absolute inset-x-4 bottom-4 xl:inset-x-6 xl:bottom-7">
+                <div className={sheetMeasure()}>
           <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-300">
             {chapter.label} · {district.completed} / {district.total} activities
           </p>
-          <h2 className="mt-0.5 text-[25px] font-extrabold uppercase leading-none tracking-tight">
-            {chapter.title}
-          </h2>
-          <p className="mt-1 max-w-xl text-[12px] font-semibold leading-snug text-white/80">
-            {chapter.intro}
-          </p>
-        </div>
-      </section>
+                  <h2 className="mt-0.5 text-[25px] font-extrabold uppercase leading-none tracking-tight xl:text-[44px]">
+                    {chapter.title}
+                  </h2>
+                  <p className="mt-1 max-w-xl text-[12px] font-semibold leading-snug text-white/80 xl:text-[14px]">
+                    {chapter.intro}
+                  </p>
+                </div>
+              </div>
+            </section>
+          </>
+        }
+      >
 
       {district.id === "digi" && (
         <div className="flex items-start gap-2 border-b border-civic-200 bg-civic-50 px-4 py-2.5 text-civic-800">
@@ -195,7 +210,7 @@ export default function DistrictPage() {
         )}
       </div>
 
-      <ol className="relative space-y-2.5 px-4 py-3.5 pl-11">
+      <ol className="relative space-y-2.5 px-4 py-3.5 pl-11 xl:px-6 xl:py-5 xl:pl-12">
         {/* The route line the stops hang off. */}
         <span
           aria-hidden="true"
@@ -231,7 +246,7 @@ export default function DistrictPage() {
           Back to ShieldQuest City
         </Link>
       </div>
-      </div>
+      </PlayerSheet>
       <DistrictDiscovery
         district={discoveryOpen ? district : null}
         onExplore={() => setDiscoveryOpen(false)}

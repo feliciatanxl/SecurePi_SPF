@@ -140,13 +140,12 @@ export default function ProjectShieldPage() {
             </ul>
           </nav>
 
-          <Link
-            href="/game"
-            className="ml-auto hidden min-h-11 shrink-0 items-center gap-2 rounded-xl bg-amber-400 px-4 text-[12px] font-extrabold uppercase tracking-wide text-navy-950 transition hover:bg-amber-300 sm:inline-flex lg:ml-3"
-          >
-            Play prototype
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
+          {/*
+            No call to action in the bar itself. The page already opens on
+            "Play ShieldQuest" in the hero, repeats it in the districts section
+            and closes on it, so a sixth amber button up here was competing with
+            the section links rather than adding a route in.
+          */}
         </div>
       </header>
 

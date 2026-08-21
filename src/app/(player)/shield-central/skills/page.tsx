@@ -40,9 +40,10 @@ export default function SkillsPage() {
     <HubPage
       eyebrow="Shield Central"
       title="S.H.I.E.L.D. skills"
+      measure="medium"
       intro={`The six prevention skills. You have practised ${skillsPractised.length} of them so far.`}
     >
-      <ul className="space-y-2">
+      <ul className="space-y-2 xl:grid xl:grid-cols-2 xl:gap-3 xl:space-y-0">
         {COMPETENCY_ORDER.map((c) => {
           const count = skillCounts[c] ?? 0;
           return (

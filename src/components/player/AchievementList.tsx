@@ -15,7 +15,7 @@ export function AchievementList({
   achievements: ResolvedAchievement[];
 }) {
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-2 xl:grid xl:grid-cols-2 xl:gap-3 xl:space-y-0">
       {achievements.map((a) => {
         const pct = Math.round((a.progress / a.target) * 100);
         return (

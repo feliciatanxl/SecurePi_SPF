@@ -222,11 +222,19 @@ export default function AdminPage() {
         />
 
         {/*
-            A working tool, so the body is capped rather than stretched: a
-            scenario table at 1440px with no measure is a row of numbers a long
-            way from the title they belong to.
+            A working tool, so the workspace is capped rather than unbounded —
+            but capped generously. A scenario table has seven columns and the
+            review cards carry three metrics each; at 1180px those were being
+            squeezed on a screen with 700px to spare, which is the opposite
+            failure to a row of numbers a long way from its title.
+
+            Long prose inside keeps its own measure, so widening the workspace
+            does not widen the reading line.
           */}
-        <main id="main" className="mx-auto min-w-0 max-w-[1180px] flex-1 px-5 py-7 lg:px-8">
+        <main
+          id="main"
+          className="mx-auto min-w-0 max-w-[1180px] flex-1 px-5 py-7 lg:px-8 xl:max-w-[1560px] 2xl:max-w-[1720px]"
+        >
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-civic-700 lg:hidden">
               Project SHIELD
@@ -343,7 +351,7 @@ export default function AdminPage() {
                     onSelect={setDetail}
                     caption="All scenarios with category, audience, status and safe decision rate"
                   />
-                  <p className="text-[12px] leading-relaxed text-ink-soft">
+                  <p className="max-w-[92ch] text-[12px] leading-relaxed text-ink-soft">
                     <strong className="font-bold text-ink-muted">
                       Safe decision rate
                     </strong>{" "}
@@ -405,7 +413,7 @@ export default function AdminPage() {
           )}
 
           <footer className="mt-10 border-t border-line pt-5">
-            <p className="text-[12px] leading-relaxed text-ink-soft">
+            <p className="max-w-[92ch] text-[12px] leading-relaxed text-ink-soft">
               ShieldQuest is a concept prototype for Project SHIELD. It is not an
               official Singapore Police Force platform and carries no official
               endorsement. All figures shown are simulated.
@@ -414,10 +422,16 @@ export default function AdminPage() {
         </main>
       </div>
 
+      {/*
+        A centred dialog rather than a side drawer. Deploying a Flash Mission is
+        a composing task with two-column rows and a preview, and a 480px drawer
+        made it a narrow column of stacked fields pinned to one edge of a 1920px
+        screen. Centred, it reads as the thing being worked on.
+      */}
       <Modal
         open={flashOpen}
         onClose={closeFlashDrawer}
-        placement="right"
+        size="form"
         className="bg-surface"
         labelledBy="flash-mission-title"
       >

@@ -53,7 +53,7 @@ export function CasebookCollection() {
         </p>
       </section>
 
-      <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+      <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-4 xl:gap-4">
         {SITUATION_CARDS.map((card, index) => {
           const met = profile.casebook.includes(card.id);
           const guardian = guardians.find((item) => item.id === card.guardianId);

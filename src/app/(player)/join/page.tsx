@@ -43,6 +43,13 @@ export default function JoinPage() {
       title="Join ShieldQuest"
       backHref="/shield-central"
       intro="How a facilitated pilot session would start."
+      /*
+        Deliberately the smallest measure. Joining is a short input flow, and a
+        session code field stretched across a laptop would be a worse form than
+        the phone one — but the page still belongs to the application rather
+        than floating as a 500px card in an empty white browser window.
+      */
+      measure="narrow"
     >
       <p className="inline-flex rounded-md border border-line-strong bg-surface-sunk px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-soft">
         Simulated pilot session
@@ -82,10 +89,15 @@ export default function JoinPage() {
           </div>
         </section>
       ) : (
-        <>
+        /*
+          The two ways in are alternatives, so on a laptop they sit beside each
+          other with the "or" between them rather than one scrolled past the
+          other. Stacked on a phone, as before.
+        */
+        <div className="space-y-3.5 xl:grid xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] xl:items-stretch xl:gap-6 xl:space-y-0">
           <form
             onSubmit={submit}
-            className="rounded-2xl border border-line bg-surface p-4"
+            className="rounded-2xl border border-line bg-surface p-4 xl:p-5"
           >
             <label
               htmlFor="session-code"
@@ -113,15 +125,21 @@ export default function JoinPage() {
             </button>
           </form>
 
-          <div className="flex items-center gap-3">
-            <span aria-hidden="true" className="h-px flex-1 bg-line" />
+          <div className="flex items-center gap-3 xl:flex-col">
+            <span
+              aria-hidden="true"
+              className="h-px flex-1 bg-line xl:h-auto xl:w-px"
+            />
             <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-soft">
               or
             </span>
-            <span aria-hidden="true" className="h-px flex-1 bg-line" />
+            <span
+              aria-hidden="true"
+              className="h-px flex-1 bg-line xl:h-auto xl:w-px"
+            />
           </div>
 
-          <div className="rounded-2xl border border-dashed border-line-strong bg-surface-sunk px-4 py-6 text-center">
+          <div className="flex flex-col justify-center rounded-2xl border border-dashed border-line-strong bg-surface-sunk px-4 py-6 text-center">
             <span
               aria-hidden="true"
               className="mx-auto grid h-20 w-20 place-items-center rounded-2xl border-2 border-line-strong bg-surface"
@@ -136,7 +154,7 @@ export default function JoinPage() {
               scanning is not part of this prototype.
             </p>
           </div>
-        </>
+        </div>
       )}
 
       <p className="flex items-start gap-2 rounded-xl border border-line bg-surface-sunk px-3.5 py-3 text-[12px] leading-relaxed text-ink-muted">

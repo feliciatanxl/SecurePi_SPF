@@ -70,7 +70,7 @@ export function AdminReviewQueue({
             className="overflow-hidden rounded-xl border border-amber-200 bg-surface"
           >
             <div className="flex flex-wrap items-start justify-between gap-4 p-4">
-              <div className="min-w-[220px] flex-1">
+              <div className="min-w-[220px] flex-1 xl:max-w-[62ch]">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-[15px] font-extrabold text-navy-900">
                     {row.title}
@@ -93,8 +93,13 @@ export function AdminReviewQueue({
                 </div>
               </div>
 
-              {/* Figures block */}
-              <dl className="grid grid-cols-3 gap-x-5 gap-y-1 sm:grid-cols-3">
+              {/*
+                Figures block. Given real room on a wide workspace: at 1180px
+                these three numbers were a 250px huddle on the end of a card,
+                which made the one figure the review is about — the current
+                rate — no more prominent than the row it sits in.
+              */}
+              <dl className="grid shrink-0 grid-cols-3 gap-x-5 gap-y-1 rounded-xl bg-surface-sunk px-4 py-3 sm:grid-cols-3 xl:gap-x-10 xl:px-6 xl:py-4">
                 <div>
                   <dt className="text-[11px] font-bold uppercase tracking-wide text-ink-soft">
                     Current

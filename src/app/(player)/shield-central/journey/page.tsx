@@ -39,7 +39,7 @@ export default function JourneyPage() {
       title="My Shield Journey"
       intro="Everything you have practised so far. This is yours alone — it is never ranked or compared."
     >
-      <ul className="grid grid-cols-2 gap-2.5">
+      <ul className="grid grid-cols-2 gap-2.5 xl:grid-cols-4 xl:gap-4">
         <Figure value={progress.completed} label="Activities completed" />
         <Figure
           value={`${districtsVisited} / ${districtCount}`}
@@ -53,7 +53,7 @@ export default function JourneyPage() {
       </ul>
 
       <HubSection title="Guardians developing">
-        <ul className="space-y-2">
+        <ul className="space-y-2 xl:grid xl:grid-cols-3 xl:gap-3 xl:space-y-0">
           {guardianStandings.map(({ guardian, level, progress: p, target }) => (
             <li
               key={guardian.id}

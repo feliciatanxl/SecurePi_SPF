@@ -42,8 +42,10 @@ export default function LearningCheckPage() {
       eyebrow="Shield Central"
       title="Learning check"
       intro="Two short, ungraded check-ins used in facilitated pilots."
+      measure="medium"
     >
-      <ul className="space-y-2.5">
+      {/* A pair, so they read as a pair once there is room for two columns. */}
+      <ul className="space-y-2.5 xl:grid xl:grid-cols-2 xl:items-start xl:gap-4 xl:space-y-0">
         {(["pre", "post"] as LearningCheckId[]).map((id) => {
           const meta = LEARNING_CHECK_META[id];
           const record = profile.learningChecks[id];
@@ -140,7 +142,12 @@ function CheckRunner({
   if (done) {
     const dimensions = [...new Set(questions.map((q) => q.dimension))];
     return (
-      <HubPage eyebrow={meta.eyebrow} title="Thank you" backHref="/shield-central">
+      <HubPage
+        eyebrow={meta.eyebrow}
+        title="Thank you"
+        backHref="/shield-central"
+        measure="reading"
+      >
         <section className="rounded-2xl border border-leaf-200 bg-leaf-50 p-4 text-center">
           <span
             aria-hidden="true"
@@ -202,6 +209,7 @@ function CheckRunner({
       title={meta.title}
       intro={meta.intro}
       backHref="/shield-central"
+      measure="reading"
       action={
         <p className="shrink-0 rounded-lg bg-white/12 px-2 py-1 text-[12px] font-bold tabular-nums text-white">
           {index + 1}/{questions.length}

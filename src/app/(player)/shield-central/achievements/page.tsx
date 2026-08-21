@@ -19,6 +19,7 @@ export default function AchievementsPage() {
     <HubPage
       eyebrow="Shield Central"
       title="Achievements"
+      measure="medium"
       intro="Milestones in what you have practised. Nothing here is compared with other participants."
       action={
         <p className="shrink-0 rounded-xl border border-white/15 bg-white/10 px-2.5 py-1 text-right">

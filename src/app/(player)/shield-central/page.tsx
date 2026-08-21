@@ -15,6 +15,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { GuardianPlate } from "@/components/player/GuardianArt";
+import { PlayerSheet, sheetMeasure } from "@/components/player/PlayerSheet";
 import { useShieldProgress } from "@/lib/hooks/useShieldProgress";
 import { usePlayer } from "@/lib/state/PlayerProvider";
 
@@ -36,12 +37,15 @@ export default function ShieldCentralPage() {
   const framed = Boolean(equippedIn("profileFrame"));
 
   return (
-    <div className="pb-8">
-      <header
-        className={`relative overflow-hidden bg-navy-900 px-4 pb-4 pt-[max(0.9rem,env(safe-area-inset-top))] text-white ${
-          framed ? "border-b-4 border-leaf-600" : ""
-        }`}
-      >
+    <PlayerSheet
+      className="pb-8"
+      header={
+        <header
+          className={`relative overflow-hidden bg-navy-900 px-4 pb-4 pt-[max(0.9rem,env(safe-area-inset-top))] text-white xl:px-6 ${
+            framed ? "border-b-4 border-leaf-600" : ""
+          }`}
+        >
+          <div className={sheetMeasure()}>
         <span
           aria-hidden="true"
           className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-civic-600/25 blur-2xl"
@@ -72,10 +76,13 @@ export default function ShieldCentralPage() {
           <HeaderStat label="Achievements" value={earned} />
           <HeaderStat label="Badges" value={badges.length} />
         </dl>
-      </header>
-
-      <div className="space-y-3 px-4 pt-3.5">
-        <ul className="grid grid-cols-2 gap-2.5">
+          </div>
+        </header>
+      }
+    >
+      <div className="space-y-3 px-4 pt-3.5 xl:space-y-5 xl:px-6 xl:pt-5">
+        {/* The four primary destinations sit on one row once there is room. */}
+        <ul className="grid grid-cols-2 gap-2.5 xl:grid-cols-4 xl:gap-4">
           <Tile
             href="/shield-central/journey"
             icon={<MapIcon className="h-5 w-5" />}
@@ -102,7 +109,7 @@ export default function ShieldCentralPage() {
           />
         </ul>
 
-        <ul className="space-y-2">
+        <ul className="space-y-2 xl:grid xl:grid-cols-2 xl:gap-3 xl:space-y-0">
           <Row
             href="/shield-central/casebook"
             icon={<BookOpen className="h-5 w-5" />}
@@ -150,7 +157,7 @@ export default function ShieldCentralPage() {
           for doing better than anyone else.
         </p>
       </div>
-    </div>
+    </PlayerSheet>
   );
 }
 

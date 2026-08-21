@@ -6,6 +6,7 @@ import { ArrowRight, ChevronDown, Lock, MapPin, Shield, Sparkles } from "lucide-
 import { DistrictPlate } from "@/components/player/DistrictArt";
 import { GuardianPlate } from "@/components/player/GuardianArt";
 import { SkillTag } from "@/components/player/MissionNode";
+import { PlayerSheet, sheetMeasure } from "@/components/player/PlayerSheet";
 import { useShieldProgress } from "@/lib/hooks/useShieldProgress";
 import { useWorld } from "@/lib/hooks/useWorld";
 import { usePlayer } from "@/lib/state/PlayerProvider";
@@ -45,9 +46,12 @@ export default function ProgressPage() {
     : 0;
 
   return (
-    <div className="pb-8">
-      <header className="sticky top-0 z-20 bg-navy-900 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white">
-        <div className="flex items-end justify-between gap-3">
+    <PlayerSheet
+      className="pb-8"
+      header={
+        <header className="sticky top-0 z-20 bg-navy-900 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white xl:px-6">
+          <div className={sheetMeasure()}>
+            <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-400">
               City progress
@@ -69,12 +73,14 @@ export default function ProgressPage() {
         >
           <span
             className="block h-full rounded-full bg-amber-500 transition-[width] duration-500"
-            style={{ width: `${pct}%` }}
-          />
-        </span>
-      </header>
-
-      <div className="space-y-3.5 px-4 pt-3.5">
+                style={{ width: `${pct}%` }}
+              />
+            </span>
+          </div>
+        </header>
+      }
+    >
+      <div className="space-y-3.5 px-4 pt-3.5 xl:space-y-5 xl:px-6 xl:pt-5">
         <section aria-labelledby="by-district">
           <h2
             id="by-district"
@@ -142,7 +148,7 @@ export default function ProgressPage() {
           <h2 id="progress-summary" className="sr-only">
             Summary
           </h2>
-          <ul className="grid grid-cols-3 gap-1.5">
+          <ul className="grid grid-cols-3 gap-1.5 xl:gap-3">
             <Figure
               icon={<Sparkles className="h-3 w-3" />}
               value={profile.shieldTokens}
@@ -167,7 +173,7 @@ export default function ProgressPage() {
           >
             S.H.I.E.L.D. skills
           </h2>
-          <ul className="grid grid-cols-2 gap-1.5">
+          <ul className="grid grid-cols-2 gap-1.5 xl:grid-cols-3 xl:gap-3">
             {COMPETENCY_ORDER.map((c) => {
               const count = skillCounts[c] ?? 0;
               return (
@@ -319,7 +325,7 @@ export default function ProgressPage() {
           )}
         </div>
       </div>
-    </div>
+    </PlayerSheet>
   );
 }
 

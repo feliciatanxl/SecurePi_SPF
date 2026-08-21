@@ -13,8 +13,11 @@ interface ModalProps {
   labelledBy?: string;
   /** "center" for dialogs, "right" for the admin side panel. */
   placement?: "center" | "right";
-  /** Sizing variant: default (max-w-lg) or wide (max-w-2xl for About modal). */
-  size?: "default" | "wide";
+  /**
+   * Sizing variant: default (max-w-lg), wide (max-w-2xl for the About modal) or
+   * form — a centred working dialog wide enough for two-column form rows.
+   */
+  size?: "default" | "wide" | "form";
 }
 
 export function Modal({
@@ -72,15 +75,23 @@ export function Modal({
       <div
         ref={panelRef}
         tabIndex={-1}
-        className={`animate-pop relative flex max-h-dvh w-full flex-col shadow-2xl outline-none ${
+        className={`animate-pop relative flex w-full flex-col shadow-2xl outline-none ${
           isRight
-            // 480px: wide enough for the Flash Mission form's two-column rows
-            // and the scenario detail panel, narrow enough that the portal
-            // behind it stays readable rather than being replaced.
-            ? "h-dvh max-w-[480px] border-l border-line"
-            : size === "wide"
-              ? "max-w-2xl rounded-t-2xl border border-line sm:rounded-2xl"
-              : "max-w-lg rounded-t-2xl border border-line sm:rounded-2xl"
+            // 480px: wide enough for the scenario detail panel, narrow enough
+            // that the portal behind it stays readable rather than replaced.
+            ? "h-dvh max-h-dvh max-w-[480px] border-l border-line"
+            : size === "form"
+              /*
+                A working dialog rather than a message: wide enough for the
+                two-column form rows to stay two columns, and short enough that
+                the portal is still visible around it, so it reads as a task
+                inside the tool. On a phone it stays a near-full-height bottom
+                sheet, because 900px of dialog on a 390px screen is a page.
+              */
+              ? "max-h-[92dvh] rounded-t-2xl border border-line sm:max-h-[88dvh] sm:max-w-[900px] sm:rounded-2xl lg:max-w-[960px]"
+              : size === "wide"
+                ? "max-h-dvh max-w-2xl rounded-t-2xl border border-line sm:rounded-2xl"
+                : "max-h-dvh max-w-lg rounded-t-2xl border border-line sm:rounded-2xl"
         } ${className}`}
       >
         {dismissible && onClose && (

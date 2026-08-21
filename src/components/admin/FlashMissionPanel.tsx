@@ -141,7 +141,7 @@ export function FlashMissionPanel({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex h-full flex-col bg-surface">
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-col bg-surface">
       <header className="shrink-0 border-b border-line bg-surface-sunk px-6 pb-4 pt-5">
         <span className="inline-flex rounded-md border border-line-strong bg-surface px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-soft">
           Prototype · Simulated data
@@ -159,7 +159,7 @@ export function FlashMissionPanel({
         </p>
       </header>
 
-      <div className="thin-scroll flex-1 space-y-7 overflow-y-auto px-6 py-5">
+      <div className="thin-scroll min-h-0 flex-1 space-y-7 overflow-y-auto px-6 py-5">
         <Section index={1} title="Mission details">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
@@ -552,8 +552,8 @@ function FlashMissionLive({
   const live = row.status === "LIVE";
 
   return (
-    <div className="flex h-full flex-col bg-surface">
-      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto bg-leaf-50 px-8 py-10 text-center">
+    <div className="flex min-h-0 flex-col bg-surface">
+      <div className="thin-scroll flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto bg-leaf-50 px-8 py-10 text-center">
         <span
           aria-hidden="true"
           className="grid h-20 w-20 place-items-center rounded-full bg-leaf-600 text-white shadow-sm"

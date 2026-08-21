@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { GuardianCard } from "@/components/player/GuardianCard";
 import { GuardianPlate } from "@/components/player/GuardianArt";
+import { PlayerSheet, sheetMeasure } from "@/components/player/PlayerSheet";
 import { guardianStanding, usePlayer } from "@/lib/state/PlayerProvider";
 import { findReward } from "@/lib/api/rewards-data";
 
@@ -43,9 +44,12 @@ export default function GuardiansPage() {
   );
 
   return (
-    <div className="pb-6">
-      <header className="sticky top-0 z-20 bg-navy-900 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white">
-        <div className="flex items-end justify-between gap-3">
+    <PlayerSheet
+      className="pb-6"
+      header={
+        <header className="sticky top-0 z-20 bg-navy-900 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white xl:px-6">
+          <div className={sheetMeasure()}>
+            <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-400">
               Your Guardians
@@ -61,13 +65,15 @@ export default function GuardiansPage() {
             <span className="text-navy-100">practised</span>
           </p>
         </div>
-        <p className="mt-1.5 text-[12px] leading-snug text-navy-100">
-          A Guardian grows when you practise its skill in a mission — never when
-          you spend anything.
-        </p>
-      </header>
-
-      <div className="space-y-3.5 px-4 pt-3.5">
+            <p className="mt-1.5 text-[12px] leading-snug text-navy-100 xl:text-[13.5px]">
+              A Guardian grows when you practise its skill in a mission — never
+              when you spend anything.
+            </p>
+          </div>
+        </header>
+      }
+    >
+      <div className="space-y-3.5 px-4 pt-3.5 xl:space-y-5 xl:px-6 xl:pt-5">
         {/* Selector. Hidden once every card is on screen at once. */}
         <div className="md:hidden">
           <h2
@@ -131,7 +137,7 @@ export default function GuardiansPage() {
         */}
         <div
           id="guardian-detail"
-          className="space-y-2.5 md:grid md:grid-cols-2 md:items-start md:gap-3 md:space-y-0"
+          className="space-y-2.5 md:grid md:grid-cols-2 md:items-start md:gap-3 md:space-y-0 xl:grid-cols-3 xl:gap-5"
         >
           {guardians.map((g) => (
             <div
@@ -158,6 +164,6 @@ export default function GuardiansPage() {
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>
-    </div>
+    </PlayerSheet>
   );
 }

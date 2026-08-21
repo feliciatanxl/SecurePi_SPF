@@ -105,7 +105,7 @@ export default function RewardsPage() {
       {tab === "ACHIEVEMENTS" ? (
         <AchievementList achievements={achievements} />
       ) : (
-        <ul className="grid grid-cols-2 gap-2.5">
+        <ul className="grid grid-cols-2 gap-2.5 lg:grid-cols-3 xl:grid-cols-4 xl:gap-4">
           {shown.map((reward) => {
             const owned = profile.unlockedRewards.includes(reward.id);
             const equipped = equippedIn(reward.slot) === reward.id;

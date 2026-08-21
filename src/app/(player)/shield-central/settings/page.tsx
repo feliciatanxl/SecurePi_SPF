@@ -30,6 +30,7 @@ export default function SettingsPage() {
     <HubPage
       eyebrow="Shield Central"
       title="Settings"
+      measure="medium"
       intro="These apply on this device only."
     >
       <HubSection title="Experience">
