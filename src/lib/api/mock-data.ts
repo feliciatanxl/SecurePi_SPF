@@ -1,3 +1,4 @@
+import { DEFAULT_SETTINGS } from "@/lib/types";
 import type {
   AdminScenarioRow,
   Guardian,
@@ -90,6 +91,35 @@ export const MOCK_PROFILE: PlayerProfile = {
   // earned rather than pre-filled. Personal progress only — never compared.
   completedActivities: [],
   currentDistrictId: "digi",
+
+  // The token starts on Shield Central, which is where a turn begins.
+  boardPosition: 0,
+  visitedSpaces: [],
+  /*
+   * A starting Shield Token balance, in the same spirit as the coins, streak
+   * and Guardian progress above: this profile represents a youth already part
+   * way through the programme, not a blank account. It also means the Rewards
+   * Hub can be shown doing something in a demonstration without ten minutes of
+   * play first. Tokens are participation credit for cosmetics — never money,
+   * never redeemable, never a measure of anyone.
+   */
+  shieldTokens: 480,
+  tokenGrants: [],
+  unlockedRewards: [],
+  equippedRewards: {},
+  earnedAchievements: [],
+  districtBadges: [],
+  casebook: [],
+  onboardingComplete: false,
+  // Matches PLAYER_TOKENS[0] in rewards-data. Written as a literal so the
+  // fixtures do not have to import from a module that imports them back.
+  playerTokenId: "pt_shield",
+  settings: DEFAULT_SETTINGS,
+  joinedSession: null,
+  learningChecks: {
+    pre: { id: "pre", completed: false, responses: [] },
+    post: { id: "post", completed: false, responses: [] },
+  },
 };
 
 /* ------------------------------------------------------------------ */

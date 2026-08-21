@@ -71,7 +71,10 @@ export function Modal({
         tabIndex={-1}
         className={`animate-pop relative flex max-h-dvh w-full flex-col shadow-2xl outline-none ${
           isRight
-            ? "h-dvh max-w-xl border-l border-line"
+            // 480px: wide enough for the Flash Mission form's two-column rows
+            // and the scenario detail panel, narrow enough that the portal
+            // behind it stays readable rather than being replaced.
+            ? "h-dvh max-w-[480px] border-l border-line"
             : "max-w-lg rounded-t-2xl border border-line sm:rounded-2xl"
         } ${className}`}
       >

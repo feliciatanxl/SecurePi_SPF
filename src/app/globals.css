@@ -78,6 +78,8 @@
   --animate-sweep: sweep 2.4s ease-out both;
   --animate-node-pulse: node-pulse 2.4s ease-out infinite;
   --animate-stamp: stamp 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  --animate-tumble: tumble 0.42s linear infinite;
+  --animate-slide-up: slide-up 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes rise {
@@ -191,6 +193,31 @@
   to {
     opacity: 1;
     transform: rotate(-8deg) scale(1);
+  }
+}
+
+/* The die, mid-roll. Six faces going past, not a slot machine. */
+@keyframes tumble {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.08);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+/* Panels that rise into place — mission complete, district complete. */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -334,4 +361,105 @@ body {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+}
+
+
+/* ==========================================================================
+   ShieldQuest City Board
+   ========================================================================== */
+
+/*
+ * The board camera.
+ *
+ * The track is one long route and the viewport pans along it, so a phone shows
+ * six or seven readable spaces around the token rather than 22 unreadable dots.
+ * The pan is the container's own horizontal scroll: the browser clamps it at
+ * both ends, a player can look ahead by dragging, and a keyboard user gets the
+ * same panning for free. The scrollbar itself is hidden — it is a camera, not
+ * a scroll region the player is meant to notice.
+ */
+.board-camera {
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.board-camera::-webkit-scrollbar {
+  display: none;
+}
+
+/* Board ground for the track surface. */
+.track-ground {
+  background-color: var(--color-navy-950);
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(42, 125, 216, 0.3) 0%, transparent 55%),
+    radial-gradient(circle at 80% 100%, rgba(242, 174, 51, 0.18) 0%, transparent 55%);
+}
+
+/*
+ * An equipped Guardian cosmetic. A treatment around the portrait, nothing more.
+ *
+ * Drawn with box-shadow rather than a pseudo-element on purpose: the portrait
+ * is an `<img>`, and replaced elements do not render `::before`/`::after`, so a
+ * pseudo-element aura would simply never appear on the Guardians who actually
+ * have artwork — which is all of them.
+ */
+.guardian-aura {
+  box-shadow:
+    0 0 0 3px rgba(242, 174, 51, 0.95),
+    0 0 18px 5px rgba(242, 174, 51, 0.45);
+}
+
+/* ==========================================================================
+   Accessibility preferences
+   Set on <html> by PlayerProvider from the player's own Settings, on top of
+   whatever the operating system already asks for — never instead of it.
+   ========================================================================== */
+
+/*
+ * Larger text.
+ *
+ * The interface is laid out in fixed pixel type so that a dense mobile game HUD
+ * stays predictable, which means a root font-size change would move nothing.
+ * `zoom` scales the content box and its type together and, unlike a transform,
+ * still reflows — so the app column simply becomes larger and scrolls, which is
+ * exactly what someone asking for bigger text wants. It is applied to the
+ * scrolling content only, so the tab bar and its 44px targets are untouched.
+ */
+[data-text-size="large"] .text-scale {
+  zoom: 1.12;
+}
+
+/* Player-requested reduced motion, on top of the OS-level preference above. */
+[data-motion="reduced"] *,
+[data-motion="reduced"] *::before,
+[data-motion="reduced"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/*
+ * High contrast.
+ *
+ * Redefines the design tokens rather than patching components, so every
+ * surface, border and muted text colour in the app moves at once and nothing
+ * can be missed. Mid-greys go darker, hairlines go stronger, and the focus ring
+ * thickens.
+ */
+[data-contrast="high"] {
+  --color-ink: #000000;
+  --color-ink-muted: #1f2937;
+  --color-ink-soft: #1f2937;
+  --color-line: #6b7787;
+  --color-line-strong: #3d4757;
+  --color-canvas: #ffffff;
+  --color-surface-sunk: #f1f4f9;
+  --color-navy-100: #ffffff;
+}
+
+[data-contrast="high"]
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline-width: 4px;
+  outline-color: #000000;
 }

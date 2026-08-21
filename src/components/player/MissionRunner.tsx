@@ -13,13 +13,16 @@ import {
   UserRound,
 } from "lucide-react";
 import { ClueInspector } from "@/components/player/ClueInspector";
+import { MissionComplete } from "@/components/player/MissionComplete";
 import { ConsequenceTakeover } from "@/components/player/ConsequenceTakeover";
 import { DebriefCard } from "@/components/player/DebriefCard";
 import { DecisionOption } from "@/components/player/DecisionOption";
 import { RewardBurst } from "@/components/player/RewardBurst";
+import { RewardTakeover } from "@/components/player/RewardTakeover";
 import { ScenarioMessage } from "@/components/player/ScenarioMessage";
 import { useScenarioRun } from "@/lib/hooks/useScenarioRun";
 import { usePlayer } from "@/lib/state/PlayerProvider";
+import { TOKEN_AWARD, tokenKey } from "@/lib/api/rewards-data";
 
 interface MissionRunnerProps {
   scenarioId: string;
@@ -58,7 +61,7 @@ export function MissionRunner({
   backLabel,
 }: MissionRunnerProps) {
   const router = useRouter();
-  const { profile, guardians, completeActivity } = usePlayer();
+  const { profile, guardians, completeActivity, awardTokens } = usePlayer();
   const {
     scenario,
     transcript,
@@ -108,11 +111,59 @@ export function MissionRunner({
    * chosen. The risky path is where the most learning happens — locking city
    * progress behind picking the safe answer would turn the board into a quiz and
    * push players to guess rather than decide.
+   *
+   * Shield Tokens follow the same rule: completing the mission pays the same
+   * participation award whichever option was taken, so no player is ever paid
+   * for choosing badly and none is punished for exploring. The one bonus that
+   * does depend on the decision is the Peer Shield one — intervening
+   * constructively for a friend is the skill that mode exists to build.
    */
   const resolved = Boolean(result);
+  const awardedRef = useRef(false);
+  const [tokensAwarded, setTokensAwarded] = useState(0);
+
   useEffect(() => {
-    if (resolved && activityId) completeActivity(activityId);
-  }, [resolved, activityId, completeActivity]);
+    if (!resolved || !activityId || awardedRef.current) return;
+    awardedRef.current = true;
+
+    completeActivity(activityId);
+
+    let total = awardTokens(tokenKey.mission(activityId), TOKEN_AWARD.mission);
+    if (scenario?.mode === "PEER_SHIELD" && result?.outcome === "SAFE") {
+      total += awardTokens(
+        tokenKey.peerShieldSuccess(activityId),
+        TOKEN_AWARD.peerShieldSuccess,
+      );
+    }
+    setTokensAwarded(total);
+  }, [
+    activityId,
+    awardTokens,
+    completeActivity,
+    resolved,
+    result?.outcome,
+    scenario?.mode,
+  ]);
+
+  /*
+   * Mission Complete is a separate beat from the debrief, and the delayed
+   * consequence has to be allowed to land first — so the takeover is dismissed
+   * into the completion card, and "View what I learned" puts it back rather
+   * than leaving the player with no way to re-read it.
+   */
+  const [completeOpen, setCompleteOpen] = useState(false);
+  const [takeoverDismissed, setTakeoverDismissed] = useState(false);
+
+  /*
+   * The full-screen reward state, shown only for a choice that pays now and
+   * charges later — the moment the whole Delayed Consequence Engine turns on.
+   * A safe choice keeps the smaller floating burst: a takeover there would read
+   * as "you won", which is not what a considered decision is.
+   *
+   * It is dismissed by the player, or automatically the moment the consequence
+   * lands on top of it.
+   */
+  const [rewardSeen, setRewardSeen] = useState(false);
 
   if (!scenario) {
     return (
@@ -128,13 +179,28 @@ export function MissionRunner({
   const isTeal = accent === "teal";
   /** The quiet beat between banking the reward and the consequence landing. */
   const awaitingConsequence = Boolean(result?.delayed) && !consequence;
-  const guardianName = result?.debrief.guardianId
-    ? guardians.find((g) => g.id === result.debrief.guardianId)?.name
+  const guardian = result?.debrief.guardianId
+    ? guardians.find((g) => g.id === result.debrief.guardianId)
     : undefined;
+  const guardianName = guardian?.name;
+
+  /*
+   * "Warning signs identified" on the completion card is the player's own clue
+   * tagging, not an invented figure — the mission asks which signals stood out,
+   * and this reports how many of them they actually marked.
+   */
+  const signals = scenario.clues?.length
+    ? { found: taggedClues.length, total: scenario.clues.length }
+    : undefined;
+
+  const finish = () => setCompleteOpen(true);
+
+  const bigReward = Boolean(result?.delayed) && Boolean(result?.flashAmount);
+  const rewardOpen = bigReward && !rewardSeen && !consequence;
 
   return (
     <div className="relative flex min-h-full flex-col">
-      {burst && (
+      {burst && !bigReward && (
         <RewardBurst
           key={burst.key}
           title={burst.title}
@@ -340,14 +406,26 @@ export function MissionRunner({
           <div className="space-y-2.5">
             <button
               type="button"
+              onClick={finish}
+              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl border-b-4 border-leaf-700 bg-leaf-600 px-4 text-[15px] font-extrabold uppercase tracking-[0.06em] text-white transition hover:bg-leaf-700 active:translate-y-[3px] active:border-b-0"
+            >
+              Finish mission
+            </button>
+            <button
+              type="button"
               onClick={() => router.push(backHref)}
-              className="flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-navy-900 px-4 text-[15px] font-extrabold text-white transition hover:bg-navy-800"
+              className="flex min-h-[48px] w-full items-center justify-center rounded-2xl border-2 border-line px-4 text-[14px] font-semibold text-ink transition hover:border-civic-500 hover:text-civic-700"
             >
               {backLabel}
             </button>
             <button
               type="button"
-              onClick={replay}
+              onClick={() => {
+                setCompleteOpen(false);
+                setTakeoverDismissed(false);
+                setRewardSeen(false);
+                replay();
+              }}
               className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-line px-4 text-[14px] font-semibold text-ink transition hover:border-civic-500 hover:text-civic-700"
             >
               <RotateCcw className="h-4 w-4" aria-hidden="true" />
@@ -373,10 +451,52 @@ export function MissionRunner({
         )}
       </div>
 
+      <RewardTakeover
+        open={rewardOpen}
+        amount={(result?.flashAmount ?? "").split(" ")[0]}
+        unit={(result?.flashAmount ?? "").split(" ").slice(1).join(" ") || "Coins"}
+        headline={
+          result?.flashTitle
+            ? `${result.flashTitle}. It went through straight away.`
+            : "It went through straight away."
+        }
+        onContinue={() => setRewardSeen(true)}
+      />
+
+      {/*
+        The takeover is the debrief for the delayed path, so it hands over to
+        Mission Complete rather than straight back to the district — and it can
+        be reopened from there, because a player who wants to re-read why the
+        S$300 cost them should never have to replay the mission to do it.
+      */}
       <ConsequenceTakeover
-        consequence={consequence}
-        onContinue={() => router.push(backHref)}
-        onReplay={replay}
+        consequence={takeoverDismissed ? null : consequence}
+        onContinue={() => {
+          setTakeoverDismissed(true);
+          setCompleteOpen(true);
+        }}
+        onReplay={() => {
+          setTakeoverDismissed(false);
+          setRewardSeen(false);
+          replay();
+        }}
+      />
+
+      <MissionComplete
+        open={completeOpen}
+        title={scenario.title}
+        competency={result?.debrief.competency ?? scenario.primaryCompetency}
+        guardian={guardian}
+        signals={signals}
+        tokensAwarded={tokensAwarded}
+        guardianAdvanced={Boolean(result?.debrief.guardianId)}
+        onViewLearning={() => {
+          setCompleteOpen(false);
+          // The delayed path has no debrief card — the takeover is the lesson.
+          if (consequence) setTakeoverDismissed(false);
+          else bottomRef.current?.scrollIntoView({ block: "end" });
+        }}
+        onClose={() => setCompleteOpen(false)}
       />
     </div>
   );

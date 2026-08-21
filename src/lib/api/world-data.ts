@@ -33,9 +33,23 @@ export const NODE_WORD_SEARCH = "nd_digi_warning_signs";
 export const NODE_DECODE = "nd_digi_decode_clue";
 export const NODE_PEER_JAYDEN = "nd_community_jayden";
 
+/*
+ * The remaining node ids. Named here rather than only inline so the city board
+ * track can reference a space's activity by constant and a typo becomes a
+ * compile error instead of a space that silently opens nothing.
+ */
+export const NODE_SCHOOL_HOLD_IT = "nd_school_hold_it";
+export const NODE_SCHOOL_RISK_OR_SAFE = "nd_school_risk_or_safe";
+export const NODE_SCHOOL_FRIEND_PRESSURE = "nd_school_friend_pressure";
+export const NODE_RETAIL_DARE = "nd_retail_dare_checkout";
+export const NODE_RETAIL_CLUE_MATCH = "nd_retail_clue_match";
+export const NODE_RETAIL_COVER_FOR_ME = "nd_retail_cover_for_me";
+export const NODE_COMMUNITY_WHO_CAN_HELP = "nd_community_who_can_help";
+export const NODE_COMMUNITY_WHAT_NEXT = "nd_community_what_next";
+
 const SCHOOL_NODES: MissionNode[] = [
   {
-    id: "nd_school_hold_it",
+    id: NODE_SCHOOL_HOLD_IT,
     districtId: "school",
     kind: "SCENARIO",
     title: "Just Hold It For Me",
@@ -46,7 +60,7 @@ const SCHOOL_NODES: MissionNode[] = [
     availability: "PLANNED",
   },
   {
-    id: "nd_school_risk_or_safe",
+    id: NODE_SCHOOL_RISK_OR_SAFE,
     districtId: "school",
     kind: "MINI_GAME",
     title: "Risk or Safe?",
@@ -56,7 +70,7 @@ const SCHOOL_NODES: MissionNode[] = [
     availability: "PLANNED",
   },
   {
-    id: "nd_school_friend_pressure",
+    id: NODE_SCHOOL_FRIEND_PRESSURE,
     districtId: "school",
     kind: "PEER_SHIELD",
     title: "Friend Under Pressure",
@@ -72,7 +86,7 @@ const SCHOOL_NODES: MissionNode[] = [
 
 const RETAIL_NODES: MissionNode[] = [
   {
-    id: "nd_retail_dare_checkout",
+    id: NODE_RETAIL_DARE,
     districtId: "retail",
     kind: "SCENARIO",
     title: "The Dare at Checkout",
@@ -83,7 +97,7 @@ const RETAIL_NODES: MissionNode[] = [
     availability: "PLANNED",
   },
   {
-    id: "nd_retail_clue_match",
+    id: NODE_RETAIL_CLUE_MATCH,
     districtId: "retail",
     kind: "MINI_GAME",
     title: "Clue Match",
@@ -93,7 +107,7 @@ const RETAIL_NODES: MissionNode[] = [
     availability: "PLANNED",
   },
   {
-    id: "nd_retail_cover_for_me",
+    id: NODE_RETAIL_COVER_FOR_ME,
     districtId: "retail",
     kind: "PEER_SHIELD",
     title: "Cover For Me",
@@ -161,7 +175,7 @@ const COMMUNITY_NODES: MissionNode[] = [
     href: "/peer-shield",
   },
   {
-    id: "nd_community_who_can_help",
+    id: NODE_COMMUNITY_WHO_CAN_HELP,
     districtId: "community",
     kind: "MINI_GAME",
     title: "Who Can Help?",
@@ -172,7 +186,7 @@ const COMMUNITY_NODES: MissionNode[] = [
     availability: "PLANNED",
   },
   {
-    id: "nd_community_what_next",
+    id: NODE_COMMUNITY_WHAT_NEXT,
     districtId: "community",
     kind: "MINI_GAME",
     title: "What Happens Next?",

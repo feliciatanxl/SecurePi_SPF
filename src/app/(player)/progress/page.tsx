@@ -2,11 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Lock, MapPin } from "lucide-react";
+import { ArrowRight, ChevronDown, Lock, MapPin, Shield, Sparkles } from "lucide-react";
 import { DistrictPlate } from "@/components/player/DistrictArt";
+import { GuardianPlate } from "@/components/player/GuardianArt";
 import { SkillTag } from "@/components/player/MissionNode";
+import { useShieldProgress } from "@/lib/hooks/useShieldProgress";
 import { useWorld } from "@/lib/hooks/useWorld";
-import { NODE_KIND_LABEL } from "@/lib/types";
+import { usePlayer } from "@/lib/state/PlayerProvider";
+import {
+  COMPETENCY_LABEL,
+  COMPETENCY_LETTER,
+  COMPETENCY_ORDER,
+  NODE_KIND_LABEL,
+} from "@/lib/types";
 
 /**
  * City Progress.
@@ -22,7 +30,11 @@ import { NODE_KIND_LABEL } from "@/lib/types";
  */
 export default function ProgressPage() {
   const { districts, progress } = useWorld();
+  const { profile } = usePlayer();
+  const { achievements, guardianStandings, skillCounts, skillsPractised } =
+    useShieldProgress();
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const earnedAchievements = achievements.filter((a) => a.earned).length;
 
   const completedNodes = districts.flatMap((d) =>
     d.nodes.filter((n) => n.completed).map((n) => ({ node: n, district: d })),
@@ -123,6 +135,101 @@ export default function ProgressPage() {
           </ul>
         </section>
 
+        {/* Shield Tokens, skills, Guardians and achievements. Everything on
+            this page is the player's own record — there is no comparison with
+            another participant anywhere in ShieldQuest. */}
+        <section aria-labelledby="progress-summary">
+          <h2 id="progress-summary" className="sr-only">
+            Summary
+          </h2>
+          <ul className="grid grid-cols-3 gap-1.5">
+            <Figure
+              icon={<Sparkles className="h-3 w-3" />}
+              value={profile.shieldTokens}
+              label="Shield Tokens"
+            />
+            <Figure
+              icon={<Shield className="h-3 w-3" />}
+              value={`${skillsPractised.length}/6`}
+              label="Skills practised"
+            />
+            <Figure
+              value={`${earnedAchievements}/${achievements.length}`}
+              label="Achievements"
+            />
+          </ul>
+        </section>
+
+        <section aria-labelledby="skills-practised">
+          <h2
+            id="skills-practised"
+            className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft"
+          >
+            S.H.I.E.L.D. skills
+          </h2>
+          <ul className="grid grid-cols-2 gap-1.5">
+            {COMPETENCY_ORDER.map((c) => {
+              const count = skillCounts[c] ?? 0;
+              return (
+                <li
+                  key={c}
+                  className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 ${
+                    count > 0
+                      ? "border-civic-200 bg-civic-50"
+                      : "border-line bg-surface"
+                  }`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="grid h-5 w-5 shrink-0 place-items-center rounded bg-navy-900 text-[10px] font-extrabold text-white"
+                  >
+                    {COMPETENCY_LETTER[c]}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-ink">
+                    {COMPETENCY_LABEL[c]}
+                  </span>
+                  <span className="shrink-0 text-[12px] font-bold tabular-nums text-ink-soft">
+                    {count}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        <section aria-labelledby="guardians-progress">
+          <h2
+            id="guardians-progress"
+            className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft"
+          >
+            Guardians
+          </h2>
+          <ul className="space-y-1.5">
+            {guardianStandings.map(({ guardian, level, progress: p, target }) => (
+              <li
+                key={guardian.id}
+                className="flex items-center gap-2.5 rounded-xl border border-line bg-surface px-2.5 py-2"
+              >
+                <GuardianPlate
+                  guardian={guardian}
+                  className="h-8 w-8 rounded-lg text-[13px]"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] font-extrabold uppercase tracking-wide text-navy-900">
+                    {guardian.name}
+                  </span>
+                  <span className="block text-[11px] font-semibold text-ink-soft">
+                    {guardian.skill} · Level {level}
+                  </span>
+                </span>
+                <span className="shrink-0 text-[13px] font-extrabold tabular-nums text-navy-900">
+                  {p}/{target}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <section aria-labelledby="activities-done">
           <h2
             id="activities-done"
@@ -175,6 +282,15 @@ export default function ProgressPage() {
           )}
         </section>
 
+        <Link
+          href="/shield-central"
+          className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-navy-900 px-4 text-[14px] font-extrabold text-white transition hover:bg-navy-800"
+        >
+          <Shield className="h-4 w-4" aria-hidden="true" />
+          Open Shield Central
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+
         {/* The privacy promise stays on the page, one tap from plain sight. */}
         <div className="rounded-xl border border-line bg-surface-sunk">
           <button
@@ -204,5 +320,27 @@ export default function ProgressPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function Figure({
+  icon,
+  value,
+  label,
+}: {
+  icon?: React.ReactNode;
+  value: string | number;
+  label: string;
+}) {
+  return (
+    <li className="rounded-xl border border-line bg-surface px-2 py-1.5">
+      <p className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.08em] text-ink-soft">
+        {icon && <span aria-hidden="true">{icon}</span>}
+        <span className="truncate">{label}</span>
+      </p>
+      <p className="text-[17px] font-extrabold leading-tight tabular-nums text-navy-900">
+        {typeof value === "number" ? value.toLocaleString() : value}
+      </p>
+    </li>
   );
 }

@@ -24,13 +24,19 @@ const isImmersive = (pathname: string) =>
   pathname === "/play" || pathname.startsWith("/mini-game/");
 
 /**
- * The city board and the district routes get a wider frame on tablet and up, so
- * the four districts can spread into a board instead of stacking forever. A
- * scenario stays at phone width on every screen — a message thread arriving on
+ * The city board and the district routes get a wider frame on tablet and up,
+ * and wider again on a laptop: the board camera then shows more of the city
+ * route at once — around six spaces on a phone, twelve on a tablet, fifteen on
+ * a laptop — without any of them being a different board.
+ *
+ * A scenario stays at phone width on every screen. A message thread arriving on
  * your phone is the situation being rehearsed, and widening it would weaken that.
  */
 const isBoard = (pathname: string) =>
-  pathname === "/" || pathname === "/progress" || pathname.startsWith("/district/");
+  pathname === "/" ||
+  pathname === "/progress" ||
+  pathname.startsWith("/district/") ||
+  pathname.startsWith("/shield-central");
 
 /**
  * Presentation canvas for the youth app.
@@ -58,12 +64,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <div
           className={`relative flex h-full w-full flex-col overflow-hidden bg-surface shadow-[0_1px_2px_rgba(11,37,69,0.06),0_16px_40px_-24px_rgba(11,37,69,0.35)] transition-[max-width] duration-300 xl:rounded-3xl xl:border xl:border-line ${
-            board ? "max-w-[440px] md:max-w-[720px]" : "max-w-[440px]"
+            board
+              ? "max-w-[440px] md:max-w-[720px] xl:max-w-[880px]"
+              : "max-w-[440px]"
           }`}
         >
+          {/*
+            `text-scale` is the hook the Settings "Text size" control uses. It
+            scales the scrolling content and leaves the tab bar alone, so the
+            44px navigation targets stay exactly where a player expects them.
+          */}
           <main
             id="main"
-            className="thin-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain xl:rounded-t-3xl"
+            className="thin-scroll text-scale min-h-0 flex-1 overflow-y-auto overscroll-contain xl:rounded-t-3xl"
           >
             {children}
           </main>

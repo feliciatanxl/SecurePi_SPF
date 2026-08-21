@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Lock, Route, SlidersHorizontal } from "lucide-react";
+import { Dices, Lock, Route, SlidersHorizontal } from "lucide-react";
+import { BoardLegend } from "@/components/player/board/SpaceSheet";
 import { Modal } from "@/components/ui/Modal";
+import type { ResolvedSpace } from "@/lib/hooks/useBoard";
 import { PROTOTYPE_DISCLAIMER } from "@/lib/api/mock-data";
 import {
   COMPETENCY_LABEL,
@@ -21,9 +23,12 @@ import {
 export function CityInfoSheet({
   open,
   onClose,
+  spaces,
 }: {
   open: boolean;
   onClose: () => void;
+  /** The resolved board, so the legend shows the real space types. */
+  spaces: ResolvedSpace[];
 }) {
   return (
     <Modal
@@ -59,13 +64,38 @@ export function CityInfoSheet({
           <section className="rounded-2xl border border-line bg-surface-sunk p-3.5">
             <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
               <Route className="h-3.5 w-3.5" aria-hidden="true" />
-              How it is structured
+              How a turn works
             </h3>
+            <p className="mt-1.5 text-[13px] font-bold text-navy-900">
+              Roll → Move → Land → Play → Decide → Learn → Back to the board
+            </p>
             <p className="mt-1.5 text-[13px] leading-relaxed text-ink-muted">
-              District → mission stop → activity → learning outcome → progress.
               The city board is the engagement layer; the scenario engine,
               delayed consequences and Peer Shield are the substance.
             </p>
+          </section>
+
+          <section className="rounded-2xl border border-amber-200 bg-amber-50 p-3.5">
+            <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-amber-700">
+              <Dices className="h-3.5 w-3.5" aria-hidden="true" />
+              What the dice does
+            </h3>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-ink">
+              It moves you, and nothing else. The dice never decides whether a
+              choice was safe, never awards Shield Tokens, never strengthens a
+              Guardian and never decides who wins — there is nothing to win.
+              Every district is also reachable directly from the city screen, so
+              nothing is locked behind a roll.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
+              Board spaces
+            </h3>
+            <div className="mt-2.5">
+              <BoardLegend spaces={spaces} />
+            </div>
           </section>
 
           <section>

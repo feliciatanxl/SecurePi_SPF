@@ -220,6 +220,44 @@ export interface PlayerProfile {
   completedActivities: string[];
   /** Where the player's marker currently sits on the city board. */
   currentDistrictId: DistrictId;
+
+  /* ---- Board, rewards and hub state (added with the roll-and-move layer) -- */
+
+  /** Index of the board space the player token is standing on. */
+  boardPosition: number;
+  /**
+   * Board spaces the player has landed on. Activity spaces take their
+   * completed state from `completedActivities`; this covers the checkpoints,
+   * which are visited rather than completed.
+   */
+  visitedSpaces: number[];
+  /**
+   * The learning/participation currency. Deliberately separate from `coins`,
+   * which is virtual cash inside a scenario and part of the lesson — merging
+   * the two would let a risky in-scenario payout buy cosmetics.
+   */
+  shieldTokens: number;
+  /**
+   * Grant keys already paid out, e.g. `mission:nd_digi_easy_money`. Every
+   * award is keyed and checked here first, so replaying an activity or
+   * reloading mid-run can never mint tokens twice.
+   */
+  tokenGrants: string[];
+  unlockedRewards: string[];
+  /** Slot → reward id. A slot with no entry is wearing nothing. */
+  equippedRewards: Partial<Record<RewardSlot, string>>;
+  /** Achievement ids already banked, so the +50 milestone pays once. */
+  earnedAchievements: string[];
+  /** District ids whose badge has been earned. */
+  districtBadges: DistrictId[];
+  /** Situation Card ids the player has met. Drives the Shield Casebook. */
+  casebook: string[];
+  onboardingComplete: boolean;
+  /** Cosmetic marker chosen during onboarding. No personal data. */
+  playerTokenId: string;
+  settings: PlayerSettings;
+  joinedSession: JoinedSession | null;
+  learningChecks: Record<LearningCheckId, LearningCheckRecord>;
 }
 
 export interface Guardian {
@@ -309,6 +347,20 @@ export interface Insight {
   note: string;
 }
 
+/**
+ * Simulated distribution groups in the prototype's Deploy Flash Mission flow.
+ *
+ * These are demonstration cohorts. There is no participant database behind
+ * them, and the portal never claims otherwise.
+ */
+export type SimulatedCohortId = "secondary" | "tertiary" | "community";
+
+export const SIMULATED_COHORTS: { id: SimulatedCohortId; label: string }[] = [
+  { id: "secondary", label: "Secondary Cohort" },
+  { id: "tertiary", label: "ITE / Poly / JC Cohort" },
+  { id: "community", label: "Community Pilot" },
+];
+
 /** Payload for the no-code "Deploy Flash Mission" form. */
 export interface FlashMissionDraft {
   title: string;
@@ -316,9 +368,24 @@ export interface FlashMissionDraft {
   targetGroup: TargetGroup;
   prompt: string;
   choices: [string, string, string];
+  /**
+   * Which choice is the intended learning response.
+   *
+   * Author-facing only. It is recorded so the content team can see at a glance
+   * what a scenario is teaching towards — it is never sent to a participant
+   * before they answer, because a visibly correct option turns a judgement
+   * exercise into a colour-matching one.
+   */
+  safeChoiceIndex: 0 | 1 | 2;
   safeResponse: string;
   competency: Competency;
+  /** Guardian whose prevention skill this mission strengthens. */
+  guardianId: string;
   debrief: string;
+  /** Signals the debrief will point to. Short phrases, not sentences. */
+  warningSigns: string[];
+  /** Simulated distribution groups. No real participant list exists. */
+  cohorts: SimulatedCohortId[];
   status: Extract<ScenarioStatus, "LIVE" | "DRAFT">;
 }
 
@@ -508,3 +575,210 @@ export interface SkillCoverage {
   /** Live scenarios currently teaching this skill. */
   scenarios: number;
 }
+
+/* ------------------------------------------------------------------ */
+/* ShieldQuest City Board — roll-and-move gameplay layer               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * What a single space on the ShieldQuest City board represents.
+ *
+ * The board is an original roll-and-move track: it borrows the *rhythm* of a
+ * tabletop game — take a turn, move, land, play — and nothing else. There is no
+ * property, no rent, no chance/community pile, no jail and no board-game
+ * trade dress of any kind. Every space resolves to something in the learning
+ * model or to a piece of the player's own progress.
+ */
+export type BoardSpaceKind =
+  | "SHIELD_CENTRAL"
+  | "DISTRICT_CHECKPOINT"
+  | "SCENARIO"
+  | "PEER_SHIELD"
+  | "MINI_GAME"
+  | "SITUATION_CARD"
+  | "GUARDIAN_CHECKPOINT"
+  | "REWARD_CHECKPOINT";
+
+export const BOARD_SPACE_LABEL: Record<BoardSpaceKind, string> = {
+  SHIELD_CENTRAL: "Shield Central",
+  DISTRICT_CHECKPOINT: "District Checkpoint",
+  SCENARIO: "Scenario Mission",
+  PEER_SHIELD: "Peer Shield",
+  MINI_GAME: "Mini-Game",
+  SITUATION_CARD: "Situation Card",
+  GUARDIAN_CHECKPOINT: "Guardian Checkpoint",
+  REWARD_CHECKPOINT: "Reward Checkpoint",
+};
+
+/**
+ * A Situation Card.
+ *
+ * ShieldQuest's own card mechanic — deliberately NOT a chance draw. A card
+ * never hands out or takes away anything on its own: it frames a realistic
+ * situation and opens the activity that teaches it, so what the player walks
+ * away with is decided by the decision they make inside that activity.
+ */
+export interface SituationCard {
+  id: string;
+  title: string;
+  /** The situation, in the player's world. One or two sentences. */
+  blurb: string;
+  competency: Competency;
+  guardianId: string;
+  /** The city activity this card opens. */
+  nodeId: string;
+  /** Call to action on the card face, e.g. "Face the situation". */
+  actionLabel: string;
+  /** Casebook entry — the signals that were present. */
+  warningSigns: string[];
+  /** Casebook entry — what a safer response looks like. */
+  saferResponse: string;
+}
+
+/** One position on the city track. */
+export interface BoardSpace {
+  /** Position along the route, 0-based. Also the persisted board position. */
+  index: number;
+  kind: BoardSpaceKind;
+  /** Absent on Shield Central, which sits outside the four districts. */
+  districtId?: DistrictId;
+  title: string;
+  /** Activity opened by this space, when it has one. */
+  nodeId?: string;
+  situationCardId?: string;
+  /** Guardian checkpoints report progress toward this Guardian. */
+  guardianId?: string;
+}
+
+/* ------------------------------------------------------------------ */
+/* Shield Tokens, rewards and achievements                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Where a cosmetic is worn.
+ *
+ * Cosmetics are expression only. Nothing in this file can change a decision,
+ * an outcome, a Guardian level or what the player is asked to do — a reward
+ * that altered gameplay would make Shield Tokens a currency for advantage.
+ */
+export type RewardSlot =
+  | "guardianAura"
+  | "playerToken"
+  | "routeTrail"
+  | "profileFrame"
+  | "boardMarker";
+
+export type RewardCategory = "GUARDIANS" | "CITY_STYLE";
+
+export interface Reward {
+  id: string;
+  category: RewardCategory;
+  slot: RewardSlot;
+  name: string;
+  /** One line describing what it changes. Always cosmetic. */
+  description: string;
+  cost: number;
+  /** Featured rewards lead the Rewards Hub. */
+  featured?: boolean;
+  /** Guardian cosmetics preview against their portrait. */
+  guardianId?: string;
+  /** Tailwind classes applied wherever the cosmetic shows. */
+  swatch: string;
+}
+
+/** How an achievement's progress is counted. All personal, never compared. */
+export type AchievementMetric =
+  | { kind: "COMPETENCY"; competency: Competency }
+  | { kind: "NODE_KIND"; nodeKind: NodeKind }
+  | { kind: "GUARDIAN"; guardianId: string }
+  | { kind: "SKILL_BREADTH" };
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  target: number;
+  metric: AchievementMetric;
+}
+
+export interface ResolvedAchievement extends Achievement {
+  progress: number;
+  earned: boolean;
+}
+
+/** A district badge, earned by finishing everything playable in a district. */
+export interface DistrictBadge {
+  districtId: DistrictId;
+  name: string;
+  blurb: string;
+}
+
+/* ------------------------------------------------------------------ */
+/* Player preferences                                                  */
+/* ------------------------------------------------------------------ */
+
+export interface PlayerSettings {
+  sound: boolean;
+  /** Forces reduced motion on top of the OS-level preference, never below it. */
+  reducedMotion: boolean;
+  textSize: "standard" | "large";
+  highContrast: boolean;
+}
+
+export const DEFAULT_SETTINGS: PlayerSettings = {
+  sound: true,
+  reducedMotion: false,
+  textSize: "standard",
+  highContrast: false,
+};
+
+/** A facilitated session the player joined. Prototype flow — no backend. */
+export interface JoinedSession {
+  code: string;
+  name: string;
+  audience: string;
+  focus: string;
+}
+
+/** One answered question in a pre/post learning check. */
+export interface CheckResponse {
+  questionId: string;
+  optionId: string;
+}
+
+export type LearningCheckId = "pre" | "post";
+
+/**
+ * A completed learning check.
+ *
+ * Responses are kept so the check can be reviewed, and are deliberately NOT
+ * turned into a score, a percentage or a rating of the person who answered.
+ */
+export interface LearningCheckRecord {
+  id: LearningCheckId;
+  completed: boolean;
+  responses: CheckResponse[];
+}
+
+export interface LearningCheckQuestion {
+  id: string;
+  situation: string;
+  prompt: string;
+  /** Presented in a neutral order and styling. No option is marked correct. */
+  options: { id: string; label: string }[];
+  /** Which conceptual dimension this question relates to. */
+  dimension: LearningDimension;
+}
+
+export type LearningDimension =
+  | "RISK_RECOGNITION"
+  | "DECISION_REASONING"
+  | "CONSEQUENCE_AWARENESS"
+  | "PEER_INTERVENTION";
+
+export const LEARNING_DIMENSION_LABEL: Record<LearningDimension, string> = {
+  RISK_RECOGNITION: "Risk recognition",
+  DECISION_REASONING: "Decision reasoning",
+  CONSEQUENCE_AWARENESS: "Consequence awareness",
+  PEER_INTERVENTION: "Peer intervention confidence",
+};

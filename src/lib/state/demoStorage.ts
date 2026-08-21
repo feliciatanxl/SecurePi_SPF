@@ -14,8 +14,24 @@
 export const PLAYER_STATE_KEY = "shieldquest-demo-player-state";
 export const FLASH_MISSIONS_KEY = "shieldquest-demo-flash-missions";
 
-/** Bumped if a stored shape ever changes; mismatched payloads are discarded. */
-const SCHEMA_VERSION = 1;
+/**
+ * Stored shapes are versioned per key, not globally.
+ *
+ * The player profile grew a board position, Shield Tokens, unlocked cosmetics
+ * and a casebook when the roll-and-move layer landed, so it moved to v2. The
+ * deployed Flash Missions did not change shape at all, and a single global
+ * version number would have thrown them away for no reason — which, mid-
+ * demonstration, is exactly the failure this module exists to prevent.
+ *
+ * A reader gets the envelope's version back and decides: migrate it, or fall
+ * back to the fixture.
+ */
+export const SCHEMA_VERSIONS: Record<string, number> = {
+  [PLAYER_STATE_KEY]: 2,
+  [FLASH_MISSIONS_KEY]: 1,
+};
+
+const currentVersion = (key: string) => SCHEMA_VERSIONS[key] ?? 1;
 
 interface Envelope<T> {
   v: number;
@@ -37,37 +53,58 @@ function storage(): Storage | null {
   }
 }
 
-export function readDemo<T>(key: string): T | null {
+/**
+ * Reads a stored value together with the version it was written under, so the
+ * caller can migrate an older payload instead of discarding it.
+ */
+export function readDemoEnvelope<T>(key: string): { v: number; data: T } | null {
   const s = storage();
   if (!s) return null;
   try {
     const raw = s.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Envelope<T>;
-    if (!parsed || parsed.v !== SCHEMA_VERSION) return null;
-    return parsed.data ?? null;
+    if (!parsed || typeof parsed.v !== "number" || parsed.data == null) {
+      return null;
+    }
+    // A payload from a *newer* build than this one cannot be understood.
+    if (parsed.v > currentVersion(key)) return null;
+    return { v: parsed.v, data: parsed.data };
   } catch {
     return null;
   }
+}
+
+/** Reads a value written under the key's current version. Older payloads are ignored. */
+export function readDemo<T>(key: string): T | null {
+  const envelope = readDemoEnvelope<T>(key);
+  if (!envelope || envelope.v !== currentVersion(key)) return null;
+  return envelope.data;
 }
 
 export function writeDemo<T>(key: string, data: T): void {
   const s = storage();
   if (!s) return;
   try {
-    s.setItem(key, JSON.stringify({ v: SCHEMA_VERSION, data } satisfies Envelope<T>));
+    s.setItem(
+      key,
+      JSON.stringify({ v: currentVersion(key), data } satisfies Envelope<T>),
+    );
   } catch {
     // Quota or blocked storage — the demo continues from memory.
   }
 }
 
-/** Clears everything this prototype has written. Fixtures are untouched. */
+/**
+ * Clears everything this prototype has written — player profile, board
+ * position, Shield Tokens, unlocked cosmetics, the casebook, onboarding state
+ * and any Flash Mission deployed during the session. Fixtures are untouched.
+ */
 export function clearDemoData(): void {
   const s = storage();
   if (!s) return;
   try {
-    s.removeItem(PLAYER_STATE_KEY);
-    s.removeItem(FLASH_MISSIONS_KEY);
+    for (const key of Object.keys(SCHEMA_VERSIONS)) s.removeItem(key);
   } catch {
     // Nothing further to do.
   }

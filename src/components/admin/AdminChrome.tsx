@@ -3,11 +3,15 @@
 import {
   BarChart3,
   ClipboardCheck,
+  FileWarning,
   LayoutDashboard,
   ListChecks,
   Lock,
   RotateCcw,
   Shield,
+  ShieldCheck,
+  Users,
+  type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Insight, PortalSummary } from "@/lib/types";
@@ -104,31 +108,48 @@ export function AdminSidebar({
   );
 }
 
-/** Overview stat tile. */
+/**
+ * Overview stat tile.
+ *
+ * The figure leads, the label sits above it and the explanation underneath —
+ * a portal metric is useless without the sentence that says what it counts.
+ * The accent rail is the only colour: an attention tile has to be findable at a
+ * glance without the row turning into a dashboard of traffic lights.
+ */
 export function MetricCard({
   label,
   value,
   note,
+  icon: Icon,
   tone = "neutral",
 }: {
   label: string;
   value: string | number;
   note: string;
+  icon?: LucideIcon;
   tone?: "neutral" | "attention";
 }) {
+  const attention = tone === "attention";
   return (
     <div
-      className={`rounded-xl border bg-surface p-4 ${
-        tone === "attention" ? "border-amber-200" : "border-line"
+      className={`relative overflow-hidden rounded-xl border bg-surface p-4 pl-[18px] ${
+        attention ? "border-amber-200" : "border-line"
       }`}
     >
-      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
+      <span
+        aria-hidden="true"
+        className={`absolute inset-y-0 left-0 w-1 ${
+          attention ? "bg-amber-500" : "bg-civic-600/45"
+        }`}
+      />
+      <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
+        {Icon && <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
         {label}
       </p>
-      <p className="mt-1.5 text-3xl font-extrabold tracking-tight text-navy-900 tabular-nums">
+      <p className="mt-1.5 text-[32px] font-extrabold leading-none tracking-tight text-navy-900 tabular-nums">
         {value}
       </p>
-      <p className="mt-1 text-[12px] leading-snug text-ink-muted">{note}</p>
+      <p className="mt-1.5 text-[12px] leading-snug text-ink-muted">{note}</p>
     </div>
   );
 }
@@ -235,7 +256,7 @@ export function AdminSection({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-3">
+    <section className="space-y-3.5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-navy-900">
@@ -287,27 +308,31 @@ export function PortalSummaryRow({ summary }: { summary: PortalSummary }) {
         Simulated prototype data
       </p>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <MetricCard
-        label="Active scenarios"
-        value={summary.activeScenarios}
-        note="Published to at least one cohort"
-      />
-      <MetricCard
-        label="Participants"
-        value={summary.participants.toLocaleString()}
-        note="Distinct youths in the demonstration cohort"
-      />
-      <MetricCard
-        label="Avg. safe decision rate"
-        value={`${summary.averageSafeDecisionRate}%`}
-        note="Across all live scored content"
-      />
-      <MetricCard
-        label="Needs review"
-        value={summary.needsReview}
-        note="Scenarios below the 60% teaching threshold"
-        tone={summary.needsReview > 0 ? "attention" : "neutral"}
-      />
+        <MetricCard
+          icon={ListChecks}
+          label="Active scenarios"
+          value={summary.activeScenarios}
+          note="Published to at least one cohort"
+        />
+        <MetricCard
+          icon={Users}
+          label="Participants"
+          value={summary.participants.toLocaleString()}
+          note="Distinct youths in the demonstration cohort"
+        />
+        <MetricCard
+          icon={ShieldCheck}
+          label="Avg. safe decision rate"
+          value={`${summary.averageSafeDecisionRate}%`}
+          note="Across all live scored content"
+        />
+        <MetricCard
+          icon={FileWarning}
+          label="Needs review"
+          value={summary.needsReview}
+          note="Scenarios below the 60% teaching threshold"
+          tone={summary.needsReview > 0 ? "attention" : "neutral"}
+        />
       </div>
     </div>
   );

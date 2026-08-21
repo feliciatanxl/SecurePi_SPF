@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { GuardianCard } from "@/components/player/GuardianCard";
 import { GuardianPlate } from "@/components/player/GuardianArt";
 import { guardianStanding, usePlayer } from "@/lib/state/PlayerProvider";
+import { findReward } from "@/lib/api/rewards-data";
 
 /**
  * View 4 — Guardians.
@@ -22,7 +23,14 @@ import { guardianStanding, usePlayer } from "@/lib/state/PlayerProvider";
  * so it does — same cards, same markup, the strip simply steps out of the way.
  */
 export default function GuardiansPage() {
-  const { profile, guardians } = usePlayer();
+  const { profile, guardians, equippedIn } = usePlayer();
+
+  /*
+   * An equipped Guardian cosmetic shows on the Guardian it belongs to and
+   * nowhere else. It is a treatment around the portrait — it does not change
+   * the Guardian's level, what strengthens it, or anything a player can do.
+   */
+  const auraReward = findReward(equippedIn("guardianAura") ?? "");
 
   const currentId = guardians.some((g) => g.id === profile.currentGuardianId)
     ? profile.currentGuardianId
@@ -134,6 +142,7 @@ export default function GuardiansPage() {
                 guardian={g}
                 cumulative={profile.guardianProgress[g.id] ?? 0}
                 featured={g.id === currentId}
+                aura={auraReward?.guardianId === g.id}
               />
             </div>
           ))}

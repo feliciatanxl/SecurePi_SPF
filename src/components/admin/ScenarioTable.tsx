@@ -81,10 +81,11 @@ export function ScenarioTable({
 
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-surface">
-      <div className="overflow-x-auto">
+      {/* The header stays put while a long library is read. */}
+      <div className="thin-scroll max-h-[70dvh] overflow-auto">
         <table className="w-full min-w-[920px] border-collapse text-left">
           <caption className="sr-only">{caption}</caption>
-          <thead>
+          <thead className="sticky top-0 z-10">
             <tr className="border-b border-line bg-surface-sunk">
               {[
                 "Scenario",

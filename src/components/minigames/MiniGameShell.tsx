@@ -15,6 +15,7 @@ import { RewardBurst } from "@/components/player/RewardBurst";
 import { SectionLabel, SkillBadge } from "@/components/ui/Badges";
 import { deltaLines } from "@/components/player/DebriefCard";
 import { usePlayer } from "@/lib/state/PlayerProvider";
+import { TOKEN_AWARD, tokenKey } from "@/lib/api/rewards-data";
 import type { MiniGame } from "@/lib/types";
 
 /**
@@ -61,9 +62,10 @@ export function MiniGameShell({
   surfaceClassName?: string;
   onReplay: () => void;
 }) {
-  const { applyDeltas, advanceGuardian, completeActivity, guardians } =
+  const { applyDeltas, advanceGuardian, completeActivity, awardTokens, guardians } =
     usePlayer();
   const [granted, setGranted] = useState(false);
+  const [tokensAwarded, setTokensAwarded] = useState(0);
   const [burstKey, setBurstKey] = useState<number | null>(null);
   const grantedOnce = useRef(false);
   const completionRef = useRef<HTMLDivElement>(null);
@@ -90,11 +92,16 @@ export function MiniGameShell({
     applyDeltas(game.reward.deltas);
     advanceGuardian(game.reward.guardianId);
     completeActivity(game.nodeId);
+    // Keyed on the node, so replaying a mini-game never pays a second time.
+    setTokensAwarded(
+      awardTokens(tokenKey.mission(game.nodeId), TOKEN_AWARD.miniGame),
+    );
     setGranted(true);
     setBurstKey(Date.now());
   }, [
     advanceGuardian,
     applyDeltas,
+    awardTokens,
     completeActivity,
     game.nodeId,
     game.reward.deltas,
@@ -212,6 +219,14 @@ export function MiniGameShell({
                 </p>
               </div>
 
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-[13px] font-bold tabular-nums text-amber-700">
+                  {tokensAwarded > 0
+                    ? `Shield Tokens +${tokensAwarded}`
+                    : "Shield Tokens already earned"}
+                </span>
+              </div>
+
               {stats.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {coins > 0 && (
@@ -239,11 +254,17 @@ export function MiniGameShell({
 
               <div className="space-y-2.5 pt-1">
                 <Link
+                  href="/"
+                  className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl border-b-4 border-civic-800 bg-civic-600 px-4 text-[15px] font-extrabold uppercase tracking-[0.06em] text-white transition hover:bg-civic-700 active:translate-y-[3px] active:border-b-0"
+                >
+                  Return to city
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+                <Link
                   href={backHref}
-                  className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-navy-900 px-4 text-[15px] font-extrabold text-white transition hover:bg-navy-800"
+                  className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-line px-4 text-[14px] font-semibold text-ink transition hover:border-civic-500 hover:text-civic-700"
                 >
                   Back to the district
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
                 <button
                   type="button"

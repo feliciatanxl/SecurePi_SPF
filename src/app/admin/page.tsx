@@ -61,7 +61,13 @@ export default function AdminPage() {
   const [filters, setFilters] = useState<ScenarioFilterState>(EMPTY_FILTERS);
   const [flashOpen, setFlashOpen] = useState(false);
   const [detail, setDetail] = useState<AdminScenarioRow | null>(null);
+  /** Drives the drawer's confirmation state. Cleared when the drawer closes. */
   const [deployed, setDeployed] = useState<AdminScenarioRow | null>(null);
+  /**
+   * The most recent deployment, kept after the drawer closes so the new row
+   * stays highlighted in the library and the banner can still be read.
+   */
+  const [lastDeployed, setLastDeployed] = useState<AdminScenarioRow | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -83,15 +89,29 @@ export default function AdminPage() {
     };
   }, []);
 
+  /*
+   * Deploying leaves the drawer open and switches it to its confirmation state.
+   * Closing on success and dropping the administrator back on the portal made
+   * them work out for themselves whether anything had happened; the drawer now
+   * says so, and offers the two things they would do next.
+   *
+   * The library is filtered and selected behind the drawer at the same time, so
+   * "View in Scenario Library" is a close rather than a navigation.
+   */
   const handleDeploy = useCallback(async (draft: FlashMissionDraft) => {
     const created = await api.deployFlashMission(draft);
     setRows((prev) => [created, ...prev]);
     setSummary(await api.getPortalSummary());
     setDeployed(created);
-    setFlashOpen(false);
-    // Land the administrator where the new scenario now lives.
+    setLastDeployed(created);
     setFilters(EMPTY_FILTERS);
     setSection("library");
+  }, []);
+
+  /** Closes the drawer and clears its confirmation, ready for the next one. */
+  const closeFlashDrawer = useCallback(() => {
+    setFlashOpen(false);
+    setDeployed(null);
   }, []);
 
   /**
@@ -152,11 +172,16 @@ export default function AdminPage() {
             </p>
           </div>
 
-          <span className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-amber-700">
+          {/*
+            The prototype framing is not a footnote. It states what this is on
+            every screen of the portal, at every width — a demonstration
+            environment, not a deployed government system.
+          */}
+          <span className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-bold uppercase leading-tight tracking-[0.12em] text-amber-700">
             Prototype admin view
-            <span className="hidden xl:inline">
+            <span className="hidden sm:inline">
               {" "}
-              · demonstration environment · simulated data
+              · Demonstration environment · Simulated data
             </span>
           </span>
 
@@ -196,7 +221,12 @@ export default function AdminPage() {
           reviewCount={reviewRows.length}
         />
 
-        <main className="min-w-0 flex-1 px-5 py-6 lg:px-8">
+        {/*
+            A working tool, so the body is capped rather than stretched: a
+            scenario table at 1440px with no measure is a row of numbers a long
+            way from the title they belong to.
+          */}
+        <main className="mx-auto min-w-0 max-w-[1180px] flex-1 px-5 py-7 lg:px-8">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-civic-700 lg:hidden">
               Project SHIELD
@@ -210,7 +240,7 @@ export default function AdminPage() {
             </p>
           </div>
 
-          {deployed && (
+          {lastDeployed && (
             <div
               role="status"
               className="mt-5 flex flex-wrap items-center gap-2.5 rounded-xl border border-leaf-200 bg-leaf-50 px-4 py-3"
@@ -221,14 +251,18 @@ export default function AdminPage() {
               />
               <p className="text-[14px] text-leaf-700">
                 <span className="font-extrabold uppercase tracking-wide">
-                  Flash Mission live
+                  {lastDeployed.status === "LIVE"
+                    ? "Flash Mission live"
+                    : "Flash Mission saved"}
                 </span>{" "}
-                — <span className="font-semibold">{deployed.title}</span> is now
-                available to the {deployed.targetGroup} cohort.
+                — <span className="font-semibold">{lastDeployed.title}</span>{" "}
+                {lastDeployed.status === "LIVE"
+                  ? ` is now available to the ${lastDeployed.targetGroup} cohort.`
+                  : " has been saved as a draft."}
               </p>
               <button
                 type="button"
-                onClick={() => setDeployed(null)}
+                onClick={() => setLastDeployed(null)}
                 className="ml-auto inline-flex min-h-[44px] items-center px-2 text-[13px] font-semibold text-leaf-700 underline underline-offset-2"
               >
                 Dismiss
@@ -282,7 +316,7 @@ export default function AdminPage() {
                     <AdminRecentContent
                       rows={recentRows}
                       onSelect={setDetail}
-                      highlightId={deployed?.id}
+                      highlightId={lastDeployed?.id}
                     />
                     <SimulatedDataNote />
                   </Section>
@@ -305,7 +339,7 @@ export default function AdminPage() {
                   />
                   <ScenarioTable
                     rows={filtered}
-                    highlightId={deployed?.id}
+                    highlightId={lastDeployed?.id}
                     onSelect={setDetail}
                     caption="All scenarios with category, audience, status and safe decision rate"
                   />
@@ -382,14 +416,20 @@ export default function AdminPage() {
 
       <Modal
         open={flashOpen}
-        onClose={() => setFlashOpen(false)}
+        onClose={closeFlashDrawer}
         placement="right"
         className="bg-surface"
         labelledBy="flash-mission-title"
       >
         <FlashMissionPanel
+          deployed={deployed}
           onDeploy={handleDeploy}
-          onCancel={() => setFlashOpen(false)}
+          onCancel={closeFlashDrawer}
+          onViewLibrary={() => {
+            closeFlashDrawer();
+            setSection("library");
+          }}
+          onDone={closeFlashDrawer}
         />
       </Modal>
 

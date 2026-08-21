@@ -39,10 +39,13 @@ export function GuardianCard({
   guardian,
   cumulative,
   featured = false,
+  aura = false,
 }: {
   guardian: Guardian;
   cumulative: number;
   featured?: boolean;
+  /** An equipped Guardian cosmetic. Appearance only — it changes nothing. */
+  aura?: boolean;
 }) {
   const { level, progress, target } = guardianStanding(guardian, cumulative);
 
@@ -57,7 +60,7 @@ export function GuardianCard({
       <div className="flex items-start gap-3">
         <GuardianPlate
           guardian={guardian}
-          className="h-11 w-11 rounded-2xl text-[17px]"
+          className={`h-11 w-11 rounded-2xl text-[17px] ${aura ? "guardian-aura" : ""}`}
           tone={featured ? "amber" : "navy"}
         />
 
