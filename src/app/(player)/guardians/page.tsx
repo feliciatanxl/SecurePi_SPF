@@ -18,10 +18,14 @@ import { findReward } from "@/lib/api/rewards-data";
  * There is nothing to roll for, nothing to collect and nothing to spend — the
  * selector below only changes which skill you are reading about.
  *
- * On a phone that selector is the whole point: three full cards stacked was
- * two and a half screens of scrolling to compare three things. One card at a
- * time, chosen from a strip, fits. A tablet has room to show all three at once,
- * so it does — same cards, same markup, the strip simply steps out of the way.
+ * On a phone that selector is the whole point: six full cards stacked is five
+ * screens of scrolling to compare six things. One card at a time, chosen from a
+ * grid of six portraits, fits. A tablet has room to show them all at once, so it
+ * does — same cards, same markup, the grid simply steps out of the way.
+ *
+ * The grid is two rows of three rather than one row of six. Six tiles across a
+ * 390px phone leaves about 60px each, which is not enough for a portrait, a
+ * name and a level, and the name is what a player is actually choosing by.
  */
 export default function GuardiansPage() {
   const { profile, guardians, equippedIn } = usePlayer();
@@ -132,7 +136,7 @@ export default function GuardiansPage() {
 
         {/*
           One set of cards for both layouts: the phone shows the selected one,
-          a tablet shows all three. Hiding with CSS rather than unmounting keeps
+          a tablet shows all six. Hiding with CSS rather than unmounting keeps
           a single copy in the accessibility tree at either width.
         */}
         <div

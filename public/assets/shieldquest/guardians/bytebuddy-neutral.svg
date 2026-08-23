@@ -1,0 +1,24 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="byte-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FB8F7C" /><stop offset="100%" stop-color="#9E3B2A" /></linearGradient>
+    <linearGradient id="byte-face" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#FFF6F4" /><stop offset="100%" stop-color="#FADAD2" /></linearGradient>
+  </defs>
+  <path d="M100 30 L100 16" stroke="#C0523C" stroke-width="5" stroke-linecap="round" />
+  <circle cx="100" cy="13" r="9" fill="#FBBF9E" />
+  <circle cx="100" cy="13" r="4" fill="#FFFFFF" />
+  <path d="M74 158 Q66 182 78 186 H52 Q42 182 58 158 Z" fill="url(#byte-grad)" />
+  <path d="M126 158 Q134 182 122 186 H148 Q158 182 142 158 Z" fill="url(#byte-grad)" />
+  <path d="M34 104 Q10 116 24 142" fill="none" stroke="url(#byte-grad)" stroke-width="16" stroke-linecap="round" />
+  <path d="M166 104 Q190 116 176 142" fill="none" stroke="url(#byte-grad)" stroke-width="16" stroke-linecap="round" />
+  <rect x="34" y="30" width="132" height="136" rx="42" fill="url(#byte-grad)" />
+  <rect x="52" y="52" width="96" height="74" rx="26" fill="url(#byte-face)" />
+  <path d="M72 76 Q82 68 91 76" stroke="#7A2E20" stroke-width="4" stroke-linecap="round" fill="none" />
+  <path d="M128 76 Q118 68 109 76" stroke="#7A2E20" stroke-width="4" stroke-linecap="round" fill="none" />
+  <circle cx="81" cy="90" r="6" fill="#7A2E20" /><circle cx="79" cy="88" r="2.2" fill="#FFFFFF" />
+  <circle cx="119" cy="90" r="6" fill="#7A2E20" /><circle cx="117" cy="88" r="2.2" fill="#FFFFFF" />
+  <path d="M88 106 Q100 116 112 106" stroke="#7A2E20" stroke-width="4" stroke-linecap="round" fill="none" />
+  <rect x="60" y="60" width="80" height="4" rx="2" fill="#FFFFFF" opacity="0.55" />
+  <path d="M100 132 L120 139 V150 Q120 162 100 168 Q80 162 80 150 V139 Z" fill="#FFE9E3" opacity="0.95" />
+  <path d="M100 141 A7 7 0 0 1 107 148 V151 H93 V148 A7 7 0 0 1 100 141 Z" fill="none" stroke="#9E3B2A" stroke-width="4" stroke-linejoin="round" />
+  <rect x="91" y="149" width="18" height="12" rx="3" fill="#9E3B2A" />
+</svg>

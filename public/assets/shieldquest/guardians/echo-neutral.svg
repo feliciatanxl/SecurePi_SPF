@@ -1,0 +1,25 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="echo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#A78BFA" /><stop offset="100%" stop-color="#5B21B6" /></linearGradient>
+    <linearGradient id="echo-face" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#F5F3FF" /><stop offset="100%" stop-color="#DDD6FE" /></linearGradient>
+  </defs>
+  <path d="M26 60 Q4 100 26 140" fill="none" stroke="#C4B5FD" stroke-width="8" stroke-linecap="round" opacity="0.75" />
+  <path d="M44 74 Q30 100 44 126" fill="none" stroke="#C4B5FD" stroke-width="7" stroke-linecap="round" opacity="0.45" />
+  <path d="M174 60 Q196 100 174 140" fill="none" stroke="#C4B5FD" stroke-width="8" stroke-linecap="round" opacity="0.75" />
+  <path d="M156 74 Q170 100 156 126" fill="none" stroke="#C4B5FD" stroke-width="7" stroke-linecap="round" opacity="0.45" />
+  <path d="M76 154 Q68 180 80 186 H54 Q44 180 60 154 Z" fill="url(#echo-grad)" />
+  <path d="M124 154 Q132 180 120 186 H146 Q156 180 140 154 Z" fill="url(#echo-grad)" />
+  <path d="M74 48 Q62 6 86 12 Q96 28 94 54 Z" fill="url(#echo-grad)" />
+  <path d="M126 48 Q138 6 114 12 Q104 28 106 54 Z" fill="url(#echo-grad)" />
+  <path d="M80 44 Q76 22 86 24 Q91 34 90 50 Z" fill="#C4B5FD" />
+  <path d="M120 44 Q124 22 114 24 Q109 34 110 50 Z" fill="#C4B5FD" />
+  <path d="M100 32 Q158 32 162 96 Q166 162 100 166 Q34 162 38 96 Q42 32 100 32 Z" fill="url(#echo-grad)" />
+  <ellipse cx="100" cy="90" rx="46" ry="40" fill="url(#echo-face)" />
+  <path d="M74 76 Q84 68 93 76" stroke="#4C1D95" stroke-width="4" stroke-linecap="round" fill="none" />
+  <path d="M126 76 Q116 68 107 76" stroke="#4C1D95" stroke-width="4" stroke-linecap="round" fill="none" />
+  <circle cx="84" cy="90" r="6" fill="#4C1D95" /><circle cx="82" cy="88" r="2.2" fill="#FFFFFF" />
+  <circle cx="116" cy="90" r="6" fill="#4C1D95" /><circle cx="114" cy="88" r="2.2" fill="#FFFFFF" />
+  <path d="M88 108 Q100 118 112 108" stroke="#4C1D95" stroke-width="4" stroke-linecap="round" fill="none" />
+  <rect x="90" y="136" width="7" height="20" rx="3.5" fill="#EDE9FE" />
+  <rect x="103" y="136" width="7" height="20" rx="3.5" fill="#EDE9FE" />
+</svg>

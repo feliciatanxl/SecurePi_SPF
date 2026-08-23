@@ -1,5 +1,8 @@
 import {
   GUARDIAN_BEACON,
+  GUARDIAN_BYTEBUDDY,
+  GUARDIAN_CLUEPAW,
+  GUARDIAN_ECHO,
   GUARDIAN_SHIELDFIN,
   GUARDIAN_VERIFOX,
   MULE_ENCOUNTER,
@@ -11,9 +14,10 @@ import type { District, DistrictId, MissionNode } from "@/lib/types";
  * ShieldQuest City — the district board.
  *
  * The city is an engagement and navigation layer wrapped around the behavioural
- * engine, not a replacement for it. Every node still resolves to one of three
- * things: a scenario decision, a Peer Shield intervention, or a reinforcement
- * mini-game that hands the player back to a scenario.
+ * engine, not a replacement for it. Every node still resolves to a piece of the
+ * learning model: a scenario decision, a Peer Shield intervention, a facilitated
+ * Think–Vote–Explain round, or a reinforcement mini-game that hands the player
+ * back to a scenario.
  *
  * Progression is chosen, never rolled. A player can walk into any district from
  * the first second; only a few later nodes open through completion, and always
@@ -59,6 +63,7 @@ const SCHOOL_NODES: MissionNode[] = [
     summary:
       "A classmate asks you to keep something in your bag until after class.",
     primaryCompetency: "HOLD",
+    guardianId: GUARDIAN_ECHO,
     estimatedMinutes: 3,
     availability: "PLANNED",
   },
@@ -67,10 +72,13 @@ const SCHOOL_NODES: MissionNode[] = [
     districtId: "school",
     kind: "MINI_GAME",
     title: "Risk or Safe?",
-    summary: "Sort situations quickly, then explain what tipped the decision.",
+    summary:
+      "Call six everyday digital requests, then read why each one was what it was.",
     primaryCompetency: "EVALUATE",
-    estimatedMinutes: 2,
-    availability: "PLANNED",
+    guardianId: GUARDIAN_BYTEBUDDY,
+    estimatedMinutes: 3,
+    availability: "OPEN",
+    href: "/mini-game/risk-or-safe",
   },
   {
     id: NODE_SCHOOL_FRIEND_PRESSURE,
@@ -95,6 +103,7 @@ const RETAIL_NODES: MissionNode[] = [
     summary:
       "Your friends are filming. One of them says nobody is watching the aisle.",
     primaryCompetency: "IDENTIFY",
+    guardianId: GUARDIAN_CLUEPAW,
     estimatedMinutes: 3,
     availability: "PLANNED",
   },
@@ -104,9 +113,11 @@ const RETAIL_NODES: MissionNode[] = [
     kind: "MINI_GAME",
     title: "Clue Match",
     summary: "Match warning signs to the situations they usually appear in.",
-    primaryCompetency: "SPOT",
-    estimatedMinutes: 2,
-    availability: "PLANNED",
+    primaryCompetency: "IDENTIFY",
+    guardianId: GUARDIAN_CLUEPAW,
+    estimatedMinutes: 3,
+    availability: "OPEN",
+    href: "/mini-game/clue-match",
   },
   {
     id: NODE_RETAIL_COVER_FOR_ME,
@@ -131,6 +142,7 @@ const DIGI_NODES: MissionNode[] = [
     summary:
       "A promising online job starts the chapter — and Jayden is listening too.",
     primaryCompetency: "IDENTIFY",
+    guardianId: GUARDIAN_CLUEPAW,
     estimatedMinutes: 2,
     availability: "PLANNED",
     chapterRole: "Chapter setup",
@@ -180,7 +192,7 @@ const DIGI_NODES: MissionNode[] = [
     title: "Decode the Clue",
     summary: "Work out the prevention skill from a hint, one letter at a time.",
     primaryCompetency: "HOLD",
-    guardianId: GUARDIAN_VERIFOX,
+    guardianId: GUARDIAN_ECHO,
     estimatedMinutes: 2,
     availability: "UNLOCK",
     requiredInDistrict: 1,
@@ -211,14 +223,15 @@ const DIGI_NODES: MissionNode[] = [
   {
     id: NODE_DIGI_FINALE,
     districtId: "digi",
-    kind: "SCENARIO",
+    kind: "GROUP_DECISION",
     title: "The Group Chat Job",
     summary:
-      "District finale: the group has to decide how to protect Jayden together.",
+      "District finale, run as Think · Vote · Explain: decide alone, see the room, then decide again.",
     primaryCompetency: "LEAD",
     guardianId: GUARDIAN_BEACON,
-    estimatedMinutes: 4,
-    availability: "PLANNED",
+    estimatedMinutes: 6,
+    availability: "OPEN",
+    href: "/think-vote-explain",
     chapterRole: "District finale",
     story: {
       character: "Jayden",
@@ -248,8 +261,9 @@ const COMMUNITY_NODES: MissionNode[] = [
     summary: "Match a situation to a help source that actually fits it.",
     primaryCompetency: "LEAD",
     guardianId: GUARDIAN_BEACON,
-    estimatedMinutes: 2,
-    availability: "PLANNED",
+    estimatedMinutes: 3,
+    availability: "OPEN",
+    href: "/mini-game/who-can-help",
   },
   {
     id: NODE_COMMUNITY_WHAT_NEXT,
@@ -258,8 +272,11 @@ const COMMUNITY_NODES: MissionNode[] = [
     title: "What Happens Next?",
     summary: "Predict the delayed consequence before the scenario shows it.",
     primaryCompetency: "EVALUATE",
-    estimatedMinutes: 2,
-    availability: "PLANNED",
+    guardianId: GUARDIAN_BYTEBUDDY,
+    estimatedMinutes: 3,
+    availability: "UNLOCK",
+    requiredInDistrict: 2,
+    href: "/mini-game/what-happens-next",
   },
 ];
 
@@ -268,7 +285,12 @@ export const DISTRICTS: District[] = [
     id: "school",
     name: "School Street",
     tagline: "Where the pressure comes from people you know.",
-    topics: ["Peer pressure", "Dares", "Harmful behaviour"],
+    topics: [
+      "Peer pressure",
+      "Dares",
+      "Risky digital requests",
+      "Harmful behaviour",
+    ],
     position: { x: 22, y: 20 },
     nodes: SCHOOL_NODES,
   },
@@ -276,7 +298,12 @@ export const DISTRICTS: District[] = [
     id: "retail",
     name: "Retail District",
     tagline: "A small dare with a permanent record.",
-    topics: ["Shop theft", "Peer dares", "Consequences"],
+    topics: [
+      "Shop theft",
+      "Peer dares",
+      "E-commerce scams",
+      "Consequences",
+    ],
     position: { x: 76, y: 27 },
     nodes: RETAIL_NODES,
   },
@@ -284,7 +311,13 @@ export const DISTRICTS: District[] = [
     id: "digi",
     name: "Digi-District",
     tagline: "Easy money is the oldest trick with the newest interface.",
-    topics: ["Money mule recruitment", "Account misuse", "Impersonation"],
+    topics: [
+      "Money mule recruitment",
+      "Job scams",
+      "Phishing and suspicious links",
+      "Account misuse",
+      "Impersonation",
+    ],
     position: { x: 24, y: 71 },
     nodes: DIGI_NODES,
   },
@@ -292,7 +325,12 @@ export const DISTRICTS: District[] = [
     id: "community",
     name: "Community Hub",
     tagline: "Sometimes the risky choice isn't yours.",
-    topics: ["Peer Shield", "Help-seeking", "Community responsibility"],
+    topics: [
+      "Peer Shield",
+      "Safe reporting",
+      "Suspicious payment requests",
+      "Community responsibility",
+    ],
     position: { x: 74, y: 78 },
     nodes: COMMUNITY_NODES,
   },
@@ -337,6 +375,21 @@ export const GUARDIAN_DIALOGUE: Record<
     briefing: "Something feels off. Check the clues.",
     success: "Good catch. You checked before you trusted.",
     checkpoint: "Slow down. The detail that matters is usually already there.",
+  },
+  [GUARDIAN_ECHO]: {
+    briefing: "You are being rushed. That is the tell.",
+    success: "You held the moment and talked it through first.",
+    checkpoint: "Say it out loud to someone. It usually answers itself.",
+  },
+  [GUARDIAN_CLUEPAW]: {
+    briefing: "Look again. Who actually gains from this?",
+    success: "You read the situation, not just the message.",
+    checkpoint: "Notice what is being left out, not only what is being said.",
+  },
+  [GUARDIAN_BYTEBUDDY]: {
+    briefing: "Accounts, logins, payments — what does this really cost?",
+    success: "You weighed what the request would leave behind.",
+    checkpoint: "Your account carries your name, whoever is using it.",
   },
   [GUARDIAN_SHIELDFIN]: {
     briefing: "A quiet warning can protect a friend.",

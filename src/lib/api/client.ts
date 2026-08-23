@@ -4,6 +4,7 @@ import type {
   ChoiceSubmission,
   District,
   FlashMissionDraft,
+  GroupDecisionSignal,
   Guardian,
   Insight,
   MiniGame,
@@ -11,7 +12,9 @@ import type {
   PortalSummary,
   Scenario,
   SkillCoverage,
+  YouthMissionSubmission,
 } from "@/lib/types";
+import { migrateTargetGroup } from "@/lib/types";
 import {
   FLASH_MISSIONS_KEY,
   readDemo,
@@ -27,6 +30,10 @@ import {
   MULE_ENCOUNTER,
   MULE_PEER_SHIELD,
 } from "@/lib/api/mock-data";
+import {
+  MOCK_GROUP_DECISION_SIGNALS,
+  MOCK_YOUTH_SUBMISSIONS,
+} from "@/lib/api/youth-missions-data";
 import { DISTRICTS } from "@/lib/api/world-data";
 import { findMiniGame } from "@/lib/api/minigame-data";
 
@@ -50,6 +57,10 @@ export interface ShieldQuestApi {
   getInsights(): Promise<Insight[]>;
   getSkillCoverage(): Promise<SkillCoverage[]>;
   deployFlashMission(draft: FlashMissionDraft): Promise<AdminScenarioRow>;
+  /** Simulated youth-submitted mission ideas awaiting moderation. */
+  listYouthMissions(): Promise<YouthMissionSubmission[]>;
+  /** Simulated aggregate signals from facilitated Think–Vote–Explain runs. */
+  getGroupDecisionSignals(): Promise<GroupDecisionSignal[]>;
 }
 
 /** Simulated network latency so loading states are exercised in the prototype. */
@@ -71,11 +82,25 @@ class MockApiClient implements ShieldQuestApi {
     return Array.isArray(stored) ? stored : [];
   }
 
-  /** Newest demo missions first, then fixtures. Keyed by id so reloads cannot duplicate. */
+  /**
+   * Newest demo missions first, then fixtures. Keyed by id so reloads cannot
+   * duplicate.
+   *
+   * A Flash Mission deployed on an earlier build carries the audience label it
+   * was written under, and the band vocabulary has since changed. Translating
+   * it on read is better than discarding a row mid-demonstration, and better
+   * than showing a label the library filters no longer offer — see
+   * `migrateTargetGroup`.
+   */
   private allRows(): AdminScenarioRow[] {
     const merged = new Map<string, AdminScenarioRow>();
     for (const row of [...this.demoFlashMissions(), ...MOCK_ADMIN_SCENARIOS]) {
-      if (!merged.has(row.id)) merged.set(row.id, row);
+      if (!merged.has(row.id)) {
+        merged.set(row.id, {
+          ...row,
+          targetGroup: migrateTargetGroup(row.targetGroup),
+        });
+      }
     }
     return [...merged.values()];
   }
@@ -174,6 +199,16 @@ class MockApiClient implements ShieldQuestApi {
     };
     writeDemo(FLASH_MISSIONS_KEY, [row, ...existing]);
     return row;
+  }
+
+  async listYouthMissions(): Promise<YouthMissionSubmission[]> {
+    await latency(260);
+    return MOCK_YOUTH_SUBMISSIONS.map((m) => ({ ...m }));
+  }
+
+  async getGroupDecisionSignals(): Promise<GroupDecisionSignal[]> {
+    await latency(140);
+    return MOCK_GROUP_DECISION_SIGNALS.map((s) => ({ ...s }));
   }
 }
 

@@ -3,6 +3,7 @@ import {
   MessageSquareWarning,
   ShieldHalf,
   Sparkles,
+  Vote,
   type LucideIcon,
 } from "lucide-react";
 import { ArtSlot } from "@/components/ui/ArtSlot";
@@ -19,6 +20,7 @@ export const KIND_ICON: Record<NodeKind, LucideIcon> = {
   MINI_GAME: Gamepad2,
   PEER_SHIELD: ShieldHalf,
   GUARDIAN_CHALLENGE: Sparkles,
+  GROUP_DECISION: Vote,
 };
 
 /**
@@ -31,6 +33,7 @@ export const KIND_CHIP: Record<NodeKind, string> = {
   MINI_GAME: "border-amber-200 bg-amber-50 text-amber-700",
   PEER_SHIELD: "border-teal-200 bg-teal-50 text-teal-700",
   GUARDIAN_CHALLENGE: "border-leaf-200 bg-leaf-50 text-leaf-700",
+  GROUP_DECISION: "border-coral-200 bg-coral-50 text-coral-700",
 };
 
 /** Mission-type mark: registered artwork if there is any, the icon until then. */

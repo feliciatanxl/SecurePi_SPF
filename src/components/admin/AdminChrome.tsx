@@ -10,6 +10,7 @@ import {
   RotateCcw,
   Shield,
   ShieldCheck,
+  Sprout,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -17,15 +18,25 @@ import type { ReactNode } from "react";
 import type { Insight, PortalSummary } from "@/lib/types";
 
 /**
- * Four primary destinations.
+ * Five primary destinations.
  *
- * Deploying a Flash Mission used to be a fifth sidebar section, which framed it
- * as somewhere an administrator navigates *to*. It is an action, not a place, so
- * it now lives as a persistent control in the portal header and its content is
- * read in the Scenario Library alongside everything else. Nothing about the
- * Flash Mission capability itself changed.
+ * Deploying a Flash Mission used to be a sidebar section, which framed it as
+ * somewhere an administrator navigates *to*. It is an action, not a place, so
+ * it lives as a persistent control in the portal header and its content is read
+ * in the Scenario Library alongside everything else. Nothing about the Flash
+ * Mission capability itself changed.
+ *
+ * Youth-Created Missions is the opposite case, and that is why it earns a
+ * section rather than a control: it is a queue with a state of its own that an
+ * administrator returns to, and burying a moderation backlog inside another
+ * screen is how a moderation backlog stops being looked at.
  */
-export type AdminSection = "overview" | "library" | "review" | "insights";
+export type AdminSection =
+  | "overview"
+  | "library"
+  | "review"
+  | "youth"
+  | "insights";
 
 export const ADMIN_NAV: {
   id: AdminSection;
@@ -35,6 +46,7 @@ export const ADMIN_NAV: {
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "library", label: "Scenario Library", icon: ListChecks },
   { id: "review", label: "Content Review", icon: ClipboardCheck },
+  { id: "youth", label: "Youth-Created Missions", icon: Sprout },
   { id: "insights", label: "Insights", icon: BarChart3 },
 ];
 
@@ -42,10 +54,13 @@ export function AdminSidebar({
   active,
   onSelect,
   reviewCount,
+  youthCount,
 }: {
   active: AdminSection;
   onSelect: (section: AdminSection) => void;
   reviewCount: number;
+  /** Youth submissions still awaiting a reviewer decision. */
+  youthCount: number;
 }) {
   return (
     /*
@@ -92,6 +107,11 @@ export function AdminSidebar({
                   {id === "review" && reviewCount > 0 && (
                     <span className="ml-auto rounded-md bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-700 tabular-nums">
                       {reviewCount}
+                    </span>
+                  )}
+                  {id === "youth" && youthCount > 0 && (
+                    <span className="ml-auto rounded-md bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-700 tabular-nums">
+                      {youthCount}
                     </span>
                   )}
                 </button>

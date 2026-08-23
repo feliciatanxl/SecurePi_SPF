@@ -26,9 +26,28 @@ export const PROTOTYPE_DISCLAIMER =
 /* ------------------------------------------------------------------ */
 
 export const GUARDIAN_VERIFOX = "gd_verifox";
+export const GUARDIAN_ECHO = "gd_echo";
+export const GUARDIAN_CLUEPAW = "gd_cluepaw";
+export const GUARDIAN_BYTEBUDDY = "gd_bytebuddy";
 export const GUARDIAN_BEACON = "gd_beacon";
 export const GUARDIAN_SHIELDFIN = "gd_shieldfin";
 
+/**
+ * The six Guardians — one per S.H.I.E.L.D. competency.
+ *
+ * The mapping is one-to-one and load-bearing, not decorative. A Guardian is the
+ * visible form of a prevention skill, so an activity that practises HOLD has to
+ * strengthen Echo and nothing else; a Guardian that grew from unrelated work
+ * would stop being evidence of anything. `COMPETENCY_ORDER` is the order used
+ * here and everywhere the six are listed together.
+ *
+ *   SPOT     → VeriFox    · Verification
+ *   HOLD     → Echo       · Consultation
+ *   IDENTIFY → Cluepaw    · Situational Awareness
+ *   EVALUATE → ByteBuddy  · Cyber Hygiene
+ *   LEAD     → Beacon     · Safe Reporting
+ *   DEFEND   → Shieldfin  · Peer Support
+ */
 export const MOCK_GUARDIANS: Guardian[] = [
   {
     id: GUARDIAN_VERIFOX,
@@ -42,9 +61,42 @@ export const MOCK_GUARDIANS: Guardian[] = [
     unlocked: true,
   },
   {
+    id: GUARDIAN_ECHO,
+    name: "Echo",
+    skill: "Consultation",
+    motto: "Say it out loud before you act on it.",
+    competency: "HOLD",
+    target: 6,
+    description:
+      "Strengthens when you pause under pressure and talk a request through with someone before answering it.",
+    unlocked: true,
+  },
+  {
+    id: GUARDIAN_CLUEPAW,
+    name: "Cluepaw",
+    skill: "Situational Awareness",
+    motto: "The detail that matters is already there.",
+    competency: "IDENTIFY",
+    target: 6,
+    description:
+      "Strengthens when you read what is really going on in a situation — who benefits, who is pushing, and what is being left out.",
+    unlocked: true,
+  },
+  {
+    id: GUARDIAN_BYTEBUDDY,
+    name: "ByteBuddy",
+    skill: "Cyber Hygiene",
+    motto: "Your account, your name, your problem.",
+    competency: "EVALUATE",
+    target: 6,
+    description:
+      "Strengthens when you weigh what a digital request actually costs — accounts, logins, payments and the trail they leave.",
+    unlocked: true,
+  },
+  {
     id: GUARDIAN_BEACON,
     name: "Beacon",
-    skill: "Help-Seeking",
+    skill: "Safe Reporting",
     motto: "Know when and where to seek help.",
     competency: "LEAD",
     target: 6,
@@ -55,7 +107,7 @@ export const MOCK_GUARDIANS: Guardian[] = [
   {
     id: GUARDIAN_SHIELDFIN,
     name: "Shieldfin",
-    skill: "Peer Protection",
+    skill: "Peer Support",
     motto: "Protect your people.",
     competency: "DEFEND",
     target: 6,
@@ -84,6 +136,9 @@ export const MOCK_PROFILE: PlayerProfile = {
   // "Level 2 · 4 / 6".
   guardianProgress: {
     [GUARDIAN_VERIFOX]: 10,
+    [GUARDIAN_ECHO]: 4,
+    [GUARDIAN_CLUEPAW]: 1,
+    [GUARDIAN_BYTEBUDDY]: 2,
     [GUARDIAN_BEACON]: 2,
     [GUARDIAN_SHIELDFIN]: 3,
   },
@@ -413,6 +468,21 @@ export const MULE_PEER_SHIELD: Scenario = {
 /* Scenario Management Portal                                          */
 /* ------------------------------------------------------------------ */
 
+/**
+ * The demonstration content library.
+ *
+ * Every row is illustrative. The figures are not pilot results, the scenarios
+ * are not all built, and nothing here has been through the review a real
+ * prevention programme would require — the library exists to show what the
+ * portal *does* with content, not to claim a catalogue exists.
+ *
+ * The spread of categories deliberately mirrors the scam-prevention scope the
+ * programme is designed around — phishing, job scams, money mule recruitment,
+ * impersonation, e-commerce scams and suspicious credential or payment requests
+ * — alongside the offline behaviours the city districts cover. Audience bands
+ * use the shared `TargetGroup` vocabulary so the library, the filters, the
+ * Flash Mission form and the youth-submission queue all speak the same one.
+ */
 export const MOCK_ADMIN_SCENARIOS: AdminScenarioRow[] = [
   {
     id: "scn_shop_theft_01",
@@ -432,7 +502,7 @@ export const MOCK_ADMIN_SCENARIOS: AdminScenarioRow[] = [
     id: "scn_money_mule_01",
     title: "Easy Money?",
     category: "Money Mule Recruitment",
-    targetGroup: "ITE / Poly / JC",
+    targetGroup: "Post-Secondary / Tertiary",
     status: "LIVE",
     safeDecisionRate: 61,
     previousSafeDecisionRate: 54,
@@ -446,7 +516,7 @@ export const MOCK_ADMIN_SCENARIOS: AdminScenarioRow[] = [
     id: "scn_account_sharing_01",
     title: "Just Use Mine",
     category: "Account Sharing",
-    targetGroup: "Secondary / Tertiary",
+    targetGroup: "Secondary",
     status: "LIVE",
     safeDecisionRate: 58,
     previousSafeDecisionRate: 60,
@@ -460,7 +530,7 @@ export const MOCK_ADMIN_SCENARIOS: AdminScenarioRow[] = [
     id: "scn_ecom_01",
     title: "Concert Tickets, Cash Only",
     category: "E-Commerce Scam",
-    targetGroup: "All youth cohorts",
+    targetGroup: "All Youth Bands",
     status: "LIVE",
     safeDecisionRate: 82,
     previousSafeDecisionRate: 80,
@@ -474,7 +544,7 @@ export const MOCK_ADMIN_SCENARIOS: AdminScenarioRow[] = [
     id: "scn_peer_mule_01",
     title: "Jayden's Offer",
     category: "Peer Shield · Money Mule",
-    targetGroup: "ITE / Poly / JC",
+    targetGroup: "Post-Secondary / Tertiary",
     status: "LIVE",
     safeDecisionRate: 71,
     previousSafeDecisionRate: 68,
@@ -488,7 +558,7 @@ export const MOCK_ADMIN_SCENARIOS: AdminScenarioRow[] = [
     id: "scn_job_scam_01",
     title: "No Experience Needed",
     category: "Job Scam",
-    targetGroup: "ITE / Poly / JC",
+    targetGroup: "Post-Secondary / Tertiary",
     status: "LIVE",
     safeDecisionRate: 66,
     previousSafeDecisionRate: 62,
@@ -516,7 +586,7 @@ export const MOCK_ADMIN_SCENARIOS: AdminScenarioRow[] = [
     id: "scn_qr_01",
     title: "Carpark QR Swap",
     category: "Phishing QR",
-    targetGroup: "All youth cohorts",
+    targetGroup: "All Youth Bands",
     status: "LIVE",
     safeDecisionRate: 55,
     previousSafeDecisionRate: 55,
@@ -530,7 +600,7 @@ export const MOCK_ADMIN_SCENARIOS: AdminScenarioRow[] = [
     id: "scn_gaming_01",
     title: "Free Skins, Just Log In",
     category: "Account Takeover",
-    targetGroup: "Secondary",
+    targetGroup: "Primary / Early Secondary",
     status: "LIVE",
     safeDecisionRate: 69,
     previousSafeDecisionRate: 64,
@@ -544,7 +614,7 @@ export const MOCK_ADMIN_SCENARIOS: AdminScenarioRow[] = [
     id: "scn_loan_01",
     title: "Runner for a Day",
     category: "Unlicensed Moneylending",
-    targetGroup: "ITE / Poly / JC",
+    targetGroup: "Post-Secondary / Tertiary",
     status: "LIVE",
     safeDecisionRate: 63,
     previousSafeDecisionRate: 58,
@@ -572,7 +642,7 @@ export const MOCK_ADMIN_SCENARIOS: AdminScenarioRow[] = [
     id: "scn_deepfake_01",
     title: "That's Not Really Them",
     category: "Impersonation",
-    targetGroup: "Secondary / Tertiary",
+    targetGroup: "Secondary",
     status: "LIVE",
     safeDecisionRate: 61,
     previousSafeDecisionRate: 57,
@@ -581,6 +651,48 @@ export const MOCK_ADMIN_SCENARIOS: AdminScenarioRow[] = [
     updatedBy: "Content Team",
     updatedOn: "16 Aug 2026",
     isFlashMission: true,
+  },
+  {
+    id: "scn_parcel_01",
+    title: "Your Parcel Is Held",
+    category: "Phishing Link",
+    targetGroup: "Primary / Early Secondary",
+    status: "LIVE",
+    safeDecisionRate: 64,
+    previousSafeDecisionRate: 59,
+    responses: 2054,
+    competencies: ["SPOT", "HOLD"],
+    updatedBy: "Content Team",
+    updatedOn: "13 Aug 2026",
+    isFlashMission: false,
+  },
+  {
+    id: "scn_otp_01",
+    title: "Just Read Me the Code",
+    category: "Credential Request",
+    targetGroup: "All Youth Bands",
+    status: "LIVE",
+    safeDecisionRate: 57,
+    previousSafeDecisionRate: 52,
+    responses: 1663,
+    competencies: ["EVALUATE", "HOLD"],
+    updatedBy: "Content Team",
+    updatedOn: "15 Aug 2026",
+    isFlashMission: false,
+  },
+  {
+    id: "scn_group_chat_01",
+    title: "The Group Chat Job",
+    category: "Money Mule · Think–Vote–Explain",
+    targetGroup: "Secondary",
+    status: "LIVE",
+    safeDecisionRate: 68,
+    previousSafeDecisionRate: 61,
+    responses: 946,
+    competencies: ["LEAD", "DEFEND"],
+    updatedBy: "Content Team",
+    updatedOn: "19 Aug 2026",
+    isFlashMission: false,
   },
   {
     id: "scn_draft_01",
@@ -600,7 +712,7 @@ export const MOCK_ADMIN_SCENARIOS: AdminScenarioRow[] = [
     id: "scn_sched_01",
     title: "The Group Buy",
     category: "E-Commerce Scam",
-    targetGroup: "All youth cohorts",
+    targetGroup: "All Youth Bands",
     status: "SCHEDULED",
     safeDecisionRate: 0,
     previousSafeDecisionRate: 0,
@@ -653,12 +765,12 @@ export const MOCK_INSIGHTS: Insight[] = [
  * competency profile.
  */
 export const MOCK_SKILL_COVERAGE: SkillCoverage[] = [
-  { competency: "SPOT", coverage: 82, scenarios: 6 },
-  { competency: "HOLD", coverage: 65, scenarios: 5 },
+  { competency: "SPOT", coverage: 82, scenarios: 7 },
+  { competency: "HOLD", coverage: 65, scenarios: 7 },
   { competency: "IDENTIFY", coverage: 71, scenarios: 3 },
-  { competency: "EVALUATE", coverage: 67, scenarios: 5 },
-  { competency: "LEAD", coverage: 79, scenarios: 3 },
-  { competency: "DEFEND", coverage: 73, scenarios: 3 },
+  { competency: "EVALUATE", coverage: 67, scenarios: 6 },
+  { competency: "LEAD", coverage: 79, scenarios: 4 },
+  { competency: "DEFEND", coverage: 73, scenarios: 4 },
 ];
 
 export const SAFEGUARDS: string[] = [
@@ -667,6 +779,9 @@ export const SAFEGUARDS: string[] = [
   "No individual youth profiling",
   "No real banking or Singpass credentials used in scenarios",
   "Simulated scenario data",
+  "Youth-submitted ideas reviewed before drafting — no direct publication",
+  "Youth submissions carry a pseudonym and a band, never an identity",
+  "Group discussion figures are simulated, never participant records",
 ];
 
 export function derivePortalSummary(rows: AdminScenarioRow[]): PortalSummary {

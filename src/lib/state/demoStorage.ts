@@ -26,9 +26,20 @@ export const FLASH_MISSIONS_KEY = "shieldquest-demo-flash-missions";
  *
  * A reader gets the envelope's version back and decides: migrate it, or fall
  * back to the fixture.
+ *
+ * ## v4 — the 22-space track became 26 spaces
+ *
+ * `boardPosition` and `visitedSpaces` are stored as plain indices, and the
+ * track gained four spaces when the Guardian roster grew to six. The *shape* of
+ * the profile did not change, so nothing here would have noticed — but the
+ * meaning of every index after the first insertion did. The version bump is
+ * what tells `normaliseProfile` that a stored index refers to the old track and
+ * has to be translated through `migrateLegacyBoardPosition` rather than read
+ * literally. Without it a restored session would quietly stand on a different
+ * space and call it the same one.
  */
 export const SCHEMA_VERSIONS: Record<string, number> = {
-  [PLAYER_STATE_KEY]: 3,
+  [PLAYER_STATE_KEY]: 4,
   [FLASH_MISSIONS_KEY]: 1,
 };
 

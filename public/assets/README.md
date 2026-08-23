@@ -20,7 +20,7 @@ renders into a fixed box that the placeholder already occupies.
                                  shieldfin-neutral.svg
                                  200×200. One neutral pose each. Wired to
                                  GUARDIAN_ART — Guardian cards, the Guardians
-                                 selector and the home HUD.
+                                 selector, the public site and the home HUD.
 
     shieldquest/districts/       school-street.svg
                                  retail-district.svg
@@ -44,6 +44,33 @@ renders into a fixed box that the placeholder already occupies.
                                  shieldquest-icon-512.svg  (512)
                                  The V2.2 mark. Not currently the app icon —
                                  see "App icon" below.
+
+## Authored in-repo (Guardian set of six)
+
+    shieldquest/guardians/       echo-neutral.svg
+                                 cluepaw-neutral.svg
+                                 bytebuddy-neutral.svg
+
+Added when the Guardian roster grew from three to six, one per S.H.I.E.L.D.
+competency. There was no design export for them, so they were drawn directly as
+SVG in this repository rather than substituted from anywhere else. They follow
+the construction of the V2.2 three so the family still reads as one set:
+
+- 200×200 viewBox, subject inside the middle ~85%.
+- One two-stop `linearGradient` for the body, in a hue no other Guardian uses —
+  Echo violet, Cluepaw green, ByteBuddy coral, against VeriFox blue, Beacon
+  amber and Shieldfin teal. Six separable hues, so a 28px selector tile is
+  distinguishable by colour as well as by silhouette.
+- A light face patch, brow strokes, dot eyes with a highlight, and a smile.
+- One silhouette feature each, so the set is still separable in greyscale:
+  Echo's tall ears and listening ripples, Cluepaw's pointed ears and magnifier,
+  ByteBuddy's antenna and rounded frame.
+- Plain SVG attribute names throughout (`stroke-width`, `stop-color`), for the
+  reason recorded immediately below.
+- Gradient ids are prefixed per file (`echo-`, `paw-`, `byte-`). Each portrait
+  is loaded as its own `<img>`, so ids cannot collide today — the prefixes are
+  there so any future inlining does not silently repaint one Guardian in
+  another's gradient.
 
 Source files exported from Figma Make carried JSX attribute names
 (`strokeWidth`, `stopColor`, `strokeLinecap`, `strokeLinejoin`,
@@ -84,11 +111,13 @@ rendered, ready for the larger board treatment they were drawn for.
 No file in the V2.2 export covers these, so they keep their CSS/lucide
 placeholders and their slots stay null. Do not substitute other artwork:
 
-- Guardian success poses, action poses and icon variants
+- Guardian success poses, action poses and icon variants (all six)
 - square district icon variants
 - mission-type marks (`NODE_KIND_ART`) — scenario, mini-game, peer shield,
-  guardian challenge
-- mini-game badges (`MINI_GAME_BADGE_ART`)
+  guardian challenge, group decision
+- mini-game badges (`MINI_GAME_BADGE_ART`) — including the four added with
+  Risk or Safe?, Clue Match, Who Can Help? and What Happens Next?
+- the Think · Vote · Explain mission-type mark
 - HUD icons, the "next" marker, route-straight and route-curve segments
 
 ## Format notes

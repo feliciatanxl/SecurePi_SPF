@@ -14,6 +14,7 @@ import { MOCK_GUARDIANS, MOCK_PROFILE } from "@/lib/api/mock-data";
 import {
   BOARD_SPACES,
   DISTRICT_BADGES,
+  migrateLegacyBoardPosition,
   normaliseBoardPosition,
 } from "@/lib/api/board-data";
 import { findReward } from "@/lib/api/rewards-data";
@@ -22,6 +23,7 @@ import {
   clearDemoData,
   PLAYER_STATE_KEY,
   readDemoEnvelope,
+  SCHEMA_VERSIONS,
   writeDemo,
 } from "@/lib/state/demoStorage";
 import {
@@ -137,6 +139,9 @@ function isValidProfile(value: unknown): value is Partial<PlayerProfile> {
   );
 }
 
+/** The stored version that first carried the 26-space track. */
+const BOARD_V2_SCHEMA = SCHEMA_VERSIONS[PLAYER_STATE_KEY];
+
 /**
  * Brings any accepted stored profile up to the current shape.
  *
@@ -146,13 +151,39 @@ function isValidProfile(value: unknown): value is Partial<PlayerProfile> {
  * here. A demo session started on the previous build therefore keeps its coins,
  * Guardian progress and completed activities instead of being thrown away, and
  * simply arrives with an empty board position and no cosmetics.
+ *
+ * `version` is the envelope version the payload was written under. Below the
+ * current one, the board indices it holds refer to the 22-space track and are
+ * translated through `migrateLegacyBoardPosition`, so a restored player stands
+ * on the same *logical* space rather than on whatever now occupies their old
+ * number. Anything the old track never had is dropped rather than guessed at.
  */
-function normaliseProfile(saved: Partial<PlayerProfile>): PlayerProfile {
+function normaliseProfile(
+  saved: Partial<PlayerProfile>,
+  version: number,
+): PlayerProfile {
   const merged = { ...MOCK_PROFILE, ...saved } as PlayerProfile;
+  const legacyBoard = version < BOARD_V2_SCHEMA;
+
+  /*
+   * Translate, then normalise. A legacy index that the old track never had
+   * resolves to null and is dropped — a visited marker is a record of somewhere
+   * the player actually stood, and inventing one is worse than losing it.
+   */
+  const readPosition = (value: unknown): number | null => {
+    if (typeof value !== "number" || !Number.isFinite(value)) return null;
+    if (!legacyBoard) return normaliseBoardPosition(value);
+    return migrateLegacyBoardPosition(Math.trunc(value));
+  };
+
   const visitedSpaces = Array.isArray(saved.visitedSpaces)
-    ? saved.visitedSpaces
-        .filter((n): n is number => typeof n === "number" && Number.isFinite(n))
-        .map(normaliseBoardPosition)
+    ? [
+        ...new Set(
+          saved.visitedSpaces
+            .map(readPosition)
+            .filter((n): n is number => n !== null),
+        ),
+      ]
     : [];
   const discoveredDistricts =
     saved.discoveredDistricts === undefined
@@ -168,9 +199,12 @@ function normaliseProfile(saved: Partial<PlayerProfile>): PlayerProfile {
     discoveredDistricts,
     currentDistrictId: saved.currentDistrictId ?? MOCK_PROFILE.currentDistrictId,
 
-    boardPosition: normaliseBoardPosition(
-      typeof saved.boardPosition === "number" ? saved.boardPosition : 0,
-    ),
+    /*
+     * A legacy position that cannot be translated falls back to Shield
+     * Central, which is where a turn begins. That is the one space whose
+     * meaning cannot have moved.
+     */
+    boardPosition: readPosition(saved.boardPosition) ?? 0,
     visitedSpaces,
     shieldTokens:
       typeof saved.shieldTokens === "number" && Number.isFinite(saved.shieldTokens)
@@ -274,7 +308,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     // `normaliseProfile`, which fills every field a v1 session never had.
     const saved = readDemoEnvelope<Partial<PlayerProfile>>(PLAYER_STATE_KEY);
     if (saved && isValidProfile(saved.data)) {
-      const restored = normaliseProfile(saved.data);
+      const restored = normaliseProfile(saved.data, saved.v);
       grantedKeys.current = new Set(restored.tokenGrants);
       setProfile(restored);
     }

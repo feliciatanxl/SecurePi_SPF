@@ -9,26 +9,36 @@ import {
   Clock3,
   Eye,
   Gamepad2,
+  Link2,
   LockKeyhole,
   MessageCircleHeart,
   MousePointerClick,
   Presentation,
+  Printer,
   Radar,
   Settings2,
   ShieldCheck,
   ShieldHalf,
+  ShoppingBag,
   Sparkles,
   UserRoundCog,
   UsersRound,
+  Vote,
+  Wallet,
 } from "lucide-react";
 import { DistrictScene } from "@/components/player/DistrictArt";
+import { GuardianPlate } from "@/components/player/GuardianArt";
 import { DISTRICT_SKIN } from "@/components/player/districtSkin";
+import { MOCK_GUARDIANS } from "@/lib/api/mock-data";
 import { DISTRICT_CHAPTER } from "@/lib/api/world-data";
 import {
   COMPETENCY_LABEL,
   COMPETENCY_LETTER,
   COMPETENCY_ORDER,
+  TARGET_GROUP_AGE,
+  type Competency,
   type DistrictId,
+  type TargetGroup,
 } from "@/lib/types";
 
 const DISTRICTS: {
@@ -59,14 +69,98 @@ const DISTRICTS: {
   },
 ];
 
-const EXPERIENCE_STEPS = [
-  "Explore",
-  "Investigate",
-  "Discuss",
-  "Decide",
-  "Experience",
-  "Reflect",
-  "Protect",
+/**
+ * The six-stage learning loop.
+ *
+ * Reflection has not gone anywhere — it is still what the debrief, the Casebook
+ * and the Think–Vote–Explain explain step are for. It stopped being a stage of
+ * its own because it is not a place the learner goes between deciding and
+ * protecting; it runs through both.
+ */
+const EXPERIENCE_STEPS: [string, string][] = [
+  ["Explore", "Move through the city and meet a situation."],
+  ["Investigate", "Tag the signals that are already there."],
+  ["Discuss", "Think privately, then hear how others read it."],
+  ["Decide", "Commit to a response, without a marked-correct option."],
+  ["Experience", "Live the consequence, including the delayed one."],
+  ["Protect", "Carry the skill into looking out for someone else."],
+];
+
+/**
+ * The learning areas the platform is designed to cover.
+ *
+ * Design scope, stated as design scope. Some of these are playable in the
+ * current build and some exist as authored library entries or planned district
+ * content — the section that renders this says which, rather than implying a
+ * finished catalogue.
+ */
+const LEARNING_COVERAGE: [string, string, typeof Radar][] = [
+  [
+    "Phishing and suspicious links",
+    "Unexpected messages that need you to click, log in or confirm something now.",
+    Link2,
+  ],
+  [
+    "Job scams",
+    "Offers that pay far above the task, with no interview and no employer you can check.",
+    BrainCircuit,
+  ],
+  [
+    "Money mule recruitment",
+    "Being paid to let money pass through an account in your name.",
+    Wallet,
+  ],
+  [
+    "Impersonation",
+    "A real-looking account, and someone else behind it.",
+    UserRoundCog,
+  ],
+  [
+    "E-commerce scams",
+    "Payments moved off-platform, where the only protection either side had disappears.",
+    ShoppingBag,
+  ],
+  [
+    "Suspicious digital requests",
+    "Logins, one-time codes, account access and payment details asked for by someone who should not need them.",
+    LockKeyhole,
+  ],
+];
+
+/**
+ * The three learner segments, as the public site presents them.
+ *
+ * Deliberately not `TARGET_GROUPS`. That list carries a fourth entry — "All
+ * Youth Bands" — which is an *administrative* targeting option for content that
+ * applies across every segment, not a fourth kind of learner. Rendering it here
+ * would tell a reader the programme is designed around four age groups when it
+ * is designed around three, so the public page names the three and the portal
+ * keeps the cross-band option it actually needs.
+ *
+ * Adaptive content design, not a shipped per-band catalogue. The metadata is
+ * real and it drives the portal's targeting and filtering; separately authored
+ * variants of every scenario per segment are a delivery question, not something
+ * this prototype claims to have done.
+ */
+const LEARNER_SEGMENTS: {
+  band: Extract<
+    TargetGroup,
+    "Primary / Early Secondary" | "Secondary" | "Post-Secondary / Tertiary"
+  >;
+  note: string;
+}[] = [
+  {
+    band: "Primary / Early Secondary",
+    note: "Simpler language, shorter situations, and everyday settings — games, group chats, school.",
+  },
+  {
+    band: "Secondary",
+    note: "Peer pressure, dares and the first digital requests that carry a real cost.",
+  },
+  {
+    band: "Post-Secondary / Tertiary",
+    note: "Money, work and independence — job offers, account use, and being recruited rather than tricked.",
+  },
 ];
 
 const PROTOTYPE_FEATURES = [
@@ -74,10 +168,12 @@ const PROTOTYPE_FEATURES = [
   "Scenario decision-making",
   "Delayed consequences",
   "Peer Shield",
-  "Guardians and mini-games",
+  "Six Guardians and six mini-games",
+  "Think · Vote · Explain (simulated group responses)",
   "Shield Tokens and learning progression",
   "Casebook",
   "Scenario Management Portal",
+  "Youth-Created Missions moderation queue (simulated)",
   "Flash Mission and City Alert demonstration",
 ];
 
@@ -124,8 +220,9 @@ export default function ProjectShieldPage() {
               {[
                 ["About", "#about"],
                 ["How it works", "#how-it-works"],
+                ["Guardians", "#guardians"],
+                ["What it covers", "#coverage"],
                 ["Districts", "#districts"],
-                ["Why it matters", "#why-it-matters"],
                 ["Responsible design", "#responsible-design"],
               ].map(([label, href]) => (
                 <li key={href}>
@@ -313,12 +410,17 @@ export default function ProjectShieldPage() {
               </p>
             </div>
 
-            <ol
+            <h3
               id="how-it-works"
-              className="mt-10 grid scroll-mt-24 grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7"
-              aria-label="ShieldQuest learning flow"
+              className="mt-10 scroll-mt-24 text-[11px] font-extrabold uppercase tracking-[0.2em] text-civic-700"
             >
-              {EXPERIENCE_STEPS.map((step, index) => (
+              The six-stage learning loop
+            </h3>
+            <ol
+              className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6"
+              aria-label="ShieldQuest learning loop"
+            >
+              {EXPERIENCE_STEPS.map(([step, detail], index) => (
                 <li
                   key={step}
                   className="relative rounded-2xl border border-line bg-surface-sunk px-3 py-4"
@@ -329,6 +431,9 @@ export default function ProjectShieldPage() {
                   <p className="mt-3 text-[13px] font-extrabold uppercase tracking-wide text-navy-900">
                     {step}
                   </p>
+                  <p className="mt-1.5 text-[12px] leading-snug text-ink-muted">
+                    {detail}
+                  </p>
                   {index < EXPERIENCE_STEPS.length - 1 && (
                     <ChevronRight
                       className="absolute -right-2 top-1/2 z-10 hidden h-4 w-4 -translate-y-1/2 rounded-full bg-white text-civic-600 lg:block"
@@ -338,6 +443,108 @@ export default function ProjectShieldPage() {
                 </li>
               ))}
             </ol>
+            <p className="mt-3 max-w-[80ch] text-[13px] leading-relaxed text-ink-muted">
+              Reflection is not a separate stop on the loop. It runs through
+              Discuss, Experience and Protect — in the debrief after a decision,
+              in the Casebook a player keeps, and in the explain step of a
+              facilitated Think–Vote–Explain round.
+            </p>
+          </div>
+        </section>
+
+        <section id="guardians" className="scroll-mt-24 bg-surface-sunk">
+          <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+            <SectionLabel>The Guardians</SectionLabel>
+            <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <h2 className="max-w-[720px] text-3xl font-black tracking-tight text-navy-950 sm:text-4xl">
+                Six Guardians. One for each prevention skill.
+              </h2>
+              <p className="max-w-[440px] text-[13px] leading-relaxed text-ink-muted">
+                A Guardian is the visible form of a S.H.I.E.L.D. skill, not a
+                collectible. Each one strengthens only when its own skill is
+                practised in a mission — so progress is evidence of learning
+                rather than of time spent.
+              </p>
+            </div>
+
+            <ul className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {MOCK_GUARDIANS.map((guardian) => (
+                <li
+                  key={guardian.id}
+                  className="flex items-start gap-3.5 rounded-3xl border border-line bg-white p-5 shadow-[0_18px_50px_-44px_rgba(11,37,69,0.8)]"
+                >
+                  <GuardianPlate
+                    guardian={guardian}
+                    className="h-16 w-16 shrink-0 rounded-2xl text-xl"
+                  />
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-extrabold uppercase leading-tight tracking-wide text-navy-950">
+                      {guardian.name}
+                    </h3>
+                    <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[12px] font-bold text-civic-700">
+                      {guardian.skill}
+                      <span
+                        aria-hidden="true"
+                        className="grid h-4 w-4 place-items-center rounded bg-navy-900 text-[10px] font-extrabold text-white"
+                      >
+                        {COMPETENCY_LETTER[guardian.competency]}
+                      </span>
+                      <span className="font-semibold text-ink-soft">
+                        {COMPETENCY_LABEL[guardian.competency]}
+                      </span>
+                    </p>
+                    <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
+                      {guardian.description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        <section id="coverage" className="scroll-mt-24">
+          <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+            <SectionLabel>Scam and civic prevention scope</SectionLabel>
+            <div className="mt-3 grid gap-8 lg:grid-cols-[0.82fr_1.18fr]">
+              <div>
+                <h2 className="text-3xl font-black tracking-tight text-navy-950 sm:text-4xl">
+                  What the platform is designed to cover.
+                </h2>
+                <p className="mt-4 text-[14px] leading-relaxed text-ink-muted">
+                  These are the learning areas the content model is built
+                  around. The working prototype plays a subset of them
+                  end-to-end and carries the rest as authored library entries or
+                  district content still marked “Coming soon” — the app says
+                  which is which rather than implying a finished catalogue.
+                </p>
+                <p className="mt-3 text-[14px] leading-relaxed text-ink-muted">
+                  Alongside these sit the offline behaviours the districts
+                  cover: peer pressure, dares, shop theft and holding something
+                  for someone else.
+                </p>
+              </div>
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {LEARNING_COVERAGE.map(([title, body, Icon]) => (
+                  <li
+                    key={title}
+                    className="flex items-start gap-3 rounded-2xl border border-line bg-surface-sunk px-4 py-3.5"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-navy-900 text-white">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <div>
+                      <p className="text-[14px] font-extrabold leading-snug text-navy-900">
+                        {title}
+                      </p>
+                      <p className="mt-1 text-[12.5px] leading-snug text-ink-muted">
+                        {body}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </section>
 
@@ -403,12 +610,19 @@ export default function ProjectShieldPage() {
             <h2 className="mt-3 max-w-[760px] text-3xl font-black tracking-tight text-navy-950 sm:text-4xl">
               Designed around choices, consequences and looking out for others.
             </h2>
-            <div className="mt-9 grid gap-4 lg:grid-cols-3">
+            <div className="mt-9 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <FeatureCard
                 icon={Clock3}
                 eyebrow="Decision practice"
                 title="Delayed Consequence Engine"
                 body="Risky choices may initially look rewarding before later consequences reveal the warning signs and wider impact."
+                tone="coral"
+              />
+              <FeatureCard
+                icon={Vote}
+                eyebrow="Facilitated discussion"
+                title="Think · Vote · Explain"
+                body="Learners think privately, lock in a vote, see how the group split, say what was behind their answer, then decide again. Hearing a peer's reason is what moves people—not being told the answer."
                 tone="coral"
               />
               <FeatureCard
@@ -422,9 +636,29 @@ export default function ProjectShieldPage() {
                 icon={ShieldHalf}
                 eyebrow="Prevention skills"
                 title="Guardian System"
-                body="VeriFox, Beacon and Shieldfin reinforce verification, trusted help and peer-protection skills as learning progresses."
+                body="Six Guardians—VeriFox, Echo, Cluepaw, ByteBuddy, Beacon and Shieldfin—each stand for one S.H.I.E.L.D. skill and strengthen only when that skill is practised."
                 tone="amber"
               />
+            </div>
+
+            <div className="mt-5 flex items-start gap-4 rounded-2xl border border-coral-200 bg-coral-50 p-5">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-coral-600 text-white">
+                <UsersRound className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-coral-700">
+                  Honest about Think · Vote · Explain
+                </p>
+                <p className="mt-1 text-[14px] leading-relaxed text-ink-muted">
+                  In a facilitated room the group half of this mechanic is real
+                  people. The working prototype runs it on a single device: the
+                  private think, the vote, the reasoning and the second vote are
+                  the learner’s own, and every figure attributed to a group is
+                  an authored simulation, labelled as one on screen. There is no
+                  live multiplayer, no session server and no participant data
+                  behind it.
+                </p>
+              </div>
             </div>
 
             <div className="mt-5 rounded-2xl border border-civic-200 bg-civic-50 px-5 py-4 text-[13px] leading-relaxed text-civic-800">
@@ -432,6 +666,61 @@ export default function ProjectShieldPage() {
               completion and participation. They support expression inside the
               prototype; they are not money, a score of a young person or a
               reward for dice luck.
+            </div>
+          </div>
+        </section>
+
+        <section id="audience" className="scroll-mt-24 bg-amber-50">
+          <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+            <SectionLabel>Adaptive by age band</SectionLabel>
+            <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <h2 className="max-w-[700px] text-3xl font-black tracking-tight text-navy-950 sm:text-4xl">
+                The same skills, pitched at the right age.
+              </h2>
+              <p className="max-w-[440px] text-[13px] leading-relaxed text-ink-muted">
+                Content is tagged to an audience band, and the facilitator
+                portal filters and targets by it. This is adaptive content
+                design — the prototype demonstrates the targeting model, not a
+                finished set of variants for every scenario.
+              </p>
+            </div>
+
+            <ul className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {LEARNER_SEGMENTS.map(({ band, note }) => (
+                <li
+                  key={band}
+                  className="rounded-3xl border border-amber-200 bg-white p-5"
+                >
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-700 tabular-nums">
+                    {TARGET_GROUP_AGE[band]}
+                  </p>
+                  <h3 className="mt-1.5 text-[17px] font-extrabold leading-tight text-navy-950">
+                    {band}
+                  </h3>
+                  <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
+                    {note}
+                  </p>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-5 flex items-start gap-4 rounded-2xl border border-amber-200 bg-white p-5">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-navy-900 text-white">
+                <Printer className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-civic-700">
+                  Planned pilot companion
+                </p>
+                <p className="mt-1 text-[14px] leading-relaxed text-ink-muted">
+                  A printable offline board-game kit is planned as a companion
+                  delivery mode for settings without devices, so a facilitator
+                  can run the same districts, Situation Cards and Think · Vote ·
+                  Explain rounds on a table. It is a future deliverable — there
+                  is nothing to download today, and this prototype does not
+                  pretend otherwise.
+                </p>
+              </div>
             </div>
           </div>
         </section>
@@ -458,8 +747,13 @@ export default function ProjectShieldPage() {
                     <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-navy-900 text-base font-black text-white">
                       {COMPETENCY_LETTER[competency]}
                     </span>
-                    <p className="text-[14px] font-extrabold text-navy-900">
-                      {COMPETENCY_LABEL[competency]}
+                    <p className="min-w-0">
+                      <span className="block text-[14px] font-extrabold text-navy-900">
+                        {COMPETENCY_LABEL[competency]}
+                      </span>
+                      <span className="block text-[12px] font-semibold text-civic-700">
+                        {guardianFor(competency)}
+                      </span>
                     </p>
                   </li>
                 ))}
@@ -641,6 +935,12 @@ export default function ProjectShieldPage() {
       </footer>
     </div>
   );
+}
+
+/** The Guardian that stands for a S.H.I.E.L.D. skill. One-to-one, by design. */
+function guardianFor(competency: Competency) {
+  const guardian = MOCK_GUARDIANS.find((g) => g.competency === competency);
+  return guardian ? `${guardian.name} · ${guardian.skill}` : "";
 }
 
 function SectionLabel({

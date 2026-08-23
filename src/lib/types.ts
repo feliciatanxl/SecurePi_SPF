@@ -305,11 +305,64 @@ export interface ChoiceResult {
 
 export type ScenarioStatus = "LIVE" | "DRAFT" | "SCHEDULED" | "ARCHIVED";
 
+/**
+ * Audience bands.
+ *
+ * One vocabulary for every surface that targets content — the scenario library,
+ * the library filters, the Flash Mission form and the Youth-Created Missions
+ * queue. The bands are age-banded rather than institution-named, because the
+ * same 15-year-old can sit in a school, a CCA or a community programme and the
+ * content decision is about reading age and life context, not about which
+ * building they are in.
+ *
+ * Adapting content per band is a *design* capability in this prototype: the
+ * metadata is real and it filters, but there is no separate authored variant of
+ * each scenario per band yet.
+ */
 export type TargetGroup =
+  | "Primary / Early Secondary"
   | "Secondary"
-  | "ITE / Poly / JC"
-  | "Secondary / Tertiary"
-  | "All youth cohorts";
+  | "Post-Secondary / Tertiary"
+  | "All Youth Bands";
+
+/** Presentation order wherever the bands are listed together. */
+export const TARGET_GROUPS: TargetGroup[] = [
+  "Primary / Early Secondary",
+  "Secondary",
+  "Post-Secondary / Tertiary",
+  "All Youth Bands",
+];
+
+/** The approximate age range each band is written for. */
+export const TARGET_GROUP_AGE: Record<TargetGroup, string> = {
+  "Primary / Early Secondary": "≈ 10–13",
+  Secondary: "≈ 14–16",
+  "Post-Secondary / Tertiary": "≈ 17–24",
+  "All Youth Bands": "≈ 10–24",
+};
+
+/**
+ * Brings an older audience label onto the current band vocabulary.
+ *
+ * A Flash Mission deployed on a previous build is stored in the browser with
+ * the label it was written under, and throwing that row away mid-demonstration
+ * would be a worse outcome than translating it. Unrecognised values fall back
+ * to the widest band rather than being dropped.
+ */
+export function migrateTargetGroup(value: unknown): TargetGroup {
+  if (typeof value !== "string") return "All Youth Bands";
+  if ((TARGET_GROUPS as string[]).includes(value)) return value as TargetGroup;
+  switch (value) {
+    case "ITE / Poly / JC":
+      return "Post-Secondary / Tertiary";
+    case "Secondary / Tertiary":
+      return "Secondary";
+    case "All youth cohorts":
+      return "All Youth Bands";
+    default:
+      return "All Youth Bands";
+  }
+}
 
 export interface AdminScenarioRow {
   id: string;
@@ -359,11 +412,16 @@ export interface Insight {
  * These are demonstration cohorts. There is no participant database behind
  * them, and the portal never claims otherwise.
  */
-export type SimulatedCohortId = "secondary" | "tertiary" | "community";
+export type SimulatedCohortId =
+  | "primary"
+  | "secondary"
+  | "tertiary"
+  | "community";
 
 export const SIMULATED_COHORTS: { id: SimulatedCohortId; label: string }[] = [
-  { id: "secondary", label: "Secondary Cohort" },
-  { id: "tertiary", label: "ITE / Poly / JC Cohort" },
+  { id: "primary", label: "Primary / Early Secondary (10–13)" },
+  { id: "secondary", label: "Secondary (14–16)" },
+  { id: "tertiary", label: "Post-Secondary / Tertiary (17–24)" },
   { id: "community", label: "Community Pilot" },
 ];
 
@@ -412,13 +470,15 @@ export type NodeKind =
   | "SCENARIO"
   | "MINI_GAME"
   | "PEER_SHIELD"
-  | "GUARDIAN_CHALLENGE";
+  | "GUARDIAN_CHALLENGE"
+  | "GROUP_DECISION";
 
 export const NODE_KIND_LABEL: Record<NodeKind, string> = {
   SCENARIO: "Scenario Mission",
   MINI_GAME: "Mini-Game",
   PEER_SHIELD: "Peer Shield",
   GUARDIAN_CHALLENGE: "Guardian Challenge",
+  GROUP_DECISION: "Think · Vote · Explain",
 };
 
 /**
@@ -496,9 +556,20 @@ export interface WorldProgress {
 /* Mini-games                                                          */
 /* ------------------------------------------------------------------ */
 
-export type MiniGameId = "spot-the-warning-signs" | "decode-the-clue";
+export type MiniGameId =
+  | "spot-the-warning-signs"
+  | "decode-the-clue"
+  | "risk-or-safe"
+  | "clue-match"
+  | "who-can-help"
+  | "what-happens-next";
 
-export type MiniGameKind = "WORD_SEARCH" | "DECODE";
+export type MiniGameKind =
+  | "WORD_SEARCH"
+  | "DECODE"
+  | "SORT"
+  | "MATCH"
+  | "PREDICT";
 
 /** Reward for finishing a mini-game. Deliberately small next to a scenario. */
 export interface MiniGameReward {
@@ -575,7 +646,91 @@ export interface DecodeClueGame extends MiniGameBase {
   attempts: number;
 }
 
-export type MiniGame = WordSearchGame | DecodeClueGame;
+/* ---- Risk or Safe? — rapid judgement, then the reason ---------------- */
+
+/**
+ * One card in Risk or Safe?
+ *
+ * The judgement is the easy half. `explanation` is the half that teaches, and
+ * it is shown whichever way the player called it — a card they got right for
+ * the wrong reason is exactly the case this activity exists to catch.
+ */
+export interface SortCard {
+  id: string;
+  /** The situation, in the player's own world. One or two lines. */
+  situation: string;
+  /** The intended reading. `RISK` means "this has a warning sign in it". */
+  answer: "RISK" | "SAFE";
+  /** Why. Always shown, right or wrong. */
+  explanation: string;
+}
+
+export interface SortGame extends MiniGameBase {
+  kind: "SORT";
+  cards: SortCard[];
+  transfer?: TransferQuestion;
+}
+
+/* ---- Clue Match / Who Can Help? — pairing --------------------------- */
+
+/** One pair. The player links the prompt to the response that fits it. */
+export interface MatchPair {
+  id: string;
+  /** Left column — the clue, or the situation. */
+  prompt: string;
+  /** Right column — the situation it signals, or the help that fits. */
+  match: string;
+  /** Shown once the pair is made. Why these two belong together. */
+  note: string;
+}
+
+export interface MatchGame extends MiniGameBase {
+  kind: "MATCH";
+  /** Column captions, e.g. "Warning sign" / "Where it shows up". */
+  promptLabel: string;
+  matchLabel: string;
+  pairs: MatchPair[];
+  /**
+   * Display order of the right column, as pair ids. Authored rather than
+   * shuffled at runtime so the server and the first client render agree.
+   */
+  matchOrder: string[];
+  transfer?: TransferQuestion;
+}
+
+/* ---- What Happens Next? — consequence reasoning --------------------- */
+
+/**
+ * One prediction round.
+ *
+ * The player is shown a decision that has already been taken and asked what
+ * follows. It is the Delayed Consequence Engine turned into practice: the whole
+ * point of the engine is that the cost arrives after the reward, so being able
+ * to name the cost in advance is the skill it is trying to build.
+ */
+export interface PredictRound {
+  id: string;
+  /** What just happened, and what the person got out of it. */
+  setup: string;
+  /** What they were given at the time, e.g. "+S$300 right away". */
+  immediate: string;
+  prompt: string;
+  options: string[];
+  answerIndex: number;
+  explanation: string;
+}
+
+export interface PredictGame extends MiniGameBase {
+  kind: "PREDICT";
+  rounds: PredictRound[];
+}
+
+export type MiniGame =
+  | WordSearchGame
+  | DecodeClueGame
+  | SortGame
+  | MatchGame
+  | PredictGame;
 
 /* ------------------------------------------------------------------ */
 /* Admin · aggregate skill coverage                                    */
@@ -614,7 +769,8 @@ export type BoardSpaceKind =
   | "MINI_GAME"
   | "SITUATION_CARD"
   | "GUARDIAN_CHECKPOINT"
-  | "REWARD_CHECKPOINT";
+  | "REWARD_CHECKPOINT"
+  | "GROUP_DECISION";
 
 export const BOARD_SPACE_LABEL: Record<BoardSpaceKind, string> = {
   SHIELD_CENTRAL: "Shield Central",
@@ -625,6 +781,7 @@ export const BOARD_SPACE_LABEL: Record<BoardSpaceKind, string> = {
   SITUATION_CARD: "Situation Card",
   GUARDIAN_CHECKPOINT: "Guardian Checkpoint",
   REWARD_CHECKPOINT: "Reward Checkpoint",
+  GROUP_DECISION: "Think · Vote · Explain",
 };
 
 /**
@@ -799,3 +956,190 @@ export const LEARNING_DIMENSION_LABEL: Record<LearningDimension, string> = {
   CONSEQUENCE_AWARENESS: "Consequence awareness",
   PEER_INTERVENTION: "Peer intervention confidence",
 };
+
+/* ------------------------------------------------------------------ */
+/* Think · Vote · Explain — facilitated group decision                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The facilitated group mechanic, as a single-device prototype.
+ *
+ * ## What this is, and what it is not
+ *
+ * In a facilitated room, Think–Vote–Explain runs across a group: everyone
+ * thinks privately, everyone votes, the room sees its own spread, people say
+ * why, and then they decide again. That loop is the intervention — the moment a
+ * young person hears three classmates give a reason they had not considered is
+ * worth more than any debrief text this app can write.
+ *
+ * This prototype has **no multiplayer, no live session, no cross-device sync
+ * and no participant database**. What it demonstrates is the *shape* of the
+ * loop, with the group half supplied by authored, clearly-labelled simulated
+ * distributions. Every surface that shows those numbers says so. They are a
+ * demonstration of a mechanic, not a measurement of anybody.
+ */
+export type GroupDecisionStage =
+  | "THINK"
+  | "VOTE"
+  | "GROUP"
+  | "EXPLAIN"
+  | "RECONSIDER"
+  | "DEBRIEF";
+
+export interface GroupDecisionOption {
+  id: string;
+  label: string;
+  /** Short line under the label. Never marks an option as the right one. */
+  hint: string;
+  outcome: ChoiceOutcome;
+  /**
+   * Simulated share of a demonstration group choosing this option, as a
+   * percentage. Authored, illustrative, and labelled as such everywhere it is
+   * shown. The three options sum to 100.
+   */
+  simulatedFirstVotePct: number;
+  /** Simulated share after the group has heard each other's reasoning. */
+  simulatedSecondVotePct: number;
+  /** What the facilitator surface says once this option is locked in. */
+  afterVoteNote: string;
+}
+
+/** One reason a player can tag when explaining their choice. */
+export interface ReasoningFactor {
+  id: string;
+  label: string;
+  /** Simulated share of the demonstration group that named this reason. */
+  simulatedSharePct: number;
+}
+
+export interface GroupDecisionScenario {
+  id: string;
+  /** Matches a `MissionNode.id`, so completion records against the board. */
+  nodeId: string;
+  title: string;
+  category: string;
+  /** The eyebrow above the title, e.g. "Digi-District · District finale". */
+  eyebrow: string;
+  primaryCompetency: Competency;
+  guardianId: string;
+  estimatedMinutes: number;
+  /** What the group is being asked to settle. */
+  situation: string;
+  /** The chat/transcript the group is reading together. */
+  messages: ScenarioMessage[];
+  /** The question put to the room. */
+  question: string;
+  options: GroupDecisionOption[];
+  /** Prompts the facilitator puts to the room during the Explain step. */
+  discussionPrompts: string[];
+  factors: ReasoningFactor[];
+  debrief: {
+    headline: string;
+    body: string;
+    warningSigns: string[];
+    saferResponse: string;
+    /** What the facilitator should draw out at the end. */
+    facilitatorNote: string;
+  };
+  reward: Deltas;
+}
+
+/* ------------------------------------------------------------------ */
+/* Admin · Youth-Created Missions (simulated moderation pipeline)      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Where a youth-submitted mission idea sits in review.
+ *
+ * Nothing reaches a player without a reviewer acting on it. There is no
+ * auto-publish path in this model and no state that skips review — that is a
+ * safeguarding rule expressed in the type, not a UI convention.
+ */
+export type YouthMissionStatus =
+  | "AWAITING_REVIEW"
+  | "CHANGES_REQUESTED"
+  | "CONVERTED"
+  | "REJECTED";
+
+export const YOUTH_MISSION_STATUS_LABEL: Record<YouthMissionStatus, string> = {
+  AWAITING_REVIEW: "Awaiting review",
+  CHANGES_REQUESTED: "Changes requested",
+  CONVERTED: "Converted to scenario draft",
+  REJECTED: "Not taken forward",
+};
+
+/** A reviewer's decision on one submission. */
+export type YouthMissionDecision = Exclude<
+  YouthMissionStatus,
+  "AWAITING_REVIEW"
+>;
+
+/**
+ * A fictionalised youth-submitted mission idea.
+ *
+ * There is no submission backend behind this queue and no real young person
+ * behind any entry. Submitters are represented by a programme-issued pseudonym
+ * and a cohort band and nothing else: no name, no school, no class, no contact
+ * detail and no identifier that could be traced back to a person. That is the
+ * shape a real intake would have to take, so it is the shape the prototype
+ * demonstrates.
+ */
+export interface YouthMissionSubmission {
+  id: string;
+  title: string;
+  /** Threat/behaviour category, matching the scenario library vocabulary. */
+  category: string;
+  /** Which band the submitter thinks it suits. */
+  suggestedBand: TargetGroup;
+  /** The S.H.I.E.L.D. skill the submitter thinks it builds. */
+  proposedCompetency: Competency;
+  /** The idea, in the submitter's words. Fictionalised for the prototype. */
+  summary: string;
+  /** What the submitter says the situation should teach. */
+  intendedLesson: string;
+  /** Programme pseudonym. Never a real identity. */
+  submittedBy: string;
+  submittedOn: string;
+  /** Cohort band the pseudonym belongs to. Aggregate context only. */
+  submitterBand: TargetGroup;
+  status: YouthMissionStatus;
+  /**
+   * Points a reviewer must weigh before this could ever be published —
+   * pre-filled in the fixture so the queue demonstrates that safeguarding is
+   * part of the workflow rather than a checkbox at the end of it.
+   */
+  safeguardingFlags: string[];
+  /** Free-text left by the reviewer. Session-local in this prototype. */
+  reviewNote?: string;
+  /** Set once a reviewer acts. Simulated reviewer identity. */
+  reviewedBy?: string;
+}
+
+/* ------------------------------------------------------------------ */
+/* Admin · Think–Vote–Explain aggregate signals                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Simulated aggregate for one facilitated question.
+ *
+ * Content-level and aggregate only, in line with everything else in the portal:
+ * it reports how a *question* behaved in a room, never how a participant
+ * behaved. There is no individual response, no per-youth history and no risk
+ * score anywhere in this shape — and there is deliberately nowhere to put one.
+ */
+export interface GroupDecisionSignal {
+  id: string;
+  question: string;
+  /** Band the simulated session was run with. */
+  band: TargetGroup;
+  /** Simulated number of responses in the demonstration session. */
+  responses: number;
+  /** Percentage choosing a safer option before discussion. */
+  initialSafePct: number;
+  /** The same measure after the Explain step. */
+  finalSafePct: number;
+  /** Percentage who changed their answer after hearing the group. */
+  reconsideredPct: number;
+  /** The reason most often tagged in the Explain step. */
+  topFactor: string;
+}

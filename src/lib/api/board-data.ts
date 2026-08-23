@@ -1,5 +1,8 @@
 import {
   GUARDIAN_BEACON,
+  GUARDIAN_BYTEBUDDY,
+  GUARDIAN_CLUEPAW,
+  GUARDIAN_ECHO,
   GUARDIAN_SHIELDFIN,
   GUARDIAN_VERIFOX,
   MULE_ENCOUNTER,
@@ -10,6 +13,7 @@ import {
   NODE_COMMUNITY_WHAT_NEXT,
   NODE_COMMUNITY_WHO_CAN_HELP,
   NODE_DECODE,
+  NODE_DIGI_FINALE,
   NODE_EASY_MONEY,
   NODE_PEER_JAYDEN,
   NODE_RETAIL_CLUE_MATCH,
@@ -46,14 +50,18 @@ import type {
  *
  * ## Why the mix of spaces looks the way it does
  *
- * Two of the four districts have no playable content in this prototype — their
- * scenarios are designed but not built. A track that sent a player into School
- * Street and handed them three dead ends in a row would be a bad demonstration
- * *and* a bad game, so every district also carries spaces that always have
- * something to say: a district checkpoint, a Guardian checkpoint reporting real
- * learning progress, or a reward checkpoint. Unbuilt activities are still
- * listed and still labelled "coming soon" rather than hidden, because pretending
- * they are earnable would be worse than admitting they are not built.
+ * Nine of the fifteen city activities are built and playable in this prototype,
+ * and all four districts now carry at least one — but the six that are not built
+ * are still on the track. A district also carries spaces that always have
+ * something to say whether or not the player has reached its built content: a
+ * district checkpoint, a Guardian checkpoint reporting real learning progress,
+ * or a reward checkpoint. Unbuilt activities stay listed and stay labelled
+ * "coming soon" rather than being hidden, because pretending they are earnable
+ * would be worse than admitting they are not built.
+ *
+ * The nine playable activities are the single source of the progress figures
+ * the player sees; nothing here hard-codes the count. `useWorld` derives it by
+ * excluding `PLANNED` nodes, so the board and the Progress screen cannot drift.
  */
 
 /* ------------------------------------------------------------------ */
@@ -104,7 +112,7 @@ export const SITUATION_CARDS: SituationCard[] = [
     blurb:
       "A message says your account will be suspended tonight unless you verify it immediately.",
     competency: "HOLD",
-    guardianId: GUARDIAN_VERIFOX,
+    guardianId: GUARDIAN_ECHO,
     nodeId: NODE_DECODE,
     actionLabel: "Work it out",
     warningSigns: [
@@ -157,7 +165,7 @@ export function findSituationCard(id: string): SituationCard | undefined {
 /* ------------------------------------------------------------------ */
 
 /**
- * 22 spaces on one continuous loop:
+ * 26 spaces on one continuous loop:
  *
  *   Shield Central → School Street → Retail District → Digi-District →
  *   Community Hub → back to Shield Central
@@ -197,6 +205,12 @@ export const BOARD_SPACES: BoardSpace[] = (
       nodeId: NODE_SCHOOL_RISK_OR_SAFE,
     },
     {
+      kind: "GUARDIAN_CHECKPOINT",
+      districtId: "school",
+      title: "Echo Checkpoint",
+      guardianId: GUARDIAN_ECHO,
+    },
+    {
       kind: "PEER_SHIELD",
       districtId: "school",
       title: "Friend Under Pressure",
@@ -219,6 +233,12 @@ export const BOARD_SPACES: BoardSpace[] = (
       kind: "REWARD_CHECKPOINT",
       districtId: "retail",
       title: "Rewards Checkpoint",
+    },
+    {
+      kind: "GUARDIAN_CHECKPOINT",
+      districtId: "retail",
+      title: "Cluepaw Checkpoint",
+      guardianId: GUARDIAN_CLUEPAW,
     },
     {
       kind: "MINI_GAME",
@@ -265,6 +285,12 @@ export const BOARD_SPACES: BoardSpace[] = (
       situationCardId: CARD_URGENT_MESSAGE,
       nodeId: NODE_DECODE,
     },
+    {
+      kind: "GROUP_DECISION",
+      districtId: "digi",
+      title: "The Group Chat Job",
+      nodeId: NODE_DIGI_FINALE,
+    },
 
     /* --- Community Hub ------------------------------------------------ */
     {
@@ -293,6 +319,12 @@ export const BOARD_SPACES: BoardSpace[] = (
       nodeId: NODE_COMMUNITY_WHO_CAN_HELP,
     },
     {
+      kind: "GUARDIAN_CHECKPOINT",
+      districtId: "community",
+      title: "ByteBuddy Checkpoint",
+      guardianId: GUARDIAN_BYTEBUDDY,
+    },
+    {
       kind: "MINI_GAME",
       districtId: "community",
       title: "What Happens Next?",
@@ -319,6 +351,106 @@ export function stepsForRoll(from: number, roll: number): number[] {
   return Array.from({ length: roll }, (_, i) =>
     normaliseBoardPosition(from + i + 1),
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* Board identity and the v1 → v2 track migration                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A stable identity for a board space, independent of where it sits.
+ *
+ * A saved profile stores `boardPosition` and `visitedSpaces` as plain indices,
+ * because that is what a position on a track is. The moment the track gains a
+ * space, every index after the insertion point means something different — so a
+ * restored session would silently move the player to whatever now occupies
+ * their old number. That is worse than losing the position: it looks like it
+ * worked.
+ *
+ * The key is derived from what the space *is*, not from where it is:
+ *
+ *   - an activity space is its `nodeId` (unique across the track, guarded below)
+ *   - a district checkpoint is its district
+ *   - a Guardian checkpoint is its Guardian
+ *   - a reward checkpoint is its district
+ *   - Shield Central is a singleton
+ *
+ * Situation Card spaces key off their `nodeId` like any other activity space:
+ * the card is the presentation of the activity behind it, and no two cards open
+ * the same activity.
+ */
+export function boardSpaceKey(space: Omit<BoardSpace, "index">): string {
+  if (space.kind === "SHIELD_CENTRAL") return "hub";
+  if (space.nodeId) return `node:${space.nodeId}`;
+  if (space.kind === "DISTRICT_CHECKPOINT") return `district:${space.districtId}`;
+  if (space.kind === "GUARDIAN_CHECKPOINT") return `guardian:${space.guardianId}`;
+  return `reward:${space.districtId}`;
+}
+
+/** Current track identities, in board order. Index i is `BOARD_SPACES[i]`. */
+export const BOARD_SPACE_KEYS: string[] = BOARD_SPACES.map(boardSpaceKey);
+
+const KEY_TO_INDEX = new Map(BOARD_SPACE_KEYS.map((key, index) => [key, index]));
+
+/** Where a stable key sits on the current track, or null if it is gone. */
+export function indexForBoardKey(key: string): number | null {
+  return KEY_TO_INDEX.get(key) ?? null;
+}
+
+/**
+ * The 22-space track, as it shipped before the Guardian roster grew to six.
+ *
+ * Written out as identities rather than reconstructed from anything, because
+ * the whole point is that it records a board that no longer exists. It must not
+ * be edited to follow the current track — a session saved against the old one
+ * is the only thing it describes.
+ *
+ * The four spaces added since are the Echo, Cluepaw and ByteBuddy checkpoints
+ * and the Think · Vote · Explain finale. Every one of these 22 identities still
+ * exists on the current track, so no legacy position is orphaned.
+ */
+export const LEGACY_BOARD_V1_KEYS: string[] = [
+  "hub",
+  /* School Street */
+  "district:school",
+  "node:nd_school_hold_it",
+  "guardian:gd_shieldfin",
+  "node:nd_school_risk_or_safe",
+  "node:nd_school_friend_pressure",
+  /* Retail District */
+  "district:retail",
+  "node:nd_retail_dare_checkout",
+  "reward:retail",
+  "node:nd_retail_clue_match",
+  "node:nd_retail_cover_for_me",
+  /* Digi-District */
+  "district:digi",
+  "node:nd_digi_easy_money",
+  "node:nd_digi_warning_signs",
+  "guardian:gd_verifox",
+  "node:nd_digi_decode_clue",
+  /* Community Hub */
+  "district:community",
+  "node:nd_community_jayden",
+  "guardian:gd_beacon",
+  "node:nd_community_who_can_help",
+  "node:nd_community_what_next",
+  "reward:community",
+];
+
+/**
+ * Translates one index on the old 22-space track to the same logical space on
+ * the current one.
+ *
+ * Returns null for anything the old track never had — a corrupt value, or an
+ * index from a board this function does not describe. A null is a signal to
+ * fall back, never to guess: mapping an unknown number onto whatever activity
+ * now occupies it is exactly the failure this exists to prevent.
+ */
+export function migrateLegacyBoardPosition(position: unknown): number | null {
+  if (typeof position !== "number" || !Number.isInteger(position)) return null;
+  if (position < 0 || position >= LEGACY_BOARD_V1_KEYS.length) return null;
+  return indexForBoardKey(LEGACY_BOARD_V1_KEYS[position]);
 }
 
 /* ------------------------------------------------------------------ */
@@ -378,6 +510,27 @@ if (process.env.NODE_ENV !== "production") {
   for (const district of DISTRICTS) {
     if (!BOARD_SPACES.some((s) => s.districtId === district.id)) {
       throw new Error(`District ${district.id} is missing from the board`);
+    }
+  }
+
+  /*
+   * Two invariants the save migration depends on. A duplicate identity would
+   * make `indexForBoardKey` answer with whichever space happened to be first,
+   * and a dropped legacy identity would strand a restored session — both are
+   * silent at runtime and cheap to introduce by editing the track above.
+   */
+  const seen = new Set<string>();
+  for (const key of BOARD_SPACE_KEYS) {
+    if (seen.has(key)) {
+      throw new Error(`Board space identity "${key}" is not unique`);
+    }
+    seen.add(key);
+  }
+  for (const key of LEGACY_BOARD_V1_KEYS) {
+    if (!seen.has(key)) {
+      throw new Error(
+        `Legacy board identity "${key}" no longer exists on the current track — a saved v1 session cannot be migrated`,
+      );
     }
   }
 }

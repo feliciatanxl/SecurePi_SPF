@@ -16,6 +16,7 @@ import { AdminNeedsAttention } from "@/components/admin/AdminNeedsAttention";
 import { AdminRecentContent } from "@/components/admin/AdminRecentContent";
 import { AdminReviewQueue } from "@/components/admin/AdminReviewQueue";
 import { FlashMissionPanel } from "@/components/admin/FlashMissionPanel";
+import { GroupDecisionSignalPanel } from "@/components/admin/GroupDecisionSignals";
 import { ScenarioDetailPanel } from "@/components/admin/ScenarioDetailPanel";
 import {
   applyScenarioFilters,
@@ -28,22 +29,55 @@ import {
   ScenarioTable,
 } from "@/components/admin/ScenarioTable";
 import { SkillCoverageChart } from "@/components/admin/SkillCoverage";
+import { YouthMissionPanel } from "@/components/admin/YouthMissionPanel";
+import { YouthMissionQueue } from "@/components/admin/YouthMissionQueue";
 import { Modal } from "@/components/ui/Modal";
 import { api } from "@/lib/api/client";
 import { clearDemoData } from "@/lib/state/demoStorage";
 import { SAFEGUARDS } from "@/lib/api/mock-data";
+import { TARGET_GROUPS } from "@/lib/types";
 import type {
   AdminScenarioRow,
   FlashMissionDraft,
+  GroupDecisionSignal,
   Insight,
   PortalSummary,
   SkillCoverage,
+  TargetGroup,
+  YouthMissionDecision,
+  YouthMissionSubmission,
 } from "@/lib/types";
+
+/**
+ * The route a youth submission takes, and where it can stop.
+ *
+ * Hoisted out of the JSX because it is content, not markup — and because the
+ * last step is the one that matters: there is no path from this queue to a
+ * published scenario that skips the review every other scenario goes through.
+ */
+const YOUTH_PIPELINE: [string, string][] = [
+  [
+    "Submitted",
+    "A young person proposes a situation they have actually met. Pseudonym and band only.",
+  ],
+  [
+    "Reviewed",
+    "A reviewer weighs the safeguarding points listed on the submission before anything else.",
+  ],
+  [
+    "Drafted",
+    "Converting produces a DRAFT scenario. It still has to be written, checked and scheduled.",
+  ],
+  [
+    "Published",
+    "Only through the same review every other scenario goes through. There is no shortcut from this queue.",
+  ],
+];
 
 /**
  * View 5 — Scenario Management Portal.
  *
- * Four destinations, one persistent action. A programme administrator opens this
+ * Five destinations, one persistent action. A programme administrator opens this
  * to answer three questions in order: what is happening, what needs attention,
  * and what can I do next — so Overview is arranged in exactly that order and
  * nothing else competes with it.
@@ -57,6 +91,11 @@ export default function AdminPage() {
   const [summary, setSummary] = useState<PortalSummary | null>(null);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [coverage, setCoverage] = useState<SkillCoverage[]>([]);
+  const [youthMissions, setYouthMissions] = useState<YouthMissionSubmission[]>([]);
+  const [groupSignals, setGroupSignals] = useState<GroupDecisionSignal[]>([]);
+  const [youthDetail, setYouthDetail] = useState<YouthMissionSubmission | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<ScenarioFilterState>(EMPTY_FILTERS);
   const [flashOpen, setFlashOpen] = useState(false);
@@ -76,12 +115,16 @@ export default function AdminPage() {
       api.getPortalSummary(),
       api.getInsights(),
       api.getSkillCoverage(),
-    ]).then(([r, s, i, c]) => {
+      api.listYouthMissions(),
+      api.getGroupDecisionSignals(),
+    ]).then(([r, s, i, c, y, g]) => {
       if (!active) return;
       setRows(r);
       setSummary(s);
       setInsights(i);
       setCoverage(c);
+      setYouthMissions(y);
+      setGroupSignals(g);
       setLoading(false);
     });
     return () => {
@@ -133,9 +176,69 @@ export default function AdminPage() {
     () => [...new Set(rows.map((r) => r.category))].sort(),
     [rows],
   );
-  const audiences = useMemo(
-    () => [...new Set(rows.map((r) => r.targetGroup))].sort(),
-    [rows],
+  /*
+   * Audience options follow the band order rather than the alphabet: the bands
+   * are an age progression, and sorting them A–Z puts "Post-Secondary" above
+   * "Primary" in a list a reader is scanning as a sequence.
+   */
+  const audiences = useMemo(() => {
+    const present = new Set(rows.map((r) => r.targetGroup));
+    return TARGET_GROUPS.filter((band) => present.has(band)) as TargetGroup[];
+  }, [rows]);
+
+  /**
+   * Records a reviewer decision on a youth submission.
+   *
+   * Session-local. There is no submission backend, so this updates the loaded
+   * queue and nothing else — a reload returns it to the fixture state, which
+   * the panel tells the reviewer rather than implying something was saved.
+   *
+   * "Convert" produces a DRAFT row in the Scenario Library. Never a LIVE one:
+   * an idea from a young person goes through the same authoring and review as
+   * any other content, not around it.
+   */
+  const handleYouthDecision = useCallback(
+    (id: string, decision: YouthMissionDecision, note: string) => {
+      const submission = youthMissions.find((m) => m.id === id);
+      setYouthMissions((prev) =>
+        prev.map((m) =>
+          m.id === id
+            ? {
+                ...m,
+                status: decision,
+                reviewNote: note || m.reviewNote,
+                reviewedBy: "You (Duty Officer)",
+              }
+            : m,
+        ),
+      );
+
+      if (decision === "CONVERTED" && submission) {
+        const draft: AdminScenarioRow = {
+          id: `scn_youth_${submission.id}`,
+          title: submission.title,
+          category: submission.category,
+          targetGroup: submission.suggestedBand,
+          status: "DRAFT",
+          safeDecisionRate: 0,
+          previousSafeDecisionRate: 0,
+          responses: 0,
+          competencies: [submission.proposedCompetency],
+          updatedBy: "You (Duty Officer)",
+          updatedOn: "Just now",
+          isFlashMission: false,
+        };
+        setRows((prev) =>
+          prev.some((r) => r.id === draft.id) ? prev : [draft, ...prev],
+        );
+      }
+    },
+    [youthMissions],
+  );
+
+  const youthPending = useMemo(
+    () => youthMissions.filter((m) => m.status === "AWAITING_REVIEW"),
+    [youthMissions],
   );
 
   /** Live, scored content that is not teaching clearly enough yet. */
@@ -219,6 +322,7 @@ export default function AdminPage() {
           active={section}
           onSelect={setSection}
           reviewCount={reviewRows.length}
+          youthCount={youthPending.length}
         />
 
         {/*
@@ -377,6 +481,60 @@ export default function AdminPage() {
                 </Section>
               )}
 
+              {section === "youth" && (
+                <>
+                  <Section
+                    title="Youth-Created Missions"
+                    badge={{ value: youthPending.length, tone: "attention" }}
+                    description="Mission ideas submitted by young people, waiting on a reviewer. Nothing here reaches a player without review, and the strongest decision available is a scenario draft."
+                  >
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                      <p className="text-[13px] font-bold text-amber-700">
+                        Prototype moderation pipeline · simulated submissions
+                      </p>
+                      <p className="mt-1 max-w-[92ch] text-[13px] leading-relaxed text-amber-700">
+                        There is no submission service behind this queue and no
+                        real young person behind any entry. Submitters are
+                        represented by a programme pseudonym and a cohort band
+                        and nothing else — no name, school, class or contact
+                        detail — because that is the shape a real intake would
+                        have to take. Decisions recorded here last for this
+                        session only.
+                      </p>
+                    </div>
+
+                    <YouthMissionQueue
+                      submissions={youthMissions}
+                      onSelect={setYouthDetail}
+                    />
+                  </Section>
+
+                  <Section
+                    title="How a submission becomes content"
+                    description="The route an idea takes, and where it can stop."
+                  >
+                    <ol className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                      {YOUTH_PIPELINE.map(([title, body], i) => (
+                        <li
+                          key={title}
+                          className="rounded-xl border border-line bg-surface p-4"
+                        >
+                          <p className="text-[11px] font-bold tabular-nums text-civic-700">
+                            0{i + 1}
+                          </p>
+                          <p className="mt-1.5 text-[14px] font-bold text-navy-900">
+                            {title}
+                          </p>
+                          <p className="mt-1 text-[12.5px] leading-relaxed text-ink-muted">
+                            {body}
+                          </p>
+                        </li>
+                      ))}
+                    </ol>
+                  </Section>
+                </>
+              )}
+
               {section === "insights" && (
                 <>
                   <Section
@@ -388,6 +546,19 @@ export default function AdminPage() {
                         <InsightCard key={i.id} insight={i} />
                       ))}
                     </div>
+                  </Section>
+
+                  <Section
+                    title="Think · Vote · Explain"
+                    description="How facilitated group questions behaved: where a room started, where it ended, and how many people moved after hearing each other."
+                  >
+                    <GroupDecisionSignalPanel signals={groupSignals} />
+                    <SimulatedDataNote>
+                      Simulated prototype data from a demonstration flow — there
+                      is no live multiplayer session behind it. Question-level
+                      and aggregate only: no individual response, no participant
+                      history and no risk score is produced or displayed.
+                    </SimulatedDataNote>
                   </Section>
 
                   <Section
@@ -456,6 +627,22 @@ export default function AdminPage() {
       >
         {detail && (
           <ScenarioDetailPanel row={detail} onClose={() => setDetail(null)} />
+        )}
+      </Modal>
+
+      <Modal
+        open={youthDetail !== null}
+        onClose={() => setYouthDetail(null)}
+        placement="right"
+        className="bg-surface"
+        labelledBy="youth-mission-title"
+      >
+        {youthDetail && (
+          <YouthMissionPanel
+            submission={youthDetail}
+            onDecide={handleYouthDecision}
+            onClose={() => setYouthDetail(null)}
+          />
         )}
       </Modal>
     </div>

@@ -21,7 +21,7 @@ import type { JoinedSession } from "@/lib/types";
  */
 const SIMULATED_SESSION: Omit<JoinedSession, "code"> = {
   name: "NYP Youth Pilot",
-  audience: "ITE / Poly / JC",
+  audience: "Post-Secondary / Tertiary (17–24)",
   focus: "Digi-District",
 };
 

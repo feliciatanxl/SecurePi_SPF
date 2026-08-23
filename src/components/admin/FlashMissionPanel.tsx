@@ -8,19 +8,14 @@ import {
   COMPETENCY_LABEL,
   COMPETENCY_LETTER,
   SIMULATED_COHORTS,
+  TARGET_GROUPS,
+  TARGET_GROUP_AGE,
   type AdminScenarioRow,
   type Competency,
   type FlashMissionDraft,
   type SimulatedCohortId,
   type TargetGroup,
 } from "@/lib/types";
-
-const TARGET_GROUPS: TargetGroup[] = [
-  "Secondary",
-  "ITE / Poly / JC",
-  "Secondary / Tertiary",
-  "All youth cohorts",
-];
 
 const COMPETENCIES = Object.keys(COMPETENCY_LABEL) as Competency[];
 
@@ -32,7 +27,7 @@ const COMPETENCIES = Object.keys(COMPETENCY_LABEL) as Competency[];
 const EXAMPLE: FlashMissionDraft = {
   title: "Fake Job Offer",
   category: "Money Mule Recruitment",
-  targetGroup: "ITE / Poly / JC",
+  targetGroup: "Post-Secondary / Tertiary",
   prompt:
     "An online recruiter says you can earn commission by receiving and forwarding payments.",
   choices: [
@@ -200,7 +195,7 @@ export function FlashMissionPanel({
               >
                 {TARGET_GROUPS.map((g) => (
                   <option key={g} value={g}>
-                    {g}
+                    {g} · {TARGET_GROUP_AGE[g]}
                   </option>
                 ))}
               </select>

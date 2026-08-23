@@ -10,6 +10,7 @@ import {
   ScrollText,
   Shield,
   ShieldHalf,
+  Vote,
   type LucideIcon,
 } from "lucide-react";
 import { GuardianPlate } from "@/components/player/GuardianArt";
@@ -35,6 +36,7 @@ export const SPACE_ICON: Record<BoardSpaceKind, LucideIcon> = {
   SITUATION_CARD: ScrollText,
   GUARDIAN_CHECKPOINT: Shield,
   REWARD_CHECKPOINT: Award,
+  GROUP_DECISION: Vote,
 };
 
 /** Shape + surface per space type. The radius is doing as much work as the hue. */
@@ -47,6 +49,7 @@ const SPACE_SKIN: Record<BoardSpaceKind, string> = {
   SITUATION_CARD: "rounded-md bg-coral-600 text-white border-coral-200/80",
   GUARDIAN_CHECKPOINT: "rounded-full bg-navy-900 text-white border-amber-400/70",
   REWARD_CHECKPOINT: "rounded-[14px] bg-leaf-600 text-white border-leaf-200/80",
+  GROUP_DECISION: "rounded-lg bg-coral-700 text-white border-coral-200/80",
 };
 
 export function SpaceMark({

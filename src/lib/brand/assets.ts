@@ -1,5 +1,8 @@
 import {
   GUARDIAN_BEACON,
+  GUARDIAN_BYTEBUDDY,
+  GUARDIAN_CLUEPAW,
+  GUARDIAN_ECHO,
   GUARDIAN_SHIELDFIN,
   GUARDIAN_VERIFOX,
 } from "@/lib/api/mock-data";
@@ -35,9 +38,20 @@ const SHIELDQUEST = "/assets/shieldquest";
  * V2.2 supplies one neutral pose each. The success/action poses the debrief and
  * reward surfaces would use are not drawn yet, so those surfaces keep showing
  * the neutral portrait rather than a stand-in.
+ *
+ * Echo, Cluepaw and ByteBuddy joined the roster when the Guardian set grew from
+ * three to six, and their portraits were authored in-repo as plain SVG rather
+ * than exported from a design tool. They follow the same construction as the
+ * V2.2 three — a 200×200 square, one two-stop gradient for the body, a light
+ * face patch, dot eyes with a highlight, and one silhouette feature each
+ * (Echo's ears and ripples, Cluepaw's ears and magnifier, ByteBuddy's antenna
+ * and frame) so the six are still separable at a 28px selector tile.
  */
 export const GUARDIAN_ART: Record<string, ArtSlotSource> = {
   [GUARDIAN_VERIFOX]: `${SHIELDQUEST}/guardians/verifox-neutral.svg`,
+  [GUARDIAN_ECHO]: `${SHIELDQUEST}/guardians/echo-neutral.svg`,
+  [GUARDIAN_CLUEPAW]: `${SHIELDQUEST}/guardians/cluepaw-neutral.svg`,
+  [GUARDIAN_BYTEBUDDY]: `${SHIELDQUEST}/guardians/bytebuddy-neutral.svg`,
   [GUARDIAN_BEACON]: `${SHIELDQUEST}/guardians/beacon-neutral.svg`,
   [GUARDIAN_SHIELDFIN]: `${SHIELDQUEST}/guardians/shieldfin-neutral.svg`,
 };
@@ -121,10 +135,15 @@ export const NODE_KIND_ART: Record<NodeKind, ArtSlotSource> = {
   MINI_GAME: null, // not in the V2.2 export
   PEER_SHIELD: null, // not in the V2.2 export
   GUARDIAN_CHALLENGE: null, // not in the V2.2 export
+  GROUP_DECISION: null, // not in the V2.2 export
 };
 
 /** Mini-game badges, keyed by the mini-game id from `minigame-data.ts`. */
 export const MINI_GAME_BADGE_ART: Record<string, ArtSlotSource> = {
   "spot-the-warning-signs": null, // not in the V2.2 export
   "decode-the-clue": null, // not in the V2.2 export
+  "risk-or-safe": null, // authored after the V2.2 export
+  "clue-match": null, // authored after the V2.2 export
+  "who-can-help": null, // authored after the V2.2 export
+  "what-happens-next": null, // authored after the V2.2 export
 };
