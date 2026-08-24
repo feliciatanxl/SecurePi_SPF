@@ -478,7 +478,9 @@ export function MissionRunner({
       <div
         className={`sticky bottom-0 z-20 border-t border-line bg-surface/95 backdrop-blur ${
           desktopSplit
-            ? "xl:bottom-auto xl:top-5 xl:self-start xl:rounded-2xl xl:border xl:bg-surface xl:shadow-[0_18px_44px_-32px_rgba(11,37,69,0.55)]"
+            ? isResolved
+              ? "xl:static xl:rounded-2xl xl:border xl:bg-surface xl:shadow-[0_18px_44px_-32px_rgba(11,37,69,0.55)]"
+              : "xl:sticky xl:bottom-auto xl:top-5 xl:self-start xl:rounded-2xl xl:border xl:bg-surface xl:shadow-[0_18px_44px_-32px_rgba(11,37,69,0.55)]"
             : ""
         }`}
       >

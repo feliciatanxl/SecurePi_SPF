@@ -197,7 +197,7 @@ export function CityTrack({
        * and bottom of the board and pushing the roll control off the screen, and
        * the stage is centred so what gets cropped is scenery rather than route.
        */
-      className="thin-scroll board-camera relative flex min-h-[340px] w-full flex-1 overflow-x-auto overflow-y-hidden overscroll-x-contain xl:min-h-[248px]"
+      className="thin-scroll board-camera relative flex min-h-[340px] w-full flex-1 overflow-x-auto overflow-y-hidden overscroll-x-contain xl:min-h-[280px]"
       aria-label="ShieldQuest City camera. Pan horizontally to look ahead."
     >
       {/* Sizing box: the zoomed footprint, which is what the camera pans over. */}

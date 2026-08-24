@@ -68,7 +68,7 @@ export function AdminSidebar({
      * administrator reads down a long table — it sits under the fixed-height
      * header on a laptop and collapses to a scrollable strip below that.
      */
-    <aside className="shrink-0 border-b border-line bg-surface lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-60 lg:overflow-y-auto lg:border-b-0 lg:border-r">
+    <aside className="shrink-0 border-b border-line bg-surface lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-[272px] lg:overflow-y-auto lg:border-b-0 lg:border-r">
       <div className="hidden items-center gap-2.5 px-5 py-5 lg:flex">
         <span
           aria-hidden="true"
@@ -103,14 +103,14 @@ export function AdminSidebar({
                   }`}
                 >
                   <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  {label}
+                  <span className="min-w-0 flex-1 text-left">{label}</span>
                   {id === "review" && reviewCount > 0 && (
-                    <span className="ml-auto rounded-md bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-700 tabular-nums">
+                    <span className="ml-auto shrink-0 rounded-md bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-700 tabular-nums">
                       {reviewCount}
                     </span>
                   )}
                   {id === "youth" && youthCount > 0 && (
-                    <span className="ml-auto rounded-md bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-700 tabular-nums">
+                    <span className="ml-auto shrink-0 rounded-md bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-700 tabular-nums">
                       {youthCount}
                     </span>
                   )}

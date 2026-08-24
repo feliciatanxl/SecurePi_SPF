@@ -233,24 +233,24 @@ export function Onboarding() {
               nothing about you, and nothing you have to fill in.
             </p>
 
-            <ul className="mt-5 grid grid-cols-2 gap-2.5 lg:mt-7 lg:grid-cols-4 lg:gap-4">
+            <ul className="mt-5 grid grid-cols-2 items-stretch gap-2.5 lg:mt-7 lg:grid-cols-4 lg:gap-4">
               {PLAYER_TOKENS.map((token) => {
                 const active = token.id === tokenId;
                 return (
-                  <li key={token.id}>
+                  <li key={token.id} className="flex h-full flex-col">
                     <button
                       type="button"
                       onClick={() => setTokenId(token.id)}
                       aria-pressed={active}
-                      className={`flex min-h-[104px] w-full flex-col items-center justify-center gap-1.5 rounded-2xl border-2 px-2 py-3 transition lg:min-h-[228px] lg:gap-3 lg:py-5 ${
+                      className={`group flex h-full min-h-[104px] w-full flex-col items-center justify-between gap-1.5 rounded-2xl border-2 px-2 py-3 transition-all duration-200 lg:min-h-[228px] lg:gap-3 lg:py-5 ${
                         active
-                          ? "border-amber-400 bg-white/12"
+                          ? "border-amber-400 bg-white/12 shadow-[0_0_20px_-6px_rgba(242,174,51,0.4)]"
                           : "border-white/15 bg-white/6 hover:border-white/35"
                       }`}
                     >
                       <PlayerAvatar
                         tokenId={token.id}
-                        className="h-11 w-11 lg:h-[104px] lg:w-[104px]"
+                        className="h-11 w-11 transition-transform duration-200 group-hover:scale-105 lg:h-[104px] lg:w-[104px]"
                       />
                       <span className="text-[13px] font-extrabold uppercase tracking-wide lg:text-[16px]">
                         {token.name}
@@ -269,7 +269,7 @@ export function Onboarding() {
                       <span
                         /* Fixed height, so the check mark on the chosen card
                            cannot make it taller than the other three. */
-                        className={`inline-flex h-[18px] items-center gap-1 rounded-full px-2 text-[9.5px] font-extrabold uppercase tracking-[0.12em] lg:h-[24px] lg:text-[11px] ${
+                        className={`inline-flex h-[18px] items-center gap-1 rounded-full px-2 text-[9.5px] font-extrabold uppercase tracking-[0.12em] transition-all duration-200 lg:h-[24px] lg:text-[11px] ${
                           active
                             ? "bg-amber-400 text-navy-900"
                             : "text-navy-100/65"
@@ -322,7 +322,7 @@ export function Onboarding() {
               <button
                 type="button"
                 onClick={() => setStep((s) => s - 1)}
-                className="min-h-[44px] px-2 text-[13px] font-semibold text-navy-100 underline underline-offset-2 lg:text-[14px]"
+                className="inline-flex min-h-[44px] items-center px-2 text-[13px] font-semibold text-navy-100 underline underline-offset-2 lg:text-[14px]"
               >
                 Back
               </button>
@@ -330,7 +330,7 @@ export function Onboarding() {
               <Link
                 href="/join"
                 onClick={() => completeOnboarding(tokenId)}
-                className="min-h-[44px] px-2 py-2 text-[13px] font-semibold text-navy-100 underline underline-offset-2 lg:text-[14px]"
+                className="inline-flex min-h-[44px] items-center px-2 text-[13px] font-semibold text-navy-100 underline underline-offset-2 lg:text-[14px]"
               >
                 Join a session instead
               </Link>
@@ -338,7 +338,7 @@ export function Onboarding() {
             <button
               type="button"
               onClick={() => completeOnboarding(tokenId)}
-              className="min-h-[44px] px-2 text-[13px] font-semibold text-navy-100/80 underline underline-offset-2 lg:text-[14px]"
+              className="inline-flex min-h-[44px] items-center px-2 text-[13px] font-semibold text-navy-100/80 underline underline-offset-2 lg:text-[14px]"
             >
               Skip
             </button>
@@ -381,7 +381,7 @@ function VisualPane({
   className?: string;
 }) {
   return (
-    <div className={`lg:order-first ${className}`}>
+    <div className={`lg:order-first lg:self-center ${className}`}>
       <div className="rounded-2xl border border-white/12 bg-white/8 p-3.5 lg:rounded-[32px] lg:p-8">
         {children}
       </div>
@@ -422,7 +422,7 @@ function WelcomePanel() {
  */
 function DicePanel() {
   return (
-    <div className="lg:order-first">
+    <div className="lg:order-first lg:self-center">
       <p className="mt-4 flex items-start gap-2.5 rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-2.5 text-[13px] leading-relaxed lg:mt-0 lg:flex-col lg:items-start lg:gap-5 lg:rounded-[32px] lg:px-8 lg:py-9 lg:text-[16px]">
         <Die value={4} className="h-8 w-8 shrink-0 lg:h-24 lg:w-24" />
         <span>
@@ -474,13 +474,18 @@ function TokenPreviewPanel({ tokenId }: { tokenId: string }) {
       <p className="text-center text-[12px] font-bold uppercase tracking-[0.2em] text-amber-400">
         Your marker
       </p>
-      <PlayerAvatar
-        tokenId={tokenId}
-        className="mx-auto mt-6 h-[220px] w-[220px]"
-      />
-      <p className="mt-5 text-center text-[22px] font-extrabold uppercase tracking-tight">
-        {token?.name ?? "Explorer"}
-      </p>
+      <div
+        key={tokenId}
+        className="animate-[pop_0.22s_cubic-bezier(0.22,1,0.36,1)] motion-reduce:animate-none"
+      >
+        <PlayerAvatar
+          tokenId={tokenId}
+          className="mx-auto mt-6 h-[220px] w-[220px]"
+        />
+        <p className="mt-5 text-center text-[22px] font-extrabold uppercase tracking-tight">
+          {token?.name ?? "Explorer"}
+        </p>
+      </div>
       <p className="mt-1 text-center text-[14px] leading-relaxed text-navy-100">
         Cosmetic only. Every Explorer plays exactly the same game.
       </p>

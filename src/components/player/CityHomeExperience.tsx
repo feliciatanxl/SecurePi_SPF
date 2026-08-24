@@ -301,7 +301,7 @@ export function CityHomeExperience() {
       */}
       <section
         aria-labelledby="city-board"
-        className="city-board-frame relative mx-3 flex shrink-0 flex-col overflow-hidden rounded-[28px] border border-white/15 shadow-[0_18px_46px_-24px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.12)] md:mx-4 xl:mx-6 xl:min-h-0 xl:flex-[2_1_440px] 2xl:max-h-[60dvh]"
+        className="city-board-frame relative mx-3 flex shrink-0 flex-col overflow-hidden rounded-[28px] border border-white/15 shadow-[0_18px_46px_-24px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.12)] md:mx-4 xl:mx-6 xl:min-h-0 xl:flex-1 tall:xl:flex-[2_1_440px] 2xl:max-h-[60dvh]"
       >
         <div className="relative z-30 flex h-10 shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-navy-950/88 px-3.5 backdrop-blur-sm xl:h-11 xl:px-5">
           <h2
@@ -360,7 +360,7 @@ export function CityHomeExperience() {
         wide as the screen, but a roll control and four chapter cards stretched
         across 2560px stop being a group and become four unrelated corners.
       */}
-      <div className="flex shrink-0 flex-col justify-center space-y-2 px-3 pb-2.5 pt-2 xl:mx-auto xl:w-full xl:max-w-[1180px] xl:space-y-2.5 xl:px-6 xl:pb-3 xl:pt-3 tall:space-y-3 tall:pb-4 tall:pt-3.5 xl:grow 2xl:max-w-[1320px]">
+      <div className="flex shrink-0 flex-col justify-center space-y-2 px-3 pb-2.5 pt-2 xl:mx-auto xl:w-full xl:max-w-[1180px] xl:space-y-2.5 xl:px-6 xl:pb-3 xl:pt-3 tall:space-y-3 tall:pb-4 tall:pt-3.5 tall:xl:grow 2xl:max-w-[1320px]">
         <DiceRoller
           phase={turn.phase}
           value={turn.value}

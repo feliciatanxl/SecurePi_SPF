@@ -30,6 +30,7 @@ import {
 import { DistrictScene } from "@/components/player/DistrictArt";
 import { GuardianPlate } from "@/components/player/GuardianArt";
 import { DISTRICT_SKIN } from "@/components/player/districtSkin";
+import { PublicSectionNav } from "@/components/public/PublicSectionNav";
 import { MOCK_GUARDIANS } from "@/lib/api/mock-data";
 import { PEER_ROLES } from "@/lib/api/peer-roles-data";
 import { DISTRICT_CHAPTER } from "@/lib/api/world-data";
@@ -245,28 +246,7 @@ export default function ProjectShieldPage() {
             </span>
           </Link>
 
-          <nav aria-label="Public website" className="ml-auto hidden lg:block">
-            <ul className="flex items-center gap-1 text-[12px] font-bold text-white/75">
-              {[
-                ["About", "#about"],
-                ["How it works", "#how-it-works"],
-                ["Guardians", "#guardians"],
-                ["What it covers", "#coverage"],
-                ["Districts", "#districts"],
-                ["Evidence-informed", "#evidence"],
-                ["Responsible design", "#responsible-design"],
-              ].map(([label, href]) => (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    className="inline-flex min-h-11 items-center rounded-lg px-3 transition hover:bg-white/8 hover:text-white"
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <PublicSectionNav />
 
           {/*
             No call to action in the bar itself. The page already opens on
@@ -387,7 +367,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="why-it-matters" className="scroll-mt-24 bg-amber-50">
+        <section id="why-it-matters" className="scroll-mt-32 lg:scroll-mt-24 bg-amber-50">
           <div className="mx-auto grid max-w-[1180px] gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.86fr_1.14fr] lg:px-8 lg:py-20">
             <div>
               <SectionLabel>Why it exists</SectionLabel>
@@ -424,7 +404,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="about" className="scroll-mt-24">
+        <section id="about" className="scroll-mt-32 lg:scroll-mt-24">
           <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <div className="grid items-end gap-8 lg:grid-cols-[0.8fr_1.2fr]">
               <div>
@@ -443,7 +423,7 @@ export default function ProjectShieldPage() {
 
             <h3
               id="how-it-works"
-              className="mt-10 scroll-mt-24 text-[11px] font-extrabold uppercase tracking-[0.2em] text-civic-700"
+              className="mt-10 scroll-mt-32 lg:scroll-mt-24 text-[11px] font-extrabold uppercase tracking-[0.2em] text-civic-700"
             >
               The six-stage learning loop
             </h3>
@@ -483,7 +463,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="guardians" className="scroll-mt-24 bg-surface-sunk">
+        <section id="guardians" className="scroll-mt-32 lg:scroll-mt-24 bg-surface-sunk">
           <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <SectionLabel>The Guardians</SectionLabel>
             <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -502,27 +482,27 @@ export default function ProjectShieldPage() {
               {MOCK_GUARDIANS.map((guardian) => (
                 <li
                   key={guardian.id}
-                  className="flex items-start gap-3.5 rounded-3xl border border-line bg-white p-5 shadow-[0_18px_50px_-44px_rgba(11,37,69,0.8)]"
+                  className="flex h-full items-start gap-3.5 rounded-3xl border border-line bg-white p-5 shadow-[0_18px_50px_-44px_rgba(11,37,69,0.8)]"
                 >
                   <GuardianPlate
                     guardian={guardian}
                     className="h-16 w-16 shrink-0 rounded-2xl text-xl"
                   />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <h3 className="text-lg font-extrabold uppercase leading-tight tracking-wide text-navy-950">
                       {guardian.name}
                     </h3>
-                    <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[12px] font-bold text-civic-700">
+                    <p className="mt-0.5 text-[12.5px] font-bold text-civic-700">
                       {guardian.skill}
+                    </p>
+                    <p className="mt-1 flex items-center gap-1.5 text-[12px] font-semibold text-ink-soft">
                       <span
                         aria-hidden="true"
-                        className="grid h-4 w-4 place-items-center rounded bg-navy-900 text-[10px] font-extrabold text-white"
+                        className="grid h-4 w-4 shrink-0 place-items-center rounded bg-navy-900 text-[10px] font-extrabold text-white"
                       >
                         {COMPETENCY_LETTER[guardian.competency]}
                       </span>
-                      <span className="font-semibold text-ink-soft">
-                        {COMPETENCY_LABEL[guardian.competency]}
-                      </span>
+                      <span>{COMPETENCY_LABEL[guardian.competency]}</span>
                     </p>
                     <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
                       {guardian.description}
@@ -534,7 +514,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="coverage" className="scroll-mt-24">
+        <section id="coverage" className="scroll-mt-32 lg:scroll-mt-24">
           <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <SectionLabel>Scam and civic prevention scope</SectionLabel>
             <div className="mt-3 grid gap-8 lg:grid-cols-[0.82fr_1.18fr]">
@@ -579,7 +559,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="districts" className="scroll-mt-24 bg-navy-950 text-white">
+        <section id="districts" className="scroll-mt-32 lg:scroll-mt-24 bg-navy-950 text-white">
           <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <SectionLabel tone="light">Four districts</SectionLabel>
             <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -729,7 +709,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="audience" className="scroll-mt-24 bg-amber-50">
+        <section id="audience" className="scroll-mt-32 lg:scroll-mt-24 bg-amber-50">
           <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <SectionLabel>Adaptive by age band</SectionLabel>
             <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -867,7 +847,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="evidence" className="scroll-mt-24 bg-surface-sunk">
+        <section id="evidence" className="scroll-mt-32 lg:scroll-mt-24 bg-surface-sunk">
           <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <SectionLabel>Evidence-informed design</SectionLabel>
             <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -915,7 +895,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="responsible-design" className="scroll-mt-24 bg-teal-50">
+        <section id="responsible-design" className="scroll-mt-32 lg:scroll-mt-24 bg-teal-50">
           <div className="mx-auto grid max-w-[1180px] gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8 lg:py-20">
             <div>
               <SectionLabel>Responsible design</SectionLabel>
@@ -1095,7 +1075,7 @@ function FeatureCard({
       <p className="mt-5 text-[10px] font-extrabold uppercase tracking-[0.16em] text-ink-soft">
         {eyebrow}
       </p>
-      <h3 className="mt-1 text-lg font-black uppercase leading-tight tracking-wide text-navy-950">
+      <h3 className="mt-1 text-lg xl:text-[15px] 2xl:text-[17px] font-black uppercase leading-tight tracking-tight text-navy-950">
         {title}
       </h3>
       <p className="mt-3 text-[13px] leading-relaxed text-ink-muted">{body}</p>

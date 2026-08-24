@@ -51,12 +51,10 @@ export default function LearningCheckPage() {
       measure="medium"
     >
       {/*
-        Three cards, and the third is the honest one. Pre and post are playable;
-        the follow-up needs a participant to be re-engaged weeks after a
-        session, which a local prototype cannot do. Showing it as a planned card
-        keeps the measurement design visible without inventing a result for it.
+        Two equal-height check-in cards for the pre/post measurement loop,
+        followed by a clear secondary planned card for the 2–4 week follow-up.
       */}
-      <ul className="space-y-2.5 xl:grid xl:grid-cols-3 xl:items-start xl:gap-4 xl:space-y-0">
+      <ul className="grid gap-3.5 sm:grid-cols-2 lg:gap-4">
         {(["pre", "post"] as LearningCheckId[]).map((id) => {
           const meta = LEARNING_CHECK_META[id];
           const record = profile.learningChecks[id];
@@ -65,39 +63,41 @@ export default function LearningCheckPage() {
           return (
             <li
               key={id}
-              className={`rounded-2xl border p-3.5 ${
+              className={`flex h-full flex-col justify-between rounded-2xl border p-4 ${
                 record.completed
                   ? "border-leaf-200 bg-leaf-50"
                   : "border-line bg-surface"
               }`}
             >
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">
-                {meta.eyebrow}
-              </p>
-              <h2 className="mt-0.5 text-[17px] font-extrabold uppercase tracking-wide text-navy-900">
-                {meta.title}
-              </h2>
-              <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
-                {meta.intro}
-              </p>
+              <div className="flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">
+                  {meta.eyebrow}
+                </p>
+                <h2 className="mt-0.5 text-[17px] font-extrabold uppercase tracking-wide text-navy-900">
+                  {meta.title}
+                </h2>
+                <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
+                  {meta.intro}
+                </p>
 
-              {record.completed ? (
-                <p className="mt-2.5 flex items-center gap-1.5 text-[13px] font-bold text-leaf-700">
-                  <Check className="h-4 w-4" strokeWidth={3} aria-hidden="true" />
-                  Completed — {record.responses.length} responses recorded
-                </p>
-              ) : blocked ? (
-                <p className="mt-2.5 flex items-center gap-1.5 text-[13px] font-semibold text-ink-soft">
-                  <Lock className="h-3.5 w-3.5" aria-hidden="true" />
-                  Available after the check-in
-                </p>
-              ) : null}
+                {record.completed ? (
+                  <p className="mt-2.5 flex items-center gap-1.5 text-[13px] font-bold text-leaf-700">
+                    <Check className="h-4 w-4" strokeWidth={3} aria-hidden="true" />
+                    Completed — {record.responses.length} responses recorded
+                  </p>
+                ) : blocked ? (
+                  <p className="mt-2.5 flex items-center gap-1.5 text-[13px] font-semibold text-ink-soft">
+                    <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+                    Available after the check-in
+                  </p>
+                ) : null}
+              </div>
 
               <button
                 type="button"
                 disabled={blocked}
                 onClick={() => setRunning(id)}
-                className="mt-3 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-civic-600 px-4 text-[14px] font-extrabold text-white transition hover:bg-civic-700 disabled:cursor-not-allowed disabled:bg-surface-sunk disabled:text-ink-soft"
+                className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-civic-600 px-4 text-[14px] font-extrabold text-white transition hover:bg-civic-700 disabled:cursor-not-allowed disabled:bg-surface-sunk disabled:text-ink-soft"
               >
                 <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
                 {record.completed ? "Take it again" : "Start"}
@@ -105,31 +105,31 @@ export default function LearningCheckPage() {
             </li>
           );
         })}
-
-        <li className="rounded-2xl border border-dashed border-line-strong bg-surface-sunk p-3.5">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">
-            2–4 weeks after the session
-          </p>
-          <h2 className="mt-0.5 text-[17px] font-extrabold uppercase tracking-wide text-navy-900">
-            Follow-up check
-          </h2>
-          <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
-            The same idea again, weeks later, to see whether what you noticed in
-            the session stayed with you.
-          </p>
-
-          <p className="mt-2.5 flex items-center gap-1.5 text-[13px] font-bold text-ink-soft">
-            <CalendarClock className="h-4 w-4" aria-hidden="true" />
-            Pilot feature — not available in this demonstration
-          </p>
-
-          <p className="mt-3 rounded-xl border border-line bg-surface px-3 py-2.5 text-[12px] leading-relaxed text-ink-muted">
-            Retention is measured during the facilitated pilot, where
-            participants can be re-engaged after a few weeks. Nothing here is
-            scored, and no retention result is shown in this build.
-          </p>
-        </li>
       </ul>
+
+      <div className="mt-3.5 rounded-2xl border border-dashed border-line-strong bg-surface-sunk p-4 lg:mt-4">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">
+          2–4 weeks after the session
+        </p>
+        <h2 className="mt-0.5 text-[17px] font-extrabold uppercase tracking-wide text-navy-900">
+          Follow-up check
+        </h2>
+        <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
+          The same idea again, weeks later, to see whether what you noticed in
+          the session stayed with you.
+        </p>
+
+        <p className="mt-2.5 flex items-center gap-1.5 text-[13px] font-bold text-ink-soft">
+          <CalendarClock className="h-4 w-4" aria-hidden="true" />
+          Pilot feature — not available in this demonstration
+        </p>
+
+        <p className="mt-3 rounded-xl border border-line bg-surface px-3 py-2.5 text-[12px] leading-relaxed text-ink-muted">
+          Retention is measured during the facilitated pilot, where
+          participants can be re-engaged after a few weeks. Nothing here is
+          scored, and no retention result is shown in this build.
+        </p>
+      </div>
 
       <p className="rounded-xl border border-line bg-surface-sunk px-3.5 py-3 text-[12px] leading-relaxed text-ink-muted">
         These checks are never scored and never turned into a rating of you.
