@@ -141,7 +141,7 @@ export interface ScenarioChoice {
     deltas: Deltas;
     /** Toast headline, e.g. "Payment received". */
     flashTitle: string;
-    /** Toast figure, e.g. "+300 Coins". */
+    /** Toast figure, e.g. "+200 Coins". */
     flashAmount?: string;
   };
   /** Present only when the true cost is deferred. */
@@ -210,6 +210,15 @@ export interface PlayerProfile {
   missionsCompleted: number;
   streakDays: number;
   currentGuardianId: string;
+  /**
+   * Guardians the player has actually met, in the order they were met.
+   *
+   * A Guardian is met the first time the player completes an activity that
+   * demonstrates its S.H.I.E.L.D. competency — never bought, never rolled for
+   * and never handed over at the start. Everything after that first meeting is
+   * practice, recorded in `guardianProgress`.
+   */
+  metGuardians: string[];
   /** Guardian id → decisions completed toward the next level. */
   guardianProgress: Record<string, number>;
   /**
@@ -249,6 +258,18 @@ export interface PlayerProfile {
    * reloading mid-run can never mint tokens twice.
    */
   tokenGrants: string[];
+  /**
+   * Guardian progression grant keys already consumed, e.g.
+   * `guardian:nd_digi_group_chat_job:gd_beacon`.
+   *
+   * The same shape and the same purpose as `tokenGrants`, for the other thing
+   * an activity pays out. Keyed by *activity and Guardian* rather than by
+   * Guardian alone, because every LEAD activity should be able to progress
+   * Beacon once — what must never happen is one activity progressing Beacon
+   * twice. Persisted, so a page reload cannot re-open a grant the way a
+   * component-local guard could.
+   */
+  guardianGrants: string[];
   unlockedRewards: string[];
   /** Slot → reward id. A slot with no entry is wearing nothing. */
   equippedRewards: Partial<Record<RewardSlot, string>>;
@@ -266,6 +287,18 @@ export interface PlayerProfile {
   learningChecks: Record<LearningCheckId, LearningCheckRecord>;
 }
 
+/**
+ * What one completion actually did to its Guardian.
+ *
+ *  - MET:        first qualifying completion; the Guardian was met.
+ *  - PROGRESSED: a genuine +1 toward the Guardian's next level.
+ *
+ * `null` alongside this type means nothing was granted — the activity's
+ * Guardian grant was already consumed and the run was practice. Result screens
+ * read this rather than assuming a completion always pays.
+ */
+export type GuardianAward = "MET" | "PROGRESSED";
+
 export interface Guardian {
   id: string;
   name: string;
@@ -276,7 +309,15 @@ export interface Guardian {
   /** Qualifying decisions needed to reach the next level. */
   target: number;
   description: string;
-  unlocked: boolean;
+  /**
+   * What the player is told when they first meet this Guardian. One line, in
+   * the Guardian's own voice.
+   *
+   * There is deliberately no `unlocked` flag here. Whether a Guardian has been
+   * met is player state, not roster data — it lives in
+   * `PlayerProfile.metGuardians`, so the roster can always list all six.
+   */
+  greeting: string;
 }
 
 /** What the client sends when a choice is committed. */
@@ -393,6 +434,79 @@ export interface PortalSummary {
 }
 
 export type InsightKind = "SUPPORT" | "IMPROVED" | "PEER_SHIELD";
+
+/**
+ * A facilitated squad role, rotated between participants during a group round.
+ *
+ * The roles exist to spread participation. Left alone, a group question is
+ * answered by whoever speaks first and agreed with by everyone else; giving
+ * each person a distinct job to do means three different readings of the same
+ * situation reach the table before anybody has to agree with anything.
+ *
+ * They are a *facilitation* device, not a game mechanic. Nothing is scored, no
+ * role is better than another, and none of them changes what the prototype
+ * awards.
+ */
+export interface PeerRole {
+  id: string;
+  /** e.g. "Evidence Checker". */
+  name: string;
+  /** One line on what this person is watching for. */
+  purpose: string;
+  /** The question this role brings to the group, in the role's own voice. */
+  prompt: string;
+  /** A short instruction shown on the role card itself. */
+  brief: string;
+}
+
+/**
+ * One aggregate engagement figure for the prototype's Engagement panel.
+ *
+ * Aggregate only, and deliberately so. Engagement is a property of the
+ * *programme* — did sessions get finished, did anyone come back — and the
+ * moment it is attached to a participant it becomes a rating of a young person,
+ * which nothing in Project SHIELD produces. There is no per-participant
+ * engagement score anywhere in this build and there is no field here that could
+ * carry one.
+ */
+export interface EngagementMetric {
+  id: string;
+  /** e.g. "Session completion". */
+  label: string;
+  /** Pre-formatted, e.g. "84%" or "18m 40s". */
+  value: string;
+  /** What the figure counts, in one line. */
+  note: string;
+}
+
+/**
+ * How honestly a KPI can be spoken about from this prototype.
+ *
+ *  - DEMONSTRATED: the prototype contains the mechanism that would produce it.
+ *  - SIMULATED:    figures exist, and they are authored demonstration values.
+ *  - PLANNED:      it needs the funded pilot; this build cannot measure it.
+ */
+export type KpiStatus = "DEMONSTRATED" | "SIMULATED" | "PLANNED";
+
+export const KPI_STATUS_LABEL: Record<KpiStatus, string> = {
+  DEMONSTRATED: "Demonstrated in prototype",
+  SIMULATED: "Simulated analytics",
+  PLANNED: "Planned for pilot",
+};
+
+/** One line of the six-KPI pilot evaluation framework. */
+export interface PilotKpi {
+  id: string;
+  /** 1–6, as numbered in the proposal. */
+  number: number;
+  /** e.g. "Risk Recognition". */
+  name: string;
+  /** What the KPI is asking, in one line. */
+  measures: string;
+  /** What in this build stands behind it, or how the pilot would measure it. */
+  method: string;
+  status: KpiStatus;
+}
 
 export interface Insight {
   id: string;
@@ -712,7 +826,7 @@ export interface PredictRound {
   id: string;
   /** What just happened, and what the person got out of it. */
   setup: string;
-  /** What they were given at the time, e.g. "+S$300 right away". */
+  /** What they were given at the time, e.g. "+S$200 right away". */
   immediate: string;
   prompt: string;
   options: string[];

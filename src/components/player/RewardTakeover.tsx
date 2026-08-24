@@ -29,7 +29,7 @@ export function RewardTakeover({
   onContinue,
 }: {
   open: boolean;
-  /** The figure itself, e.g. "+300". */
+  /** The figure itself, e.g. "+200". */
   amount: string;
   /** What the figure is, e.g. "Coins". */
   unit: string;

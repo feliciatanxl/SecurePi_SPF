@@ -13,7 +13,7 @@ import type { Achievement, Reward } from "@/lib/types";
  *
  * ## Shield Tokens are not money
  *
- * Coins are virtual cash *inside* a scenario — the S$300 an offer dangles in
+ * Coins are virtual cash *inside* a scenario — the S$200 an offer dangles in
  * front of you is part of the lesson, and it is supposed to feel good before it
  * costs you. Shield Tokens are the opposite kind of thing: a record of learning
  * participation, spent only on expression. They are kept apart deliberately.

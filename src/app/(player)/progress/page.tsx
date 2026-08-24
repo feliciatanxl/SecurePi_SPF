@@ -211,25 +211,34 @@ export default function ProgressPage() {
             Guardians
           </h2>
           <ul className="space-y-1.5">
-            {guardianStandings.map(({ guardian, level, progress: p, target }) => (
+            {guardianStandings.map(({ guardian, met, level, progress: p, target }) => (
               <li
                 key={guardian.id}
-                className="flex items-center gap-2.5 rounded-xl border border-line bg-surface px-2.5 py-2"
+                className={`flex items-center gap-2.5 rounded-xl border px-2.5 py-2 ${
+                  met
+                    ? "border-line bg-surface"
+                    : "border-dashed border-line-strong bg-surface-sunk"
+                }`}
               >
                 <GuardianPlate
                   guardian={guardian}
-                  className="h-8 w-8 rounded-lg text-[13px]"
+                  className={`h-8 w-8 rounded-lg text-[13px] ${
+                    met ? "" : "opacity-55 saturate-50"
+                  }`}
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-extrabold uppercase tracking-wide text-navy-900">
                     {guardian.name}
                   </span>
+                  {/* State in words, so it survives greyscale and high contrast. */}
                   <span className="block text-[11px] font-semibold text-ink-soft">
-                    {guardian.skill} · Level {level}
+                    {met
+                      ? `${guardian.skill} · Level ${level}`
+                      : `${guardian.skill} · Not yet met`}
                   </span>
                 </span>
                 <span className="shrink-0 text-[13px] font-extrabold tabular-nums text-navy-900">
-                  {p}/{target}
+                  {met ? `${p}/${target}` : "—"}
                 </span>
               </li>
             ))}

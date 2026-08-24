@@ -1,7 +1,12 @@
 import { Check, Lightbulb, MessageSquareQuote, ShieldAlert } from "lucide-react";
 import { SectionLabel, SkillBadge } from "@/components/ui/Badges";
 import { GuardianProgressNote } from "@/components/player/GuardianCard";
-import type { ChoiceOutcome, DecisionDebrief, Deltas } from "@/lib/types";
+import type {
+  ChoiceOutcome,
+  DecisionDebrief,
+  Deltas,
+  GuardianAward,
+} from "@/lib/types";
 
 const OUTCOME_STYLE: Record<
   ChoiceOutcome,
@@ -45,12 +50,15 @@ export function DebriefCard({
   debrief,
   deltas,
   guardianName,
+  guardianAward,
   skillCaption = "Skill practised",
 }: {
   outcome: ChoiceOutcome;
   debrief: DecisionDebrief;
   deltas: Deltas;
   guardianName?: string;
+  /** What this decision granted its Guardian. `null` when already paid. */
+  guardianAward: GuardianAward | null;
   skillCaption?: string;
 }) {
   const { wrap, head, Icon } = OUTCOME_STYLE[outcome];
@@ -134,7 +142,9 @@ export function DebriefCard({
 
       <div className="flex flex-wrap items-center gap-2">
         <SkillBadge competency={debrief.competency} caption={skillCaption} />
-        {guardianName && <GuardianProgressNote name={guardianName} />}
+        {guardianName && (
+          <GuardianProgressNote name={guardianName} award={guardianAward} />
+        )}
       </div>
     </section>
   );

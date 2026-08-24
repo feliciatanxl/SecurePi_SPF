@@ -156,7 +156,7 @@ const DIGI_NODES: MissionNode[] = [
     districtId: "digi",
     kind: "SCENARIO",
     title: MULE_ENCOUNTER.title,
-    summary: "S$300 to let money pass through your account. No risk, they say.",
+    summary: "S$200 to let money pass through your account. No risk, they say.",
     primaryCompetency: MULE_ENCOUNTER.primaryCompetency,
     guardianId: GUARDIAN_VERIFOX,
     estimatedMinutes: MULE_ENCOUNTER.estimatedMinutes,

@@ -46,6 +46,8 @@ export function useShieldProgress() {
 
     const guardianStandings = guardians.map((g) => ({
       guardian: g,
+      /** True once the player has demonstrated this Guardian's competency. */
+      met: profile.metGuardians.includes(g.id),
       cumulative: profile.guardianProgress[g.id] ?? 0,
       ...guardianStanding(g, profile.guardianProgress[g.id] ?? 0),
     }));
@@ -76,7 +78,14 @@ export function useShieldProgress() {
       badges,
       progress,
     };
-  }, [districts, guardians, profile.guardianProgress, profile.districtBadges, progress]);
+  }, [
+    districts,
+    guardians,
+    profile.guardianProgress,
+    profile.metGuardians,
+    profile.districtBadges,
+    progress,
+  ]);
 }
 
 function achievementProgress(

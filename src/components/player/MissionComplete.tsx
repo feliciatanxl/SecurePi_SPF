@@ -4,7 +4,13 @@ import Link from "next/link";
 import { ArrowRight, BookMarked, BookOpen, Check, Sparkles } from "lucide-react";
 import { GuardianPlate } from "@/components/player/GuardianArt";
 import { Modal } from "@/components/ui/Modal";
-import { COMPETENCY_LABEL, COMPETENCY_LETTER, type Competency, type Guardian } from "@/lib/types";
+import {
+  COMPETENCY_LABEL,
+  COMPETENCY_LETTER,
+  type Competency,
+  type Guardian,
+  type GuardianAward,
+} from "@/lib/types";
 import { GUARDIAN_DIALOGUE } from "@/lib/api/world-data";
 
 /**
@@ -28,7 +34,7 @@ export function MissionComplete({
   /** Clues the player tagged, out of those available. Omitted when there are none. */
   signals,
   tokensAwarded,
-  guardianAdvanced,
+  guardianAward,
   casebookDiscovered = false,
   onViewLearning,
   onClose,
@@ -39,7 +45,11 @@ export function MissionComplete({
   guardian?: Guardian;
   signals?: { found: number; total: number };
   tokensAwarded: number;
-  guardianAdvanced: boolean;
+  /**
+   * What this run granted the Guardian. `null` when the activity had already
+   * paid its Guardian progression — a replay is practice, not another +1.
+   */
+  guardianAward: GuardianAward | null;
   casebookDiscovered?: boolean;
   onViewLearning: () => void;
   onClose: () => void;
@@ -125,14 +135,26 @@ export function MissionComplete({
           {guardian && (
             <Row
               tone="civic"
-              label={`${guardian.name} progress`}
+              label={
+                guardianAward === "MET"
+                  ? `${guardian.name} met`
+                  : `${guardian.name} progress`
+              }
               badge={
                 <GuardianPlate
                   guardian={guardian}
                   className="h-5 w-5 rounded text-[10px]"
                 />
               }
-              value={<span>{guardianAdvanced ? "+1" : "No change"}</span>}
+              value={
+                <span>
+                  {guardianAward === "MET"
+                    ? "First meeting"
+                    : guardianAward === "PROGRESSED"
+                      ? "+1"
+                      : "Already earned"}
+                </span>
+              }
             />
           )}
 

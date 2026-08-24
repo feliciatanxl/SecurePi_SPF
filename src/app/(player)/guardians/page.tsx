@@ -42,8 +42,17 @@ export default function GuardiansPage() {
     : guardians[0].id;
   const [selectedId, setSelectedId] = useState(currentId);
 
+  const isMet = (id: string) => profile.metGuardians.includes(id);
+  const metCount = guardians.filter((g) => isMet(g.id)).length;
+
+  /*
+   * Only met Guardians contribute. A stored session from before Guardians had
+   * to be earned can still carry a progress figure for a Guardian the player
+   * has not met, and counting it here would put practice on the board that
+   * never happened.
+   */
   const totalPractised = guardians.reduce(
-    (sum, g) => sum + (profile.guardianProgress[g.id] ?? 0),
+    (sum, g) => sum + (isMet(g.id) ? (profile.guardianProgress[g.id] ?? 0) : 0),
     0,
   );
 
@@ -62,16 +71,25 @@ export default function GuardiansPage() {
               Skills you are building
             </h1>
           </div>
-          <p className="shrink-0 rounded-lg bg-white/10 px-2.5 py-1 text-right text-[11px] font-semibold leading-tight">
-            <span className="block text-[15px] font-extrabold tabular-nums text-amber-400">
-              {totalPractised}
-            </span>
-            <span className="text-navy-100">practised</span>
-          </p>
+          <div className="flex shrink-0 gap-1.5">
+            <p className="rounded-lg bg-white/10 px-2.5 py-1 text-right text-[11px] font-semibold leading-tight">
+              <span className="block text-[15px] font-extrabold tabular-nums text-amber-400">
+                {metCount}/{guardians.length}
+              </span>
+              <span className="text-navy-100">met</span>
+            </p>
+            <p className="rounded-lg bg-white/10 px-2.5 py-1 text-right text-[11px] font-semibold leading-tight">
+              <span className="block text-[15px] font-extrabold tabular-nums text-amber-400">
+                {totalPractised}
+              </span>
+              <span className="text-navy-100">practised</span>
+            </p>
+          </div>
         </div>
             <p className="mt-1.5 text-[12px] leading-snug text-navy-100 xl:text-[13.5px]">
-              A Guardian grows when you practise its skill in a mission — never
-              when you spend anything.
+              You meet a Guardian by completing an activity that practises its
+              skill, and it grows as you keep practising — never by spending
+              anything, and never by chance.
             </p>
           </div>
         </header>
@@ -91,6 +109,7 @@ export default function GuardiansPage() {
             className="grid grid-cols-3 gap-1.5"
           >
             {guardians.map((g) => {
+              const met = isMet(g.id);
               const { level } = guardianStanding(
                 g,
                 profile.guardianProgress[g.id] ?? 0,
@@ -111,7 +130,9 @@ export default function GuardiansPage() {
                   >
                     <GuardianPlate
                       guardian={g}
-                      className="h-7 w-7 rounded-lg text-[12px]"
+                      className={`h-7 w-7 rounded-lg text-[12px] ${
+                        met ? "" : "opacity-55 saturate-50"
+                      }`}
                       tone={active ? "amber" : "navy"}
                     />
                     <span
@@ -121,10 +142,18 @@ export default function GuardiansPage() {
                     >
                       {g.name}
                     </span>
+                    {/* Never a level for a Guardian that has not been met —
+                        "Lv 1" would read as owned-but-empty. */}
                     <span className="text-[10px] font-bold tabular-nums text-ink-soft">
-                      Lv {level}
-                      {g.id === currentId && (
-                        <span className="text-amber-700"> · current</span>
+                      {met ? (
+                        <>
+                          Lv {level}
+                          {g.id === currentId && (
+                            <span className="text-amber-700"> · current</span>
+                          )}
+                        </>
+                      ) : (
+                        "Not yet met"
                       )}
                     </span>
                   </button>
@@ -151,6 +180,7 @@ export default function GuardiansPage() {
               <GuardianCard
                 guardian={g}
                 cumulative={profile.guardianProgress[g.id] ?? 0}
+                met={isMet(g.id)}
                 featured={g.id === currentId}
                 aura={auraReward?.guardianId === g.id}
               />

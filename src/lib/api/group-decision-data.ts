@@ -59,7 +59,7 @@ export const GROUP_CHAT_JOB: GroupDecisionScenario = {
       id: "gd4",
       author: "them",
       displayName: "Marcus",
-      body: "lol his problem la. he said got $300 what",
+      body: "lol his problem la. he said got $200 what",
     },
     {
       id: "gd5",

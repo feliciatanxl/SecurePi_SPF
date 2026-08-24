@@ -85,10 +85,11 @@ export function MissionRunner({
     result,
     burst,
     consequence,
+    guardianAward,
     choose,
     replay,
     isResolved,
-  } = useScenarioRun(scenarioId);
+  } = useScenarioRun(scenarioId, activityId);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   /*
@@ -459,6 +460,7 @@ export function MissionRunner({
               debrief={result.debrief}
               deltas={result.deltas}
               guardianName={guardianName}
+              guardianAward={guardianAward}
               skillCaption={skillCaption}
             />
           </div>
@@ -568,7 +570,7 @@ export function MissionRunner({
         The takeover is the debrief for the delayed path, so it hands over to
         Mission Complete rather than straight back to the district — and it can
         be reopened from there, because a player who wants to re-read why the
-        S$300 cost them should never have to replay the mission to do it.
+        S$200 cost them should never have to replay the mission to do it.
       */}
       <ConsequenceTakeover
         consequence={takeoverDismissed ? null : consequence}
@@ -590,7 +592,7 @@ export function MissionRunner({
         guardian={guardian}
         signals={signals}
         tokensAwarded={tokensAwarded}
-        guardianAdvanced={Boolean(result?.debrief.guardianId)}
+        guardianAward={guardianAward}
         casebookDiscovered={casebookDiscovered}
         onViewLearning={() => {
           setCompleteOpen(false);

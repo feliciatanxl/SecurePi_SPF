@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, ClipboardCheck, Lock } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarClock,
+  Check,
+  ClipboardCheck,
+  Lock,
+} from "lucide-react";
 import { HubPage } from "@/components/player/HubPage";
 import {
   LEARNING_CHECK_META,
@@ -41,11 +47,16 @@ export default function LearningCheckPage() {
     <HubPage
       eyebrow="Shield Central"
       title="Learning check"
-      intro="Two short, ungraded check-ins used in facilitated pilots."
+      intro="Short, ungraded check-ins used in facilitated pilots."
       measure="medium"
     >
-      {/* A pair, so they read as a pair once there is room for two columns. */}
-      <ul className="space-y-2.5 xl:grid xl:grid-cols-2 xl:items-start xl:gap-4 xl:space-y-0">
+      {/*
+        Three cards, and the third is the honest one. Pre and post are playable;
+        the follow-up needs a participant to be re-engaged weeks after a
+        session, which a local prototype cannot do. Showing it as a planned card
+        keeps the measurement design visible without inventing a result for it.
+      */}
+      <ul className="space-y-2.5 xl:grid xl:grid-cols-3 xl:items-start xl:gap-4 xl:space-y-0">
         {(["pre", "post"] as LearningCheckId[]).map((id) => {
           const meta = LEARNING_CHECK_META[id];
           const record = profile.learningChecks[id];
@@ -94,6 +105,30 @@ export default function LearningCheckPage() {
             </li>
           );
         })}
+
+        <li className="rounded-2xl border border-dashed border-line-strong bg-surface-sunk p-3.5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">
+            2–4 weeks after the session
+          </p>
+          <h2 className="mt-0.5 text-[17px] font-extrabold uppercase tracking-wide text-navy-900">
+            Follow-up check
+          </h2>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
+            The same idea again, weeks later, to see whether what you noticed in
+            the session stayed with you.
+          </p>
+
+          <p className="mt-2.5 flex items-center gap-1.5 text-[13px] font-bold text-ink-soft">
+            <CalendarClock className="h-4 w-4" aria-hidden="true" />
+            Pilot feature — not available in this demonstration
+          </p>
+
+          <p className="mt-3 rounded-xl border border-line bg-surface px-3 py-2.5 text-[12px] leading-relaxed text-ink-muted">
+            Retention is measured during the facilitated pilot, where
+            participants can be re-engaged after a few weeks. Nothing here is
+            scored, and no retention result is shown in this build.
+          </p>
+        </li>
       </ul>
 
       <p className="rounded-xl border border-line bg-surface-sunk px-3.5 py-3 text-[12px] leading-relaxed text-ink-muted">

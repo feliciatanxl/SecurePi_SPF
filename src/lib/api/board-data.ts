@@ -92,7 +92,7 @@ export const SITUATION_CARDS: SituationCard[] = [
     id: CARD_EASY_MONEY,
     title: "Easy Money",
     blurb:
-      "Someone offers you S$300 to receive and forward money through your account.",
+      "Someone offers you S$200 to receive and forward money through your account.",
     competency: "SPOT",
     guardianId: GUARDIAN_VERIFOX,
     nodeId: NODE_EASY_MONEY,

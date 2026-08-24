@@ -7,7 +7,7 @@ import { NODE_EASY_MONEY } from "@/lib/api/world-data";
 /**
  * View 2 — Scenario Encounter.
  *
- * The player is the target. "Accept" pays +300 Coins instantly; the delayed
+ * The player is the target. "Accept" pays +200 Coins instantly; the delayed
  * consequence lands three seconds later.
  */
 export default function PlayPage() {

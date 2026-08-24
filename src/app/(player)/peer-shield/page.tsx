@@ -24,7 +24,7 @@ export default function PeerShieldPage() {
       friend={{
         name: "Jayden",
         quote:
-          "Bro this guy says he'll pay me $300. I just need to receive the money first.",
+          "Bro this guy says he'll pay me $200. I just need to receive the money first.",
       }}
       modeBadge="Peer Shield"
       note="In Peer Shield you are not the target. You are practising how to help a friend step back from a risky decision — without confronting anyone or putting yourself in the middle of it."

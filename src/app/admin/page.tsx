@@ -15,8 +15,10 @@ import {
 import { AdminNeedsAttention } from "@/components/admin/AdminNeedsAttention";
 import { AdminRecentContent } from "@/components/admin/AdminRecentContent";
 import { AdminReviewQueue } from "@/components/admin/AdminReviewQueue";
+import { EngagementPanel } from "@/components/admin/EngagementPanel";
 import { FlashMissionPanel } from "@/components/admin/FlashMissionPanel";
 import { GroupDecisionSignalPanel } from "@/components/admin/GroupDecisionSignals";
+import { PilotEvaluationFramework } from "@/components/admin/PilotEvaluationFramework";
 import { ScenarioDetailPanel } from "@/components/admin/ScenarioDetailPanel";
 import {
   applyScenarioFilters,
@@ -34,6 +36,11 @@ import { YouthMissionQueue } from "@/components/admin/YouthMissionQueue";
 import { Modal } from "@/components/ui/Modal";
 import { api } from "@/lib/api/client";
 import { clearDemoData } from "@/lib/state/demoStorage";
+import {
+  ENGAGEMENT_METRICS,
+  PILOT_KPIS,
+  RETENTION_LIMITATION,
+} from "@/lib/api/evaluation-data";
 import { SAFEGUARDS } from "@/lib/api/mock-data";
 import { TARGET_GROUPS } from "@/lib/types";
 import type {
@@ -558,6 +565,42 @@ export default function AdminPage() {
                       is no live multiplayer session behind it. Question-level
                       and aggregate only: no individual response, no participant
                       history and no risk score is produced or displayed.
+                    </SimulatedDataNote>
+                  </Section>
+
+                  <Section
+                    title="Engagement"
+                    description="KPI 6. Whether the experience is completed, returned to and stayed with — across the programme, never per participant."
+                  >
+                    <EngagementPanel metrics={ENGAGEMENT_METRICS} />
+                    <SimulatedDataNote>
+                      Simulated prototype data. These are authored demonstration
+                      values, not pilot results — this build has no telemetry
+                      pipeline, no cohort and no participant records behind them.
+                      No engagement score is produced for any individual young
+                      person.
+                    </SimulatedDataNote>
+                  </Section>
+
+                  <Section
+                    title="Pilot evaluation framework"
+                    description="The six KPIs the funded pilot would measure, and what this prototype can honestly show against each one."
+                  >
+                    <PilotEvaluationFramework kpis={PILOT_KPIS} />
+                    <div className="rounded-xl border border-line-strong bg-surface-sunk p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
+                        KPI 5 · Retention — planned for pilot
+                      </p>
+                      <p className="mt-1.5 max-w-[92ch] text-[13px] leading-relaxed text-ink-muted">
+                        {RETENTION_LIMITATION}
+                      </p>
+                    </div>
+                    <SimulatedDataNote>
+                      An evaluation plan, not a set of results. ShieldQuest has
+                      not completed the funded youth pilot, so no measured change
+                      in risk recognition, decision accuracy, consequence
+                      awareness or peer intervention confidence is claimed
+                      anywhere in this build.
                     </SimulatedDataNote>
                   </Section>
 

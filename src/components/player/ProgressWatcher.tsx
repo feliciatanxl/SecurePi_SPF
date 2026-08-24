@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DistrictComplete } from "@/components/player/DistrictComplete";
+import { GuardianMet } from "@/components/player/GuardianMet";
 import { DISTRICT_BADGES } from "@/lib/api/board-data";
 import { TOKEN_AWARD, tokenKey } from "@/lib/api/rewards-data";
 import { useShieldProgress } from "@/lib/hooks/useShieldProgress";
@@ -22,7 +23,12 @@ import type { Competency, DistrictId } from "@/lib/types";
  * render cannot pay twice. Neither depends on the dice, on speed, or on how
  * anybody else is doing.
  *
- * Renders nothing except the District Complete milestone when one is crossed.
+ * It also renders the Guardian first-meeting moment. Meeting a Guardian can be
+ * triggered by a scenario decision, a mini-game or a facilitated group question,
+ * so like the milestones above it belongs here rather than in any one of them —
+ * and putting it here means every activity gets the same moment for free.
+ *
+ * Renders nothing except those two takeovers when one is due.
  */
 export function ProgressWatcher() {
   const {
@@ -32,6 +38,8 @@ export function ProgressWatcher() {
     awardTokens,
     recordAchievement,
     recordDistrictBadge,
+    pendingGuardianMetId,
+    acknowledgeGuardianMet,
   } = usePlayer();
   const { districts } = useWorld();
   const { achievements, skillCounts } = useShieldProgress();
@@ -104,6 +112,21 @@ export function ProgressWatcher() {
   const guardian = guardianId
     ? guardians.find((g) => g.id === guardianId)
     : undefined;
+
+  /*
+   * One takeover at a time, and the meeting goes first. Finishing the last
+   * activity in a district can meet a Guardian and clear the district in the
+   * same commit; stacking both would bury the introduction under the badge.
+   */
+  const metGuardian = pendingGuardianMetId
+    ? (guardians.find((g) => g.id === pendingGuardianMetId) ?? null)
+    : null;
+
+  if (metGuardian) {
+    return (
+      <GuardianMet guardian={metGuardian} onContinue={acknowledgeGuardianMet} />
+    );
+  }
 
   return (
     <DistrictComplete

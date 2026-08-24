@@ -47,6 +47,12 @@ export const GUARDIAN_SHIELDFIN = "gd_shieldfin";
  *   EVALUATE → ByteBuddy  · Cyber Hygiene
  *   LEAD     → Beacon     · Safe Reporting
  *   DEFEND   → Shieldfin  · Peer Support
+ *
+ * This is the roster, not a player's collection. All six are always listed —
+ * on the public site, and in the app — because the roster explains the skill
+ * system. Whether a player has *met* a Guardian is player state
+ * (`PlayerProfile.metGuardians`), earned by demonstrating the matching
+ * competency, and it is never rolled for, bought or granted up front.
  */
 export const MOCK_GUARDIANS: Guardian[] = [
   {
@@ -58,7 +64,7 @@ export const MOCK_GUARDIANS: Guardian[] = [
     target: 6,
     description:
       "Strengthens when you slow down and check who you are really dealing with.",
-    unlocked: true,
+    greeting: "Nobody who is telling the truth minds being checked.",
   },
   {
     id: GUARDIAN_ECHO,
@@ -69,7 +75,7 @@ export const MOCK_GUARDIANS: Guardian[] = [
     target: 6,
     description:
       "Strengthens when you pause under pressure and talk a request through with someone before answering it.",
-    unlocked: true,
+    greeting: "You still have time to pause.",
   },
   {
     id: GUARDIAN_CLUEPAW,
@@ -80,7 +86,7 @@ export const MOCK_GUARDIANS: Guardian[] = [
     target: 6,
     description:
       "Strengthens when you read what is really going on in a situation — who benefits, who is pushing, and what is being left out.",
-    unlocked: true,
+    greeting: "You already noticed. Now say what you noticed.",
   },
   {
     id: GUARDIAN_BYTEBUDDY,
@@ -91,7 +97,7 @@ export const MOCK_GUARDIANS: Guardian[] = [
     target: 6,
     description:
       "Strengthens when you weigh what a digital request actually costs — accounts, logins, payments and the trail they leave.",
-    unlocked: true,
+    greeting: "The account has your name on it. That is the whole story.",
   },
   {
     id: GUARDIAN_BEACON,
@@ -102,7 +108,7 @@ export const MOCK_GUARDIANS: Guardian[] = [
     target: 6,
     description:
       "Strengthens when you step out of a situation and reach the right channel for help.",
-    unlocked: true,
+    greeting: "Asking for help is the move, not the last resort.",
   },
   {
     id: GUARDIAN_SHIELDFIN,
@@ -113,7 +119,7 @@ export const MOCK_GUARDIANS: Guardian[] = [
     target: 6,
     description:
       "Strengthens when you look out for a friend without escalating the situation.",
-    unlocked: true,
+    greeting: "You can look out for someone without making a scene of it.",
   },
 ];
 
@@ -130,18 +136,22 @@ export const MOCK_PROFILE: PlayerProfile = {
   risk: 28,
   missionsCompleted: 7,
   streakDays: 4,
+  // The Guardian whose skill the opening chapter leads with. It is where the
+  // roster starts reading, not a Guardian the player has been given.
   currentGuardianId: GUARDIAN_VERIFOX,
-  // Cumulative qualifying decisions. Level and bar position are derived from
-  // these, so the two can never drift apart. 10 with a target of 6 renders as
-  // "Level 2 · 4 / 6".
-  guardianProgress: {
-    [GUARDIAN_VERIFOX]: 10,
-    [GUARDIAN_ECHO]: 4,
-    [GUARDIAN_CLUEPAW]: 1,
-    [GUARDIAN_BYTEBUDDY]: 2,
-    [GUARDIAN_BEACON]: 2,
-    [GUARDIAN_SHIELDFIN]: 3,
-  },
+  /*
+   * No Guardian has been met yet, and nothing has been practised.
+   *
+   * A fresh profile starts with all six listed and none met, because meeting a
+   * Guardian is the acknowledgement of a skill the player has demonstrated. A
+   * seeded roster would hand over that acknowledgement before the first
+   * decision and make Guardian progress evidence of having opened the app.
+   */
+  metGuardians: [],
+  // Cumulative qualifying decisions, filled in as activities are completed.
+  // Level and bar position are derived from these, so the two can never drift
+  // apart: 10 against a target of 6 renders as "Level 2 · 4 / 6".
+  guardianProgress: {},
   // The city board starts unplayed so a demonstration shows progress being
   // earned rather than pre-filled. Personal progress only — never compared.
   completedActivities: [],
@@ -163,6 +173,8 @@ export const MOCK_PROFILE: PlayerProfile = {
    */
   shieldTokens: 480,
   tokenGrants: [],
+  // No activity has paid its Guardian progression yet. See `metGuardians`.
+  guardianGrants: [],
   unlockedRewards: [],
   equippedRewards: {},
   earnedAchievements: [],
@@ -197,7 +209,7 @@ export const MULE_ENCOUNTER: Scenario = {
   step: 2,
   totalSteps: 4,
   prompt:
-    "Someone online offers you S$300 to receive money into your bank account.",
+    "Someone online offers you S$200 to receive money into your bank account.",
   messages: [
     {
       id: "m1",
@@ -209,7 +221,7 @@ export const MULE_ENCOUNTER: Scenario = {
       id: "m2",
       author: "them",
       displayName: "Unknown contact",
-      body: "Bro easy $300.",
+      body: "Bro easy $200.",
     },
     {
       id: "m3",
@@ -251,21 +263,21 @@ export const MULE_ENCOUNTER: Scenario = {
     {
       id: "ch_accept",
       label: "Accept",
-      hint: "Share your account details and take the S$300",
+      hint: "Share your account details and take the S$200",
       reply: "Ok deal. Sending you my account number now.",
       outcome: "RISKY",
       immediate: {
-        deltas: { coins: 300 },
+        deltas: { coins: 200 },
         flashTitle: "Payment received",
-        flashAmount: "+300 Coins",
+        flashAmount: "+200 Coins",
       },
       delayed: {
         delayMs: 3000,
         timeLabel: "3 days later",
         headline: "Account access restricted",
         body: "Transactions through your account were flagged as suspicious. The account is now restricted while the transfers are reviewed.",
-        deltas: { coins: -300, trust: -20, risk: 25 },
-        changedImmediate: ["+300 Coins"],
+        deltas: { coins: -200, trust: -20, risk: 25 },
+        changedImmediate: ["+200 Coins"],
         changedLater: [
           "Account restricted",
           "Trust decreased",
@@ -365,7 +377,7 @@ export const MULE_PEER_SHIELD: Scenario = {
       id: "p2",
       author: "them",
       displayName: "Jayden",
-      body: "Bro this guy says he'll pay me $300. I just need to receive the money first.",
+      body: "Bro this guy says he'll pay me $200. I just need to receive the money first.",
     },
     {
       id: "p3",

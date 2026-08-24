@@ -16,7 +16,7 @@ import { SectionLabel, SkillBadge } from "@/components/ui/Badges";
 import { deltaLines } from "@/components/player/DebriefCard";
 import { usePlayer } from "@/lib/state/PlayerProvider";
 import { TOKEN_AWARD, tokenKey } from "@/lib/api/rewards-data";
-import type { MiniGame } from "@/lib/types";
+import type { GuardianAward, MiniGame } from "@/lib/types";
 
 /**
  * Shared chrome and reward pipeline for every mini-game.
@@ -66,6 +66,7 @@ export function MiniGameShell({
     usePlayer();
   const [granted, setGranted] = useState(false);
   const [tokensAwarded, setTokensAwarded] = useState(0);
+  const [guardianAward, setGuardianAward] = useState<GuardianAward | null>(null);
   const [burstKey, setBurstKey] = useState<number | null>(null);
   const grantedOnce = useRef(false);
   const completionRef = useRef<HTMLDivElement>(null);
@@ -90,7 +91,13 @@ export function MiniGameShell({
     if (grantedOnce.current) return;
     grantedOnce.current = true;
     applyDeltas(game.reward.deltas);
-    advanceGuardian(game.reward.guardianId);
+    /*
+     * Keyed on the node, like the Shield Tokens below: the Guardian grant is
+     * paid once for this mini-game and a replay adds nothing. A first meeting
+     * is announced by the provider's takeover; the completion panel only
+     * reports which of met, progressed and already-earned actually happened.
+     */
+    setGuardianAward(advanceGuardian(game.nodeId, game.reward.guardianId));
     completeActivity(game.nodeId);
     // Keyed on the node, so replaying a mini-game never pays a second time.
     setTokensAwarded(
@@ -261,7 +268,12 @@ export function MiniGameShell({
                 </div>
               )}
 
-              {guardian && <GuardianProgressNote name={guardian.name} />}
+              {guardian && (
+                <GuardianProgressNote
+                  name={guardian.name}
+                  award={guardianAward}
+                />
+              )}
 
               <p className="border-t border-leaf-200 pt-3 text-[13px] leading-relaxed text-ink-muted">
                 Mini-games sharpen recognition. The decision itself is still

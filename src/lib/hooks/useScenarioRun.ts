@@ -6,6 +6,7 @@ import { usePlayer } from "@/lib/state/PlayerProvider";
 import type {
   ChoiceResult,
   DelayedConsequence,
+  GuardianAward,
   Scenario,
   ScenarioChoice,
   ScenarioMessage,
@@ -27,7 +28,7 @@ interface Burst {
  * choices feel bad immediately", which is the opposite of how this works in
  * real life.
  */
-export function useScenarioRun(scenarioId: string) {
+export function useScenarioRun(scenarioId: string, activityId?: string) {
   const { applyDeltas, advanceGuardian } = usePlayer();
 
   const [scenario, setScenario] = useState<Scenario | null>(null);
@@ -42,6 +43,11 @@ export function useScenarioRun(scenarioId: string) {
   const [consequence, setConsequence] = useState<DelayedConsequence | null>(
     null,
   );
+  /**
+   * What the committed choice actually did to its Guardian, or `null` when this
+   * activity had already paid its Guardian grant and nothing was added.
+   */
+  const [guardianAward, setGuardianAward] = useState<GuardianAward | null>(null);
 
   const startedAt = useRef<number>(Date.now());
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -113,8 +119,17 @@ export function useScenarioRun(scenarioId: string) {
       });
       track(() => setBurst(null), 2000);
 
-      // 3. A strong decision strengthens the matching Guardian.
-      if (res.debrief.guardianId) advanceGuardian(res.debrief.guardianId);
+      /*
+       * 3. A strong decision meets the matching Guardian, or strengthens one
+       *    already met. Paid once per activity: the first meeting is announced
+       *    by the takeover the provider raises, and the debrief says which of
+       *    met, progressed and already-earned actually happened.
+       */
+      setGuardianAward(
+        res.debrief.guardianId
+          ? advanceGuardian(activityId, res.debrief.guardianId)
+          : null,
+      );
 
       // 4. The bill, later.
       if (res.delayed) {
@@ -126,6 +141,7 @@ export function useScenarioRun(scenarioId: string) {
       }
     },
     [
+      activityId,
       advanceGuardian,
       applyDeltas,
       committedChoice,
@@ -143,6 +159,7 @@ export function useScenarioRun(scenarioId: string) {
     setResult(null);
     setBurst(null);
     setConsequence(null);
+    setGuardianAward(null);
     setTaggedClues([]);
     void load();
   }, [clearTimers, load]);
@@ -157,6 +174,7 @@ export function useScenarioRun(scenarioId: string) {
     result,
     burst,
     consequence,
+    guardianAward,
     choose,
     replay,
     /** True once a choice is locked in — the choice list stops accepting input. */

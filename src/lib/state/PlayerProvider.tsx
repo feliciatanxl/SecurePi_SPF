@@ -31,6 +31,7 @@ import {
   type Deltas,
   type DistrictId,
   type Guardian,
+  type GuardianAward,
   type JoinedSession,
   type LearningCheckId,
   type CheckResponse,
@@ -52,8 +53,29 @@ interface PlayerContextValue {
   /** False until the stored demo session has been applied. */
   hydrated: boolean;
   applyDeltas: (deltas: Deltas) => void;
-  /** Records one qualifying decision toward a Guardian's next level. */
-  advanceGuardian: (guardianId: string) => void;
+  /**
+   * Pays one activity's Guardian progression, once, ever.
+   *
+   * Returns what actually happened — `"MET"` on the first meeting,
+   * `"PROGRESSED"` on a genuine +1, and `null` when this activity has already
+   * paid its Guardian grant and the run was practice. Decided synchronously, so
+   * the caller can report the truth in the same event handler.
+   *
+   * `activityId` is the grant's identity. Two different LEAD activities each
+   * progress Beacon once; the same activity never progresses it twice, whether
+   * it is replayed, revisited or reloaded.
+   */
+  advanceGuardian: (
+    activityId: string | undefined,
+    guardianId: string,
+  ) => GuardianAward | null;
+  /** True once this activity has paid its Guardian progression. */
+  hasGuardianGrant: (activityId: string, guardianId: string) => boolean;
+  /** True once the player has demonstrated this Guardian's competency. */
+  hasMetGuardian: (guardianId: string) => boolean;
+  /** The Guardian just met for the first time, awaiting acknowledgement. */
+  pendingGuardianMetId: string | null;
+  acknowledgeGuardianMet: () => void;
   /**
    * Marks one city activity finished. Idempotent, so replaying a mission or
    * refreshing mid-run cannot inflate progress or double-count an unlock.
@@ -193,9 +215,16 @@ function normaliseProfile(
         ])
       : districtArray(saved.discoveredDistricts);
 
+  const completedActivities = stringArray(saved.completedActivities);
+
   return {
     ...merged,
-    completedActivities: stringArray(saved.completedActivities),
+    completedActivities,
+    metGuardians: normaliseMetGuardians(saved.metGuardians, completedActivities),
+    guardianGrants: normaliseGuardianGrants(
+      saved.guardianGrants,
+      completedActivities,
+    ),
     discoveredDistricts,
     currentDistrictId: saved.currentDistrictId ?? MOCK_PROFILE.currentDistrictId,
 
@@ -233,6 +262,69 @@ function normaliseProfile(
   };
 }
 
+/**
+ * Works out which Guardians a stored session has met.
+ *
+ * Sessions saved before Guardians had to be earned carry no `metGuardians` at
+ * all — every profile simply listed all six as available. Those sessions are
+ * not made to start over: a Guardian counts as met if the player has already
+ * completed an activity that practises its competency, which is exactly the
+ * condition that would have met it under the current model. Nothing else in the
+ * profile is touched, so completed activities, Shield Tokens, board position,
+ * the Casebook and rewards all survive the migration intact.
+ *
+ * A player who has completed nothing has met nobody, which is the correct
+ * fresh-start state rather than a loss of progress.
+ */
+function normaliseMetGuardians(
+  value: unknown,
+  completedActivities: string[],
+): string[] {
+  const known = new Set(MOCK_GUARDIANS.map((g) => g.id));
+
+  if (Array.isArray(value)) {
+    return [...new Set(stringArray(value).filter((id) => known.has(id)))];
+  }
+
+  const earned = completedActivities
+    .map((nodeId) => findNode(nodeId)?.guardianId)
+    .filter((id): id is string => Boolean(id) && known.has(id as string));
+  return [...new Set(earned)];
+}
+
+/**
+ * Works out which Guardian grants a stored session has already consumed.
+ *
+ * Sessions saved before this ledger existed have no record of what they were
+ * paid — but they do have `completedActivities`, and an activity that has been
+ * completed has already had its one Guardian grant. Deriving the keys from that
+ * is what stops the new ledger handing every previously finished activity a
+ * fresh payout the moment it is introduced.
+ *
+ * Nothing else is touched: stored Guardian progress, levels, met Guardians,
+ * completions, Shield Tokens, board position, visited spaces, the Casebook,
+ * achievements and rewards all carry through untouched.
+ */
+function normaliseGuardianGrants(
+  value: unknown,
+  completedActivities: string[],
+): string[] {
+  if (Array.isArray(value)) return [...new Set(stringArray(value))];
+
+  /*
+   * The node's own Guardian is the canonical one for the activity — the
+   * one-to-one competency mapping the roster is built on. A legacy save is
+   * credited on that basis.
+   */
+  const consumed = completedActivities
+    .map((nodeId) => {
+      const guardianId = findNode(nodeId)?.guardianId;
+      return guardianId ? guardianGrantKey(nodeId, guardianId) : null;
+    })
+    .filter((key): key is string => key !== null);
+  return [...new Set(consumed)];
+}
+
 /** Drops any equipped id that is no longer in the catalogue or in the wrong slot. */
 function normaliseEquipped(
   value: PlayerProfile["equippedRewards"] | undefined,
@@ -246,6 +338,19 @@ function normaliseEquipped(
   }
   return out;
 }
+
+/**
+ * The grant key for one activity's Guardian progression.
+ *
+ * Deliberately the same shape as `tokenKey` in rewards-data: a keyed, persisted
+ * ledger entry is how everything else in this prototype guarantees it pays
+ * once, and Guardian progress is no different. Both halves of the key matter —
+ * dropping the activity would cap a Guardian at one grant for its whole life,
+ * and dropping the Guardian would stop a scenario whose choices credit
+ * different Guardians from crediting more than the first.
+ */
+export const guardianGrantKey = (activityId: string, guardianId: string) =>
+  `guardian:${activityId}:${guardianId}`;
 
 /**
  * `guardianProgress` stores the *cumulative* count of qualifying decisions, so
@@ -279,6 +384,28 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
    */
   const [hydrated, setHydrated] = useState(false);
   const [newlyUnlockedNodeIds, setNewlyUnlockedNodeIds] = useState<string[]>([]);
+  const [pendingGuardianMetId, setPendingGuardianMetId] = useState<string | null>(
+    null,
+  );
+
+  /**
+   * Guardians already met, tracked synchronously for the same reason
+   * `grantedKeys` is: `setProfile` has not run yet when `advanceGuardian`
+   * returns, so the profile cannot answer "was this the first meeting" inside
+   * the handler that caused it. The updater still guards on the persisted
+   * profile, so a Strict Mode double render cannot record a meeting twice.
+   */
+  const metGuardianIds = useRef<Set<string>>(new Set());
+
+  /**
+   * Guardian grants already consumed, tracked synchronously for the same reason
+   * `grantedKeys` is — and persisted for a reason a ref alone cannot cover. A
+   * component-local guard only survives as long as its component: reloading the
+   * page rebuilt the guard and let the same activity pay its Guardian a second
+   * time. The ledger this mirrors is part of the saved profile, so the grant
+   * stays spent across a reload, a route change and a later visit.
+   */
+  const guardianGrantKeys = useRef<Set<string>>(new Set());
 
   /**
    * Grant keys already paid, tracked synchronously alongside the profile.
@@ -310,6 +437,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (saved && isValidProfile(saved.data)) {
       const restored = normaliseProfile(saved.data, saved.v);
       grantedKeys.current = new Set(restored.tokenGrants);
+      metGuardianIds.current = new Set(restored.metGuardians);
+      guardianGrantKeys.current = new Set(restored.guardianGrants);
       setProfile(restored);
     }
     setHydrated(true);
@@ -349,14 +478,62 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const advanceGuardian = useCallback((guardianId: string) => {
-    setProfile((prev) => ({
-      ...prev,
-      guardianProgress: {
-        ...prev.guardianProgress,
-        [guardianId]: (prev.guardianProgress[guardianId] ?? 0) + 1,
-      },
-    }));
+  /**
+   * MEET → PRACTISE → PROGRESS, paid once per activity.
+   *
+   * The first qualifying activity meets the Guardian and counts as the first
+   * practice of its skill. A different activity for the same skill progresses
+   * it again. The *same* activity never pays twice — replaying it is practice,
+   * which is worth doing and worth nothing extra, so Guardian progress stays
+   * evidence of range rather than of repetition.
+   *
+   * The synchronous ledger decides and is written before the state update, so
+   * two calls inside one handler cannot both succeed on the same key. The
+   * updater repeats the check against the persisted profile, which is what
+   * makes a Strict Mode double render, a replay and a reload all safe.
+   */
+  const advanceGuardian = useCallback(
+    (activityId: string | undefined, guardianId: string) => {
+      /*
+       * An activity with no id cannot be keyed, so it cannot be made
+       * idempotent either. Nothing in the build reaches this — every scenario,
+       * mini-game and group question carries its node id — and it stays
+       * awarding rather than silently dropping progress if one ever does.
+       */
+      const key = activityId ? guardianGrantKey(activityId, guardianId) : null;
+      if (key) {
+        if (guardianGrantKeys.current.has(key)) return null;
+        guardianGrantKeys.current.add(key);
+      }
+
+      const firstMeeting = !metGuardianIds.current.has(guardianId);
+      if (firstMeeting) metGuardianIds.current.add(guardianId);
+
+      setProfile((prev) => {
+        if (key && prev.guardianGrants.includes(key)) return prev;
+        return {
+          ...prev,
+          guardianGrants: key
+            ? [...prev.guardianGrants, key]
+            : prev.guardianGrants,
+          metGuardians: prev.metGuardians.includes(guardianId)
+            ? prev.metGuardians
+            : [...prev.metGuardians, guardianId],
+          guardianProgress: {
+            ...prev.guardianProgress,
+            [guardianId]: (prev.guardianProgress[guardianId] ?? 0) + 1,
+          },
+        };
+      });
+
+      if (firstMeeting) setPendingGuardianMetId(guardianId);
+      return firstMeeting ? "MET" : "PROGRESSED";
+    },
+    [],
+  );
+
+  const acknowledgeGuardianMet = useCallback(() => {
+    setPendingGuardianMetId(null);
   }, []);
 
   const completeActivity = useCallback((nodeId: string) => {
@@ -565,7 +742,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const reset = useCallback(() => {
     clearDemoData();
     grantedKeys.current = new Set();
+    metGuardianIds.current = new Set(MOCK_PROFILE.metGuardians);
+    guardianGrantKeys.current = new Set(MOCK_PROFILE.guardianGrants);
     setNewlyUnlockedNodeIds([]);
+    setPendingGuardianMetId(null);
     setProfile(MOCK_PROFILE);
   }, []);
 
@@ -576,6 +756,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       hydrated,
       applyDeltas,
       advanceGuardian,
+      hasMetGuardian: (guardianId: string) =>
+        profile.metGuardians.includes(guardianId),
+      hasGuardianGrant: (activityId: string, guardianId: string) =>
+        profile.guardianGrants.includes(guardianGrantKey(activityId, guardianId)),
+      pendingGuardianMetId,
+      acknowledgeGuardianMet,
       completeActivity,
       isCompleted: (nodeId: string) => profile.completedActivities.includes(nodeId),
       newlyUnlockedNodeIds,
@@ -604,6 +790,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       hydrated,
       applyDeltas,
       advanceGuardian,
+      pendingGuardianMetId,
+      acknowledgeGuardianMet,
       completeActivity,
       newlyUnlockedNodeIds,
       acknowledgeNewUnlocks,

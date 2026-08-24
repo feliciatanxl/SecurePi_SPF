@@ -10,15 +10,27 @@ import {
   MessagesSquare,
   RotateCcw,
   Sparkles,
+  UserRoundCheck,
   Users,
   Vote,
 } from "lucide-react";
 import { GuardianPlate } from "@/components/player/GuardianArt";
 import { ScenarioMessage } from "@/components/player/ScenarioMessage";
 import { SectionLabel, SkillBadge } from "@/components/ui/Badges";
+import {
+  nextPeerRole,
+  peerRoleForRound,
+  PEER_ROLES,
+  PEER_ROLE_DISCLOSURE,
+} from "@/lib/api/peer-roles-data";
 import { TOKEN_AWARD, tokenKey } from "@/lib/api/rewards-data";
 import { usePlayer } from "@/lib/state/PlayerProvider";
-import type { GroupDecisionScenario, GroupDecisionStage } from "@/lib/types";
+import type {
+  GroupDecisionScenario,
+  GroupDecisionStage,
+  GuardianAward,
+  PeerRole,
+} from "@/lib/types";
 
 /**
  * Think · Vote · Explain — the facilitated group mechanic, on one device.
@@ -40,6 +52,16 @@ import type { GroupDecisionScenario, GroupDecisionStage } from "@/lib/types";
  * The stage order is fixed and one-way. A player who could jump straight to the
  * group view before locking a vote would be doing something other than thinking
  * privately, which is the step the whole mechanic is built on.
+ *
+ * ## Rotating roles
+ *
+ * A facilitated round also hands each participant a job — Safety Lead, Evidence
+ * Checker or Peer Supporter — and rotates it between rounds so participation is
+ * spread rather than captured by whoever speaks first. Here that is shown for
+ * one participant: the role for this round is named up front, brought back as a
+ * focus prompt at the point it is meant to be used, and rotated when the
+ * activity is run again. It is labelled a role demonstration everywhere it
+ * appears, because one device is not three people.
  */
 
 const STAGES: { id: GroupDecisionStage; label: string; short: string }[] = [
@@ -74,6 +96,29 @@ export function GroupDecisionRunner({
   const [factors, setFactors] = useState<string[]>([]);
   const [factorsShared, setFactorsShared] = useState(false);
   const [tokensAwarded, setTokensAwarded] = useState(0);
+  /**
+   * What this run actually did to the Guardian, not what a run generally does.
+   *
+   * `null` means this pass awarded nothing, whether because `awardedRef`
+   * stopped the effect running twice in this mount or because the persisted
+   * grant ledger had already paid this activity's Guardian in an earlier
+   * session. The debrief has to be able to tell the difference, because "+1"
+   * when nothing was granted is the screen telling the player something that
+   * did not happen.
+   *
+   * This is the award *result*, reported by `advanceGuardian` — not a second
+   * opinion on idempotence.
+   */
+  const [guardianAward, setGuardianAward] = useState<GuardianAward | null>(
+    null,
+  );
+  /**
+   * Which facilitated round this is, locally. Incremented by "Run it again" so
+   * the role rotation can be seen rather than described — there is no session
+   * and no server, so the round is exactly as long-lived as this component.
+   */
+  const [round, setRound] = useState(0);
+  const role = peerRoleForRound(round);
 
   const guardian = guardians.find((g) => g.id === scenario.guardianId);
   const stageIndex = STAGES.findIndex((s) => s.id === stage);
@@ -91,7 +136,7 @@ export function GroupDecisionRunner({
     if (stage !== "DEBRIEF" || awardedRef.current) return;
     awardedRef.current = true;
     applyDeltas(scenario.reward);
-    advanceGuardian(scenario.guardianId);
+    setGuardianAward(advanceGuardian(scenario.nodeId, scenario.guardianId));
     completeActivity(scenario.nodeId);
     setTokensAwarded(
       awardTokens(tokenKey.mission(scenario.nodeId), TOKEN_AWARD.mission),
@@ -128,6 +173,10 @@ export function GroupDecisionRunner({
     setFactors([]);
     setFactorsShared(false);
     setTokensAwarded(0);
+    setGuardianAward(null);
+    // The next round is the next role, which is the whole point of rotating.
+    // `awardedRef` is deliberately left alone — see the note above.
+    setRound((r) => r + 1);
   };
 
   const band = "mx-auto w-full xl:max-w-[1400px]";
@@ -220,6 +269,7 @@ export function GroupDecisionRunner({
           <p className="mt-0.5 text-[13px] font-semibold leading-snug text-ink-muted">
             {scenario.situation}
           </p>
+          <RoleCard role={role} round={round} />
           <PrototypeNote />
         </div>
       </div>
@@ -243,6 +293,7 @@ export function GroupDecisionRunner({
           {stage === "THINK" && (
             <ThinkStage
               question={scenario.question}
+              role={role}
               onDone={() => setStage("VOTE")}
             />
           )}
@@ -271,6 +322,7 @@ export function GroupDecisionRunner({
           {stage === "EXPLAIN" && (
             <ExplainStage
               scenario={scenario}
+              role={role}
               chosen={factors}
               shared={factorsShared}
               onToggle={(id) =>
@@ -310,7 +362,10 @@ export function GroupDecisionRunner({
               factorLabels={scenario.factors
                 .filter((f) => factors.includes(f.id))
                 .map((f) => f.label)}
+              role={role}
+              round={round}
               guardianName={guardian?.name}
+              guardianAward={guardianAward}
               guardianPlate={
                 guardian ? (
                   <GuardianPlate
@@ -351,6 +406,56 @@ function PrototypeNote({ children }: { children?: React.ReactNode }) {
   );
 }
 
+/**
+ * The role this participant is holding, compact enough to sit under the
+ * situation without competing with it.
+ *
+ * The role is context for how to read the situation, not the task itself, so it
+ * gets one line of brief and stays out of the way. The rotation note is part of
+ * the card rather than a footnote elsewhere: a reader who sees "Evidence
+ * Checker" and is not told it rotates will assume it was assigned to them.
+ */
+function RoleCard({ role, round }: { role: PeerRole; round: number }) {
+  return (
+    <div className="mt-2 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2.5">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <p className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-teal-700">
+          <UserRoundCheck className="h-3.5 w-3.5" aria-hidden="true" />
+          Your role this round
+        </p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-soft">
+          Round {round + 1} · Facilitated role demonstration
+        </p>
+      </div>
+      <p className="mt-1 text-[15px] font-extrabold uppercase tracking-wide text-navy-900">
+        {role.name}
+      </p>
+      <p className="mt-0.5 text-[12.5px] font-semibold leading-snug text-ink">
+        {role.brief}
+      </p>
+      <p className="mt-1 text-[12px] leading-snug text-ink-muted">
+        In a facilitated group session, these roles are held by different
+        participants and rotate between rounds.
+      </p>
+    </div>
+  );
+}
+
+/** The role's question, brought back at the point in the flow it is for. */
+function RoleFocus({ role }: { role: PeerRole }) {
+  return (
+    <div className="rounded-xl border border-teal-200 bg-teal-50 px-3 py-2.5">
+      <p className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-teal-700">
+        <UserRoundCheck className="h-3.5 w-3.5" aria-hidden="true" />
+        Role focus · {role.name}
+      </p>
+      <p className="mt-1 text-[13.5px] font-semibold leading-snug text-ink">
+        “{role.prompt}”
+      </p>
+    </div>
+  );
+}
+
 function StageHeading({
   eyebrow,
   title,
@@ -384,9 +489,11 @@ const primaryButton =
 
 function ThinkStage({
   question,
+  role,
   onDone,
 }: {
   question: string;
+  role: PeerRole;
   onDone: () => void;
 }) {
   return (
@@ -396,6 +503,7 @@ function ThinkStage({
         title={question}
         caption="Read it through and settle on an answer before anyone says anything out loud. Thinking first is what stops the loudest voice in the room deciding for everybody."
       />
+      <RoleFocus role={role} />
       <ul className="space-y-1.5 text-[13px] leading-relaxed text-ink-muted">
         <li className="flex gap-2">
           <span aria-hidden="true" className="mt-2 h-1 w-1 shrink-0 rounded-full bg-ink-soft" />
@@ -599,6 +707,7 @@ function VoteBar({
 
 function ExplainStage({
   scenario,
+  role,
   chosen,
   shared,
   onToggle,
@@ -606,6 +715,7 @@ function ExplainStage({
   onContinue,
 }: {
   scenario: GroupDecisionScenario;
+  role: PeerRole;
   chosen: string[];
   shared: boolean;
   onToggle: (id: string) => void;
@@ -619,6 +729,8 @@ function ExplainStage({
         title="What was behind your vote?"
         caption="Pick everything that was actually in your head. Naming the reason is what makes it reusable — and it is the part other people learn from."
       />
+
+      <RoleFocus role={role} />
 
       <ul className="flex flex-wrap gap-2">
         {scenario.factors.map((factor) => {
@@ -716,22 +828,29 @@ function ExplainStage({
 
 function DebriefStage({
   scenario,
+  role,
+  round,
   firstLabel,
   finalLabel,
   changed,
   factorLabels,
   guardianName,
+  guardianAward,
   guardianPlate,
   tokensAwarded,
   backHref,
   onRestart,
 }: {
   scenario: GroupDecisionScenario;
+  role: PeerRole;
+  round: number;
   firstLabel?: string;
   finalLabel?: string;
   changed: boolean;
   factorLabels: string[];
   guardianName?: string;
+  /** What this run did to the Guardian. `null` when it awarded nothing. */
+  guardianAward: GuardianAward | null;
   guardianPlate: React.ReactNode;
   tokensAwarded: number;
   backHref: string;
@@ -838,6 +957,37 @@ function DebriefStage({
         </p>
       </div>
 
+      <div className="rounded-2xl border border-teal-200 bg-teal-50 p-3.5">
+        <SectionLabel>Roles rotate</SectionLabel>
+        <p className="mt-1 text-[13px] leading-relaxed text-ink">
+          You held <strong>{role.name}</strong> for round {round + 1}. Running
+          this again hands you <strong>{nextPeerRole(round).name}</strong>, so
+          the same situation gets read a different way.
+        </p>
+        {/* The full set, so a facilitator can see the rotation rather than
+            infer it from the two rounds in front of them. */}
+        <ul className="mt-2.5 space-y-1.5">
+          {PEER_ROLES.map((r) => (
+            <li
+              key={r.id}
+              className="flex gap-2 text-[12.5px] leading-snug text-ink-muted"
+            >
+              <span
+                aria-hidden="true"
+                className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-600"
+              />
+              <span>
+                <span className="font-bold text-navy-900">{r.name}</span> —{" "}
+                {r.purpose}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-[12px] leading-relaxed text-ink-muted">
+          {PEER_ROLE_DISCLOSURE}
+        </p>
+      </div>
+
       <div className="rounded-2xl border border-line bg-surface-sunk p-3.5">
         <SectionLabel>For the facilitator</SectionLabel>
         <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
@@ -845,18 +995,52 @@ function DebriefStage({
         </p>
       </div>
 
+      {/*
+        A replay is worth running and worth saying so, but it is not worth
+        claiming a reward for. The progression is paid once; the practice is
+        unlimited, and that is the honest way round.
+      */}
+      {guardianAward === null && (
+        <div className="rounded-2xl border border-civic-200 bg-civic-50 p-3.5">
+          <SectionLabel>Practice run complete</SectionLabel>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink">
+            You have already earned the progression reward for this activity, so
+            nothing was added this time. Running it again is still worth doing —
+            a different role reads the same situation differently.
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2">
         <SkillBadge
           competency={scenario.primaryCompetency}
           caption="Skill practised"
         />
         {guardianName && (
-          <span className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[13px] font-bold text-amber-700">
+          <span
+            className={`inline-flex items-center gap-2 rounded-xl border px-2.5 py-1.5 text-[13px] font-bold ${
+              guardianAward === "MET"
+                ? "border-leaf-200 bg-leaf-50 text-leaf-700"
+                : guardianAward === "PROGRESSED"
+                  ? "border-amber-200 bg-amber-50 text-amber-700"
+                  : "border-line bg-surface-sunk text-ink-muted"
+            }`}
+          >
             {guardianPlate}
-            {guardianName} +1
+            {guardianAward === "MET"
+              ? `${guardianName} met`
+              : guardianAward === "PROGRESSED"
+                ? `${guardianName} +1`
+                : `${guardianName} progress already earned`}
           </span>
         )}
-        <span className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[13px] font-bold tabular-nums text-amber-700">
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[13px] font-bold tabular-nums ${
+            tokensAwarded > 0
+              ? "border-amber-200 bg-amber-50 text-amber-700"
+              : "border-line bg-surface-sunk text-ink-muted"
+          }`}
+        >
           <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
           {tokensAwarded > 0
             ? `Shield Tokens +${tokensAwarded}`
@@ -884,7 +1068,7 @@ function DebriefStage({
           className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-line px-4 text-[14px] font-semibold text-ink transition hover:border-civic-500 hover:text-civic-700"
         >
           <RotateCcw className="h-4 w-4" aria-hidden="true" />
-          Run it again
+          Run it again as {nextPeerRole(round).name}
         </button>
       </div>
     </section>

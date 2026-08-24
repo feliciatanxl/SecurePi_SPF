@@ -21,6 +21,7 @@ import {
   ShieldHalf,
   ShoppingBag,
   Sparkles,
+  UserRoundCheck,
   UserRoundCog,
   UsersRound,
   Vote,
@@ -30,6 +31,7 @@ import { DistrictScene } from "@/components/player/DistrictArt";
 import { GuardianPlate } from "@/components/player/GuardianArt";
 import { DISTRICT_SKIN } from "@/components/player/districtSkin";
 import { MOCK_GUARDIANS } from "@/lib/api/mock-data";
+import { PEER_ROLES } from "@/lib/api/peer-roles-data";
 import { DISTRICT_CHAPTER } from "@/lib/api/world-data";
 import {
   COMPETENCY_LABEL,
@@ -177,6 +179,34 @@ const PROTOTYPE_FEATURES = [
   "Flash Mission and City Alert demonstration",
 ];
 
+/**
+ * The design principles the learning mechanics are built on.
+ *
+ * Four, deliberately, and each one names a mechanic rather than an aspiration —
+ * every principle here corresponds to something in the build. The section this
+ * renders is a summary of the design rationale, not a literature review, and it
+ * carries no citations because inventing publication details to look rigorous
+ * would be worse than claiming nothing.
+ */
+const EVIDENCE_PRINCIPLES: [string, string][] = [
+  [
+    "Active decision-making",
+    "Players make choices and live with them, rather than being told what to avoid.",
+  ],
+  [
+    "Peer discussion",
+    "Group reasoning surfaces the assumptions and social pressures a private answer hides.",
+  ],
+  [
+    "Consequence-based learning",
+    "Immediate and delayed outcomes make the real trade-off visible in the right order.",
+  ],
+  [
+    "Reflection and transfer",
+    "Debriefs, the Casebook and Peer Shield move the skill to situations the player has not seen.",
+  ],
+];
+
 const RESPONSIBLE_DESIGN = [
   "Privacy by design",
   "No youth crime prediction",
@@ -223,6 +253,7 @@ export default function ProjectShieldPage() {
                 ["Guardians", "#guardians"],
                 ["What it covers", "#coverage"],
                 ["Districts", "#districts"],
+                ["Evidence-informed", "#evidence"],
                 ["Responsible design", "#responsible-design"],
               ].map(([label, href]) => (
                 <li key={href}>
@@ -622,7 +653,7 @@ export default function ProjectShieldPage() {
                 icon={Vote}
                 eyebrow="Facilitated discussion"
                 title="Think · Vote · Explain"
-                body="Learners think privately, lock in a vote, see how the group split, say what was behind their answer, then decide again. Hearing a peer's reason is what moves people—not being told the answer."
+                body="Learners think privately, lock in a vote, see how the group split, say what was behind their answer, then decide again. During facilitated sessions, rotating roles spread the participation. Hearing a peer's reason is what moves people—not being told the answer."
                 tone="coral"
               />
               <FeatureCard
@@ -659,6 +690,34 @@ export default function ProjectShieldPage() {
                   behind it.
                 </p>
               </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-teal-200 bg-teal-50 p-5">
+              <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-teal-700">
+                <UserRoundCheck className="h-4 w-4" aria-hidden="true" />
+                Rotating facilitated roles
+              </p>
+              <p className="mt-1.5 max-w-[80ch] text-[14px] leading-relaxed text-ink-muted">
+                In a facilitated session each participant holds a job for the
+                round, and the jobs rotate — so the same young person is not
+                always the one who speaks, and three readings of a situation
+                reach the group before anyone has to agree.
+              </p>
+              <ul className="mt-4 grid gap-2 sm:grid-cols-3">
+                {PEER_ROLES.map((role) => (
+                  <li
+                    key={role.id}
+                    className="rounded-2xl border border-teal-200 bg-white px-4 py-3"
+                  >
+                    <p className="text-[13px] font-extrabold uppercase tracking-wide text-navy-900">
+                      {role.name}
+                    </p>
+                    <p className="mt-1 text-[12.5px] leading-snug text-ink-muted">
+                      {role.purpose}
+                    </p>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             <div className="mt-5 rounded-2xl border border-civic-200 bg-civic-50 px-5 py-4 text-[13px] leading-relaxed text-civic-800">
@@ -805,6 +864,54 @@ export default function ProjectShieldPage() {
                 </p>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section id="evidence" className="scroll-mt-24 bg-surface-sunk">
+          <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+            <SectionLabel>Evidence-informed design</SectionLabel>
+            <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <h2 className="max-w-[720px] text-3xl font-black tracking-tight text-navy-950 sm:text-4xl">
+                Gameplay is the lesson, not the wrapper.
+              </h2>
+              <p className="max-w-[460px] text-[13px] leading-relaxed text-ink-muted">
+                Purposeful play, discussion and reflection are built into how
+                ShieldQuest teaches, rather than added on top of a message as
+                decorative gamification.
+              </p>
+            </div>
+
+            <ol className="mt-9 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {EVIDENCE_PRINCIPLES.map(([title, body], index) => (
+                <li
+                  key={title}
+                  className="rounded-3xl border border-line bg-white p-5 shadow-[0_18px_50px_-40px_rgba(11,37,69,0.8)]"
+                >
+                  <span className="text-[10px] font-extrabold tabular-nums text-civic-700">
+                    0{index + 1}
+                  </span>
+                  <h3 className="mt-3 text-[15px] font-black uppercase leading-tight tracking-wide text-navy-950">
+                    {title}
+                  </h3>
+                  <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
+                    {body}
+                  </p>
+                </li>
+              ))}
+            </ol>
+
+            {/*
+              Stated rather than dressed up. The proposal's evidence base is
+              cited in the proposal itself; repeating a reference list here
+              without the sources to hand would mean inventing publication
+              details, which is a worse outcome than saying where they live.
+            */}
+            <p className="mt-5 max-w-[92ch] text-[13px] leading-relaxed text-ink-muted">
+              These principles come from the Project SHIELD proposal's
+              evidence-informed approach to youth crime prevention. The proposal
+              carries the full reference list; the prototype has not completed a
+              youth pilot and makes no claim of measured impact.
+            </p>
           </div>
         </section>
 
