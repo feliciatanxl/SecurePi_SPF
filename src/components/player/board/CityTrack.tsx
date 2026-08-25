@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { CircleHelp } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { ChevronLeft, ChevronRight, CircleHelp } from "lucide-react";
 import { DistrictScene } from "@/components/player/DistrictArt";
 import { SpaceMark, spaceStateLabel } from "@/components/player/board/SpaceMark";
 import {
@@ -23,10 +23,10 @@ import {
 /**
  * The ShieldQuest City track.
  *
- * One continuous route of 22 original spaces running through the four
+ * One continuous route of 26 spaces running through the four
  * districts and back to Shield Central. The viewport pans along it — the
  * board camera — so a phone shows six or seven readable spaces around the
- * token instead of 22 unreadable dots, and a laptop shows more of the same
+ * token instead of 26 unreadable dots, and a laptop shows more of the same
  * route rather than a different board.
  *
  * The camera is the container's own horizontal scroll. That is deliberate:
@@ -85,6 +85,13 @@ export function CityTrack({
   markerCosmetic?: boolean;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
+  const [canPanLeft, setCanPanLeft] = useState(false);
+  const [canPanRight, setCanPanRight] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const startScrollLeftRef = useRef(0);
+  const hasDraggedRef = useRef(false);
 
   /*
    * Camera zoom.
@@ -102,6 +109,15 @@ export function CityTrack({
    * factor is 1, and nothing about the mobile board changes.
    */
   const [zoom, setZoom] = useState(1);
+
+  const updatePanState = useCallback(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    setCanPanLeft(el.scrollLeft > 4);
+    setCanPanRight(el.scrollLeft < maxScroll - 4);
+  }, []);
+
   useEffect(() => {
     const el = viewportRef.current;
     if (!el) return;
@@ -110,13 +126,14 @@ export function CityTrack({
       const next = Math.min(MAX_ZOOM, Math.max(1, el.clientHeight / TRACK_HEIGHT));
       // Rounded, so a one-pixel resize cannot churn the whole board.
       setZoom(Math.round(next * 100) / 100);
+      updatePanState();
     };
 
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [updatePanState]);
 
   /** Contiguous runs of spaces belonging to the same district. */
   const bands = useMemo(() => {
@@ -159,10 +176,12 @@ export function CityTrack({
     const target = spaceX(tokenIndex) * zoom - el.clientWidth / 2;
     if (stepped) {
       el.scrollLeft = target;
+      updatePanState();
       return;
     }
     snap(el, target);
-  }, [tokenIndex, zoom]);
+    updatePanState();
+  }, [tokenIndex, zoom, updatePanState]);
 
   /*
    * And once the walk is over, land the camera exactly. An animated pan can be
@@ -175,7 +194,68 @@ export function CityTrack({
     const el = viewportRef.current;
     if (!el || walking) return;
     snap(el, spaceX(tokenIndex) * zoom - el.clientWidth / 2);
-  }, [walking, tokenIndex, zoom]);
+    updatePanState();
+  }, [walking, tokenIndex, zoom, updatePanState]);
+
+  const panBy = useCallback((ratio: number) => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const isReduced =
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      document.documentElement.dataset.motion === "reduced";
+    const delta = el.clientWidth * ratio;
+    el.scrollBy({
+      left: delta,
+      behavior: isReduced ? "instant" : "smooth",
+    });
+  }, []);
+
+  const panLeft = useCallback(() => panBy(-0.65), [panBy]);
+  const panRight = useCallback(() => panBy(0.65), [panBy]);
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== viewportRef.current) return;
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      panLeft();
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      panRight();
+    }
+  };
+
+  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "touch") return;
+    if ((e.target as HTMLElement).closest("button, a")) return;
+    if (e.button !== 0) return;
+    isDraggingRef.current = true;
+    hasDraggedRef.current = false;
+    startXRef.current = e.clientX;
+    startScrollLeftRef.current = viewportRef.current?.scrollLeft ?? 0;
+  };
+
+  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current || !viewportRef.current) return;
+    const dx = e.clientX - startXRef.current;
+    if (Math.abs(dx) > 5) {
+      if (!hasDraggedRef.current) {
+        hasDraggedRef.current = true;
+        setIsDragging(true);
+        viewportRef.current.setPointerCapture(e.pointerId);
+      }
+      viewportRef.current.scrollLeft = startScrollLeftRef.current - dx;
+      updatePanState();
+    }
+  };
+
+  const onPointerUp = (e: PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    if (viewportRef.current?.hasPointerCapture(e.pointerId)) {
+      viewportRef.current.releasePointerCapture(e.pointerId);
+    }
+  };
 
   const path = useMemo(() => routePath(), []);
   const exploredPercent = Math.max(
@@ -184,229 +264,267 @@ export function CityTrack({
   );
 
   return (
-    <div
-      ref={viewportRef}
-      /*
-       * `flex-1` with a floor rather than a fixed height: on a phone the floor
-       * is the whole of it (340px, matching TRACK_HEIGHT, so a phone renders
-       * exactly the board it always did), and on a laptop the board grows into
-       * whatever is left between the HUD and the roll control.
-       *
-       * The desktop floor is lower than the track. On a short laptop — 1280×720
-       * — that is the difference between cropping a little scenery off the top
-       * and bottom of the board and pushing the roll control off the screen, and
-       * the stage is centred so what gets cropped is scenery rather than route.
-       */
-      className="thin-scroll board-camera relative flex min-h-[340px] w-full flex-1 overflow-x-auto overflow-y-hidden overscroll-x-contain xl:min-h-[280px]"
-      aria-label="ShieldQuest City camera. Pan horizontally to look ahead."
-    >
-      {/* Sizing box: the zoomed footprint, which is what the camera pans over. */}
+    <div className="relative flex min-h-[340px] w-full flex-1 overflow-hidden xl:min-h-[280px]">
       <div
-        className="relative m-auto shrink-0"
-        style={{ width: TRACK_WIDTH * zoom, height: TRACK_HEIGHT * zoom }}
+        ref={viewportRef}
+        tabIndex={0}
+        onScroll={updatePanState}
+        onKeyDown={handleKeyDown}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        /*
+         * `flex-1` with a floor rather than a fixed height: on a phone the floor
+         * is the whole of it (340px, matching TRACK_HEIGHT, so a phone renders
+         * exactly the board it always did), and on a laptop the board grows into
+         * whatever is left between the HUD and the roll control.
+         *
+         * The desktop floor is lower than the track. On a short laptop — 1280×720
+         * — that is the difference between cropping a little scenery off the top
+         * and bottom of the board and pushing the roll control off the screen, and
+         * the stage is centred so what gets cropped is scenery rather than route.
+         */
+        className={`thin-scroll board-camera relative flex h-full w-full flex-1 overflow-x-auto overflow-y-hidden overscroll-x-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-civic-400 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950 ${
+          isDragging ? "cursor-grabbing select-none" : "cursor-grab"
+        }`}
+        aria-label="ShieldQuest City camera. Pan horizontally or use left and right arrow keys to look ahead."
       >
-      <div
-        className="absolute left-0 top-0 origin-top-left"
-        style={{
-          width: TRACK_WIDTH,
-          height: TRACK_HEIGHT,
-          transform: zoom === 1 ? undefined : `scale(${zoom})`,
-        }}
-      >
-        {/* District scenery. The V2.2 scenes sit under the route they belong
-            to, so the track visibly travels through four places. */}
-        {bands.map((band) => {
-          const box = bandBox(band.first, band.last);
-          const discovered = band.districtId
-            ? discoveredDistricts.includes(band.districtId)
-            : true;
-          return (
-            <div
-              key={`${band.districtId ?? "central"}-${band.first}`}
-              className={`district-world absolute inset-y-0 overflow-hidden ${
-                band.districtId ? `district-world-${band.districtId}` : "district-world-central"
-              }`}
-              style={{ left: box.left, width: box.width }}
-            >
-              {band.districtId ? (
-                <>
-                  <DistrictScene
-                    districtId={band.districtId}
-                    className={
-                      discovered
-                        ? "opacity-[0.9]"
-                        : "opacity-[0.58] saturate-50 grayscale-[0.2]"
-                    }
-                  />
+        {/* Sizing box: the zoomed footprint, which is what the camera pans over. */}
+        <div
+          className="relative m-auto shrink-0"
+          style={{ width: TRACK_WIDTH * zoom, height: TRACK_HEIGHT * zoom }}
+        >
+          <div
+            className="absolute left-0 top-0 origin-top-left"
+            style={{
+              width: TRACK_WIDTH,
+              height: TRACK_HEIGHT,
+              transform: zoom === 1 ? undefined : `scale(${zoom})`,
+            }}
+          >
+            {/* District scenery. The V2.2 scenes sit under the route they belong
+                to, so the track visibly travels through four places. */}
+            {bands.map((band) => {
+              const box = bandBox(band.first, band.last);
+              const discovered = band.districtId
+                ? discoveredDistricts.includes(band.districtId)
+                : true;
+              return (
+                <div
+                  key={`${band.districtId ?? "central"}-${band.first}`}
+                  className={`district-world absolute inset-y-0 overflow-hidden ${
+                    band.districtId ? `district-world-${band.districtId}` : "district-world-central"
+                  }`}
+                  style={{ left: box.left, width: box.width }}
+                >
+                  {band.districtId ? (
+                    <>
+                      <DistrictScene
+                        districtId={band.districtId}
+                        className={
+                          discovered
+                            ? "opacity-[0.9]"
+                            : "opacity-[0.58] saturate-50 grayscale-[0.2]"
+                        }
+                      />
+                      <span
+                        aria-hidden="true"
+                        className={`absolute inset-0 ${
+                          discovered
+                            ? "bg-gradient-to-b from-white/0 via-navy-950/5 to-navy-950/45"
+                            : "bg-gradient-to-b from-white/28 via-white/16 to-navy-950/42"
+                        }`}
+                      />
+                      <span aria-hidden="true" className="city-horizon absolute inset-x-0 bottom-0 h-[46%]" />
+                      <div
+                        className={`absolute left-2.5 top-2 max-w-[190px] rounded-lg border px-2.5 py-1.5 shadow-sm backdrop-blur-sm ${
+                          discovered
+                            ? "border-white/30 bg-navy-950/78 text-white"
+                            : "border-navy-900/22 bg-white/86 text-navy-950"
+                        }`}
+                      >
+                        <p className="truncate text-[9px] font-extrabold uppercase tracking-[0.14em]">
+                          {districtNames[band.districtId]}
+                        </p>
+                        {!discovered && (
+                          <>
+                            <p className="mt-0.5 flex items-center gap-1 text-[8px] font-extrabold uppercase tracking-[0.08em] text-navy-700">
+                              <CircleHelp className="h-3 w-3 shrink-0" aria-hidden="true" />
+                              Undiscovered
+                            </p>
+                            <p className="mt-0.5 text-[8px] font-semibold leading-tight text-navy-700">
+                              Travel here to discover this chapter.
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span aria-hidden="true" className="city-central-beacon absolute inset-0" />
+                      <p
+                        aria-hidden="true"
+                        className="absolute left-2.5 top-2 truncate rounded-md border border-amber-400/50 bg-navy-950/80 px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.14em] text-amber-400"
+                      >
+                        Shield Central
+                      </p>
+                    </>
+                  )}
                   <span
                     aria-hidden="true"
-                    className={`absolute inset-0 ${
-                      discovered
-                        ? "bg-gradient-to-b from-white/0 via-navy-950/5 to-navy-950/45"
-                        : "bg-gradient-to-b from-white/28 via-white/16 to-navy-950/42"
-                    }`}
+                    className="absolute inset-y-0 right-0 w-px bg-white/12"
                   />
-                  <span aria-hidden="true" className="city-horizon absolute inset-x-0 bottom-0 h-[46%]" />
-                  <div
-                    className={`absolute left-2.5 top-2 max-w-[190px] rounded-lg border px-2.5 py-1.5 shadow-sm backdrop-blur-sm ${
-                      discovered
-                        ? "border-white/30 bg-navy-950/78 text-white"
-                        : "border-navy-900/22 bg-white/86 text-navy-950"
-                    }`}
-                  >
-                    <p className="truncate text-[9px] font-extrabold uppercase tracking-[0.14em]">
-                      {districtNames[band.districtId]}
-                    </p>
-                    {!discovered && (
-                      <>
-                        <p className="mt-0.5 flex items-center gap-1 text-[8px] font-extrabold uppercase tracking-[0.08em] text-navy-700">
-                          <CircleHelp className="h-3 w-3 shrink-0" aria-hidden="true" />
-                          Undiscovered
-                        </p>
-                        <p className="mt-0.5 text-[8px] font-semibold leading-tight text-navy-700">
-                          Travel here to discover this chapter.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <span aria-hidden="true" className="city-central-beacon absolute inset-0" />
-                  <p
-                    aria-hidden="true"
-                    className="absolute left-2.5 top-2 truncate rounded-md border border-amber-400/50 bg-navy-950/80 px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.14em] text-amber-400"
-                  >
-                    Shield Central
-                  </p>
-                </>
-              )}
-              <span
-                aria-hidden="true"
-                className="absolute inset-y-0 right-0 w-px bg-white/12"
+                </div>
+              );
+            })}
+
+            {/* The route the token walks. */}
+            <svg
+              className="pointer-events-none absolute inset-0"
+              width={TRACK_WIDTH}
+              height={TRACK_HEIGHT}
+              viewBox={`0 0 ${TRACK_WIDTH} ${TRACK_HEIGHT}`}
+              aria-hidden="true"
+            >
+              <path
+                d={path}
+                fill="none"
+                stroke="rgba(6,21,39,0.55)"
+                strokeWidth={38}
+                strokeLinecap="round"
               />
+              <path
+                d={path}
+                fill="none"
+                stroke="rgba(238,241,246,0.82)"
+                strokeWidth={31}
+                strokeLinecap="round"
+              />
+              <path
+                d={path}
+                fill="none"
+                className={trailClass ?? "stroke-amber-400/55"}
+                strokeWidth={27}
+                strokeLinecap="round"
+                pathLength={100}
+                strokeDasharray={`${exploredPercent} 100`}
+              />
+              <path
+                d={path}
+                fill="none"
+                stroke="rgba(11,37,69,0.28)"
+                strokeWidth={2}
+                strokeDasharray="5 8"
+                strokeLinecap="round"
+              />
+            </svg>
+
+            <ol className="absolute inset-0">
+              {spaces.map((space) => {
+                const stepOrder = steppingIndices.indexOf(space.index);
+                const guardian = space.guardianId
+                  ? guardians.find((g) => g.id === space.guardianId)
+                  : undefined;
+                const districtDiscovered = space.districtId
+                  ? discoveredDistricts.includes(space.districtId)
+                  : true;
+
+                return (
+                  <li
+                    key={space.index}
+                    className="absolute -translate-x-1/2 -translate-y-1/2"
+                    style={{ left: spaceX(space.index), top: spaceY(space.index) }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (hasDraggedRef.current) return;
+                        onOpenSpace(space);
+                      }}
+                      aria-current={space.isCurrent ? "location" : undefined}
+                      className="relative grid h-[54px] w-[54px] place-items-center rounded-2xl transition hover:-translate-y-0.5 focus-visible:z-10"
+                    >
+                      <SpaceMark
+                        space={space}
+                        guardian={guardian}
+                        discovered={districtDiscovered}
+                        stepping={stepOrder >= 0}
+                        markerCosmetic={markerCosmetic}
+                        relation={
+                          space.index === tokenIndex
+                            ? "current"
+                            : space.index < tokenIndex || space.visited
+                              ? "behind"
+                              : "ahead"
+                        }
+                      />
+                      {/* Movement feedback: 1 → 2 → 3 → 4 as the token counts across. */}
+                      {stepOrder >= 0 && (
+                        <span
+                          aria-hidden="true"
+                          className="animate-pop absolute -bottom-2 grid h-[18px] w-[18px] place-items-center rounded-full border border-navy-950 bg-amber-400 text-[10px] font-extrabold text-navy-900"
+                        >
+                          {stepOrder + 1}
+                        </span>
+                      )}
+                      <span className="sr-only">
+                        Space {space.index + 1} of {spaces.length}.{" "}
+                        {BOARD_SPACE_LABEL[space.kind]}. {space.title}.{" "}
+                        {spaceStateLabel(space, districtDiscovered)}.
+                        {space.isCurrent ? " You are here." : ""}
+                      </span>
+                      {space.index === tokenIndex && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute -bottom-7 left-1/2 max-w-[92px] -translate-x-1/2 truncate rounded-md bg-navy-950/85 px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wide text-white"
+                        >
+                          {space.title}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+
+            {/* The player token. Rides above the route rather than replacing a space. */}
+            <div
+              className="board-token pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full"
+              style={{
+                left: spaceX(tokenIndex),
+                top: spaceY(tokenIndex) - 22,
+              }}
+            >
+              <PlayerTokenMark tokenId={playerTokenId} className={tokenClass} />
             </div>
-          );
-        })}
-
-        {/* The route the token walks. */}
-        <svg
-          className="pointer-events-none absolute inset-0"
-          width={TRACK_WIDTH}
-          height={TRACK_HEIGHT}
-          viewBox={`0 0 ${TRACK_WIDTH} ${TRACK_HEIGHT}`}
-          aria-hidden="true"
-        >
-          <path
-            d={path}
-            fill="none"
-            stroke="rgba(6,21,39,0.55)"
-            strokeWidth={38}
-            strokeLinecap="round"
-          />
-          <path
-            d={path}
-            fill="none"
-            stroke="rgba(238,241,246,0.82)"
-            strokeWidth={31}
-            strokeLinecap="round"
-          />
-          <path
-            d={path}
-            fill="none"
-            className={trailClass ?? "stroke-amber-400/55"}
-            strokeWidth={27}
-            strokeLinecap="round"
-            pathLength={100}
-            strokeDasharray={`${exploredPercent} 100`}
-          />
-          <path
-            d={path}
-            fill="none"
-            stroke="rgba(11,37,69,0.28)"
-            strokeWidth={2}
-            strokeDasharray="5 8"
-            strokeLinecap="round"
-          />
-        </svg>
-
-        <ol className="absolute inset-0">
-          {spaces.map((space) => {
-            const stepOrder = steppingIndices.indexOf(space.index);
-            const guardian = space.guardianId
-              ? guardians.find((g) => g.id === space.guardianId)
-              : undefined;
-            const districtDiscovered = space.districtId
-              ? discoveredDistricts.includes(space.districtId)
-              : true;
-
-            return (
-              <li
-                key={space.index}
-                className="absolute -translate-x-1/2 -translate-y-1/2"
-                style={{ left: spaceX(space.index), top: spaceY(space.index) }}
-              >
-                <button
-                  type="button"
-                  onClick={() => onOpenSpace(space)}
-                  aria-current={space.isCurrent ? "location" : undefined}
-                  className="relative grid h-[54px] w-[54px] place-items-center rounded-2xl transition hover:-translate-y-0.5 focus-visible:z-10"
-                >
-                  <SpaceMark
-                    space={space}
-                    guardian={guardian}
-                    discovered={districtDiscovered}
-                    stepping={stepOrder >= 0}
-                    markerCosmetic={markerCosmetic}
-                    relation={
-                      space.index === tokenIndex
-                        ? "current"
-                        : space.index < tokenIndex || space.visited
-                          ? "behind"
-                          : "ahead"
-                    }
-                  />
-                  {/* Movement feedback: 1 → 2 → 3 → 4 as the token counts across. */}
-                  {stepOrder >= 0 && (
-                    <span
-                      aria-hidden="true"
-                      className="animate-pop absolute -bottom-2 grid h-[18px] w-[18px] place-items-center rounded-full border border-navy-950 bg-amber-400 text-[10px] font-extrabold text-navy-900"
-                    >
-                      {stepOrder + 1}
-                    </span>
-                  )}
-                  <span className="sr-only">
-                    Space {space.index + 1} of {spaces.length}.{" "}
-                    {BOARD_SPACE_LABEL[space.kind]}. {space.title}.{" "}
-                    {spaceStateLabel(space, districtDiscovered)}.
-                    {space.isCurrent ? " You are here." : ""}
-                  </span>
-                  {space.index === tokenIndex && (
-                    <span
-                      aria-hidden="true"
-                      className="absolute -bottom-7 left-1/2 max-w-[92px] -translate-x-1/2 truncate rounded-md bg-navy-950/85 px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wide text-white"
-                    >
-                      {space.title}
-                    </span>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-
-        {/* The player token. Rides above the route rather than replacing a space. */}
-        <div
-          className="board-token pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full"
-          style={{
-            left: spaceX(tokenIndex),
-            top: spaceY(tokenIndex) - 22,
-          }}
-        >
-          <PlayerTokenMark tokenId={playerTokenId} className={tokenClass} />
+          </div>
         </div>
       </div>
-      </div>
+
+      {/* Desktop / Laptop overlay camera pan controls */}
+      <button
+        type="button"
+        onClick={panLeft}
+        disabled={!canPanLeft}
+        aria-label="Pan city left"
+        className={`absolute left-3 top-1/2 z-30 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/25 bg-navy-950/85 text-white shadow-xl backdrop-blur-md transition hover:border-white/45 hover:bg-navy-900 hover:text-amber-300 active:scale-95 disabled:pointer-events-none disabled:opacity-0 focus-visible:ring-2 focus-visible:ring-civic-400 md:flex ${
+          canPanLeft ? "opacity-90 hover:opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
+        <ChevronLeft className="h-6 w-6" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        onClick={panRight}
+        disabled={!canPanRight}
+        aria-label="Pan city right"
+        className={`absolute right-3 top-1/2 z-30 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/25 bg-navy-950/85 text-white shadow-xl backdrop-blur-md transition hover:border-white/45 hover:bg-navy-900 hover:text-amber-300 active:scale-95 disabled:pointer-events-none disabled:opacity-0 focus-visible:ring-2 focus-visible:ring-civic-400 md:flex ${
+          canPanRight ? "opacity-90 hover:opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
+        <ChevronRight className="h-6 w-6" aria-hidden="true" />
+      </button>
     </div>
   );
 }

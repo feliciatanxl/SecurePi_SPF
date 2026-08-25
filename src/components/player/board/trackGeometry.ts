@@ -21,7 +21,7 @@ export const EDGE = 42;
 /** Vertical travel of the route, peak to peak. */
 export const AMPLITUDE = 32;
 /** Vertical centre of the route within the track. */
-export const CENTRE_Y = 230;
+export const CENTRE_Y = 202;
 export const TRACK_HEIGHT = 340;
 
 export const TRACK_WIDTH = EDGE * 2 + (BOARD_SPACES.length - 1) * SPACING;

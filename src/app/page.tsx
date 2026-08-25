@@ -222,7 +222,7 @@ export default function ProjectShieldPage() {
   return (
     <div className="min-h-full overflow-x-clip bg-surface text-ink">
       <header className="sticky top-0 z-50 border-b border-white/10 bg-navy-950/95 text-white shadow-sm backdrop-blur-xl">
-        <div className="mx-auto flex min-h-[68px] max-w-[1180px] items-center gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-[68px] max-w-[1180px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link
             href="#top"
             aria-label="Project SHIELD home"
@@ -367,7 +367,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="why-it-matters" className="scroll-mt-32 lg:scroll-mt-24 bg-amber-50">
+        <section id="why-it-matters" className="scroll-mt-24 bg-amber-50">
           <div className="mx-auto grid max-w-[1180px] gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.86fr_1.14fr] lg:px-8 lg:py-20">
             <div>
               <SectionLabel>Why it exists</SectionLabel>
@@ -404,7 +404,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="about" className="scroll-mt-32 lg:scroll-mt-24">
+        <section id="about" className="scroll-mt-24">
           <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <div className="grid items-end gap-8 lg:grid-cols-[0.8fr_1.2fr]">
               <div>
@@ -423,7 +423,7 @@ export default function ProjectShieldPage() {
 
             <h3
               id="how-it-works"
-              className="mt-10 scroll-mt-32 lg:scroll-mt-24 text-[11px] font-extrabold uppercase tracking-[0.2em] text-civic-700"
+              className="mt-10 scroll-mt-24 text-[11px] font-extrabold uppercase tracking-[0.2em] text-civic-700"
             >
               The six-stage learning loop
             </h3>
@@ -463,7 +463,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="guardians" className="scroll-mt-32 lg:scroll-mt-24 bg-surface-sunk">
+        <section id="guardians" className="scroll-mt-24 bg-surface-sunk">
           <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <SectionLabel>The Guardians</SectionLabel>
             <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -514,7 +514,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="coverage" className="scroll-mt-32 lg:scroll-mt-24">
+        <section id="coverage" className="scroll-mt-24">
           <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <SectionLabel>Scam and civic prevention scope</SectionLabel>
             <div className="mt-3 grid gap-8 lg:grid-cols-[0.82fr_1.18fr]">
@@ -559,7 +559,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="districts" className="scroll-mt-32 lg:scroll-mt-24 bg-navy-950 text-white">
+        <section id="districts" className="scroll-mt-24 bg-navy-950 text-white">
           <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <SectionLabel tone="light">Four districts</SectionLabel>
             <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -709,7 +709,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="audience" className="scroll-mt-32 lg:scroll-mt-24 bg-amber-50">
+        <section id="audience" className="scroll-mt-24 bg-amber-50">
           <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <SectionLabel>Adaptive by age band</SectionLabel>
             <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -847,7 +847,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="evidence" className="scroll-mt-32 lg:scroll-mt-24 bg-surface-sunk">
+        <section id="evidence" className="scroll-mt-24 bg-surface-sunk">
           <div className="mx-auto max-w-[1180px] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
             <SectionLabel>Evidence-informed design</SectionLabel>
             <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -895,7 +895,7 @@ export default function ProjectShieldPage() {
           </div>
         </section>
 
-        <section id="responsible-design" className="scroll-mt-32 lg:scroll-mt-24 bg-teal-50">
+        <section id="responsible-design" className="scroll-mt-24 bg-teal-50">
           <div className="mx-auto grid max-w-[1180px] gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8 lg:py-20">
             <div>
               <SectionLabel>Responsible design</SectionLabel>

@@ -238,11 +238,15 @@ export function MissionRunner({
    * 1400px, and a message thread you are living through stays a thread.
    */
   const measure = desktopSplit
-    ? "mx-auto w-full max-w-[440px] md:max-w-[720px] xl:max-w-none"
+    ? isResolved
+      ? "mx-auto w-full max-w-[440px] md:max-w-[720px] xl:max-w-[960px]"
+      : "mx-auto w-full max-w-[440px] md:max-w-[720px] xl:max-w-none"
     : "mx-auto w-full max-w-[440px] md:max-w-[560px] xl:max-w-none";
   /** The inner measure, applied to the contents of every full-bleed band. */
   const band = desktopSplit
-    ? "mx-auto w-full xl:max-w-[1400px]"
+    ? isResolved
+      ? "mx-auto w-full xl:max-w-[960px]"
+      : "mx-auto w-full xl:max-w-[1400px]"
     : "mx-auto w-full xl:max-w-[700px]";
 
   return (
@@ -381,19 +385,27 @@ export function MissionRunner({
         Situation and decision.
 
         One flex column on a phone — friend card, thread, then the decision rail
-        pinned to the bottom, exactly as before. On a laptop the same two groups
-        become two columns: what happened on the left, what you do about it on
-        the right, both on screen at once instead of a scroll apart.
+        pinned to the bottom, exactly as before. On a laptop:
+        - When unresolved: two columns side-by-side (situation on left, decision on right)
+        - When resolved: single column in natural document flow (friend -> thread -> response -> debrief -> actions)
       */}
       <div
         className={`flex min-h-0 flex-1 flex-col ${
           desktopSplit
-            ? `${band} xl:grid xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] xl:items-start xl:gap-7 xl:px-6 xl:py-5`
+            ? isResolved
+              ? `${band} xl:flex xl:flex-col xl:gap-5 xl:px-6 xl:py-5`
+              : `${band} xl:grid xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] xl:items-start xl:gap-7 xl:px-6 xl:py-5`
             : ""
         }`}
       >
         <div
-          className={`flex min-w-0 flex-1 flex-col ${desktopSplit ? "" : band}`}
+          className={`flex min-w-0 flex-1 flex-col ${
+            desktopSplit
+              ? isResolved
+                ? "w-full"
+                : ""
+              : band
+          }`}
         >
       {/* Friend card — Peer Shield only */}
       {friend && (
@@ -423,12 +435,16 @@ export function MissionRunner({
       )}
 
       {/*
-        Transcript. Capped on a laptop: a message thread read at 700px is still
+        Transcript. Capped on a laptop when unresolved in 2 columns: a message thread read at 700px is still
         a message thread, and one read at 1400px is a document.
       */}
       <div
         className={`flex-1 space-y-2 px-4 py-2.5 ${
-          desktopSplit ? "xl:max-w-[700px] xl:px-0 xl:py-3" : ""
+          desktopSplit && !isResolved
+            ? "xl:max-w-[700px] xl:px-0 xl:py-3"
+            : desktopSplit && isResolved
+              ? "xl:px-0 xl:py-2"
+              : ""
         }`}
       >
         {transcript.map((m) => (
@@ -471,16 +487,17 @@ export function MissionRunner({
         </div>
 
       {/*
-        Decision rail. A pinned bar at the bottom of a phone; the right-hand
-        pane on a laptop, where it sticks near the top of the column so the
-        response options stay put while the thread is read beside them.
+        Decision rail / action panel.
+        - Mobile: pinned bar at the bottom of the screen.
+        - Laptop unresolved: sticky right-hand pane beside the situation thread.
+        - Laptop resolved: static card directly below the debrief in single-column flow.
       */}
       <div
         className={`sticky bottom-0 z-20 border-t border-line bg-surface/95 backdrop-blur ${
           desktopSplit
             ? isResolved
-              ? "xl:static xl:rounded-2xl xl:border xl:bg-surface xl:shadow-[0_18px_44px_-32px_rgba(11,37,69,0.55)]"
-              : "xl:sticky xl:bottom-auto xl:top-5 xl:self-start xl:rounded-2xl xl:border xl:bg-surface xl:shadow-[0_18px_44px_-32px_rgba(11,37,69,0.55)]"
+              ? "xl:static xl:w-full xl:rounded-2xl xl:border xl:border-line xl:bg-surface xl:shadow-[0_18px_44px_-32px_rgba(11,37,69,0.55)]"
+              : "xl:sticky xl:bottom-auto xl:top-5 xl:self-start xl:rounded-2xl xl:border xl:border-line xl:bg-surface xl:shadow-[0_18px_44px_-32px_rgba(11,37,69,0.55)]"
             : ""
         }`}
       >
